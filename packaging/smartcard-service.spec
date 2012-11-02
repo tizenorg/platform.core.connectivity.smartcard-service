@@ -1,7 +1,7 @@
 Name:       smartcard-service
 Summary:    Smartcard Service FW
 Version:    0.1.0
-Release:    8
+Release:    9
 Group:      libs
 License:    Samsung Proprietary License
 Source0:    %{name}-%{version}.tar.gz
@@ -111,6 +111,7 @@ rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 /usr/lib/pkgconfig/smartcard-service-common.pc
 
 %files -n smartcard-service-server
+%manifest smartcard-service-server.manifest
 %defattr(-,root,root,-)
 /usr/bin/smartcard-daemon
 #/usr/bin/smartcard-test-client
