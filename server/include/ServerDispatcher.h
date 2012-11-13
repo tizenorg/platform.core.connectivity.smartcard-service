@@ -38,7 +38,6 @@ namespace smartcard_service_api
 		void *dispatcherThreadFunc(DispatcherMsg *msg, void *data);
 
 	public:
-
 		static ServerDispatcher *getInstance();
 	};
 

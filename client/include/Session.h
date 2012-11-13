@@ -50,6 +50,20 @@ namespace smartcard_service_api
 
 		Channel *openChannelSync(int id, ByteArray aid);
 
+	public:
+		~Session();
+
+		void closeChannels();
+
+		int getATR(getATRCallback callback, void *userData);
+		int close(closeSessionCallback callback, void *userData);
+
+		int openBasicChannel(ByteArray aid, openChannelCallback callback, void *userData);
+		int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
+		int openLogicalChannel(ByteArray aid, openChannelCallback callback, void *userData);
+		int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
+		int getChannelCount(getChannelCountCallback callback, void * userData);
+
 		ByteArray getATRSync();
 		void closeSync();
 
@@ -58,20 +72,6 @@ namespace smartcard_service_api
 		Channel *openLogicalChannelSync(ByteArray aid);
 		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length);
 		unsigned int getChannelCountSync();
-
-	public:
-		~Session();
-
-		int getATR(getATRCallback callback, void *userData);
-		int close(closeSessionCallback callback, void *userData);
-
-		void closeChannels();
-
-		int openBasicChannel(ByteArray aid, openChannelCallback callback, void *userData);
-		int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
-		int openLogicalChannel(ByteArray aid, openChannelCallback callback, void *userData);
-		int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
-		unsigned int getChannelCount(getChannelCountCallback callback, void * userData);
 
 		friend class ClientDispatcher;
 		friend class Reader;
@@ -87,15 +87,23 @@ extern "C"
 #endif /* __cplusplus */
 
 reader_h session_get_reader(session_h handle);
+bool session_is_closed(session_h handle);
+void session_destroy_instance(session_h handle);
+void session_close_channels(session_h handle);
+
 int session_get_atr(session_h handle, session_get_atr_cb callback, void *userData);
 int session_close(session_h handle, session_close_session_cb callback, void *userData);
-bool session_is_closed(session_h handle);
-void session_close_channels(session_h handle);
 
 int session_open_basic_channel(session_h handle, unsigned char *aid, unsigned int length, session_open_channel_cb callback, void *userData);
 int session_open_logical_channel(session_h handle, unsigned char *aid, unsigned int length, session_open_channel_cb callback, void *userData);
-unsigned int session_get_channel_count(session_h handle, session_get_channel_count_cb callback, void * userData);
-void session_destroy_instance(session_h handle);
+int session_get_channel_count(session_h handle, session_get_channel_count_cb callback, void * userData);
+
+int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length);
+void session_close_sync(session_h handle);
+
+channel_h session_open_basic_channel_sync(session_h handle, unsigned char *aid, unsigned int length);
+channel_h session_open_logical_channel_sync(session_h handle, unsigned char *aid, unsigned int length);
+unsigned int session_get_channel_count_sync(session_h handle);
 
 #ifdef __cplusplus
 }

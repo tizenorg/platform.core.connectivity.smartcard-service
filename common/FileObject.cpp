@@ -29,10 +29,12 @@ namespace smartcard_service_api
 {
 	FileObject::FileObject(Channel *channel):ProviderHelper(channel)
 	{
+		opened = false;
 	}
 
 	FileObject::FileObject(Channel *channel, ByteArray selectResponse):ProviderHelper(channel)
 	{
+		opened = false;
 		setSelectResponse(selectResponse);
 	}
 
@@ -40,33 +42,43 @@ namespace smartcard_service_api
 	{
 	}
 
-	bool FileObject::setSelectResponse(ByteArray response)
+	bool FileObject::setSelectResponse(ByteArray &response)
 	{
 		bool result = false;
 
-		selectResponse = response;
-
-		if (selectResponse.getLength() > 2)
+		if (response.getLength() >= 2)
 		{
-			ResponseHelper resp(selectResponse);
+			ResponseHelper resp(response);
+			selectResponse = response;
 
-			fcp.setFCP(resp.getDataField());
+			if (resp.getStatus() == 0)
+			{
+				fcp.releaseFCP();
 
-			result = true;
+				fcp.setFCP(resp.getDataField());
+
+				SCARD_DEBUG("FCP : %s", fcp.toString());
+
+				opened = true;
+				result = true;
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("invalid response : %s", selectResponse.toString());
+			SCARD_DEBUG_ERR("invalid response : %s", response.toString());
 		}
 
 		return result;
 	}
 
-	int FileObject::select(ByteArray aid)
+	int FileObject::_select(ByteArray command)
 	{
 		int ret = ERROR_ILLEGAL_STATE;
-		ByteArray command, result;
-		APDUHelper apdu;
+		ByteArray result;
 
 		if (channel == NULL || channel->isClosed())
 		{
@@ -75,40 +87,40 @@ namespace smartcard_service_api
 			return ret;
 		}
 
-		/* make apdu command */
-		command = apdu.generateAPDU(APDUHelper::COMMAND_SELECT_BY_DF_NAME, 0, aid);
-		SCARD_DEBUG("command : %s", command.toString());
+		opened = false;
+
 		ret = channel->transmitSync(command, result);
-
-		if (ret == 0 && result.getLength() >= 2)
+		if (ret == 0)
 		{
-			ResponseHelper resp(result);
-			this->selectResponse = result;
-
-			if (resp.getStatus() == 0)
+			if (setSelectResponse(result) == true)
 			{
-				SCARD_DEBUG("response [%d] : %s", result.getLength(), result.toString());
-
-				fcp.releaseFCP();
-
-				if (result.getLength() > 2)
-				{
-					fcp.setFCP(resp.getDataField());
-
-					SCARD_DEBUG("FCP : %s", fcp.toString());
-				}
-
 				ret = SUCCESS;
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), result[result.getLength() - 2], result[result.getLength() - 1]);
+				ret = ERROR_ILLEGAL_STATE;
 			}
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", ret, result.getLength());
+
+			ret = ERROR_ILLEGAL_STATE;
 		}
+
+		return ret;
+	}
+
+	int FileObject::select(ByteArray aid)
+	{
+		int ret = ERROR_ILLEGAL_STATE;
+		ByteArray command;
+
+		/* make apdu command */
+		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_DF_NAME, 0, aid);
+		SCARD_DEBUG("command : %s", command.toString());
+
+		ret = _select(command);
 
 		return ret;
 	}
@@ -116,58 +128,20 @@ namespace smartcard_service_api
 	int FileObject::select(ByteArray path, bool fromCurrentDF)
 	{
 		int ret = ERROR_ILLEGAL_STATE;
-		ByteArray command, result;
-		APDUHelper apdu;
-
-		if (channel == NULL || channel->isClosed())
-		{
-			SCARD_DEBUG_ERR("channel is not open");
-
-			return ret;
-		}
+		ByteArray command;
 
 		/* make apdu command */
 		if (fromCurrentDF == true)
 		{
-			command = apdu.generateAPDU(APDUHelper::COMMAND_SELECT_BY_PATH_FROM_CURRENT_DF, 0, path);
+			command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_PATH_FROM_CURRENT_DF, 0, path);
 		}
 		else
 		{
-			command = apdu.generateAPDU(APDUHelper::COMMAND_SELECT_BY_PATH, 0, path);
+			command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_PATH, 0, path);
 		}
 		SCARD_DEBUG("command : %s", command.toString());
 
-		ret = channel->transmitSync(command, result);
-
-		if (ret == 0 && result.getLength() >= 2)
-		{
-			ResponseHelper resp(result);
-			this->selectResponse = result;
-
-			if (resp.getStatus() == 0)
-			{
-				SCARD_DEBUG("response [%d] : %s", result.getLength(), result.toString());
-
-				fcp.releaseFCP();
-
-				if (result.getLength() > 2)
-				{
-					fcp.setFCP(resp.getDataField());
-
-					SCARD_DEBUG("FCP : %s", fcp.toString());
-				}
-
-				ret = SUCCESS;
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), result[result.getLength() - 2], result[result.getLength() - 1]);
-			}
-		}
-		else
-		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", ret, result.getLength());
-		}
+		ret = _select(command);
 
 		return ret;
 	}
@@ -175,48 +149,13 @@ namespace smartcard_service_api
 	int FileObject::select(unsigned int fid)
 	{
 		int ret = ERROR_ILLEGAL_STATE;
-		ByteArray command, result, fidData((unsigned char *)&fid, 2);
-
-		if (channel == NULL || channel->isClosed())
-		{
-			SCARD_DEBUG_ERR("channel is not open");
-
-			return ret;
-		}
+		ByteArray command, fidData((unsigned char *)&fid, 2);
 
 		/* make apdu command */
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_ID, 0, fidData);
-		ret = channel->transmitSync(command, result);
+		SCARD_DEBUG("command : %s", command.toString());
 
-		if (ret == 0 && result.getLength() >= 2)
-		{
-			ResponseHelper resp(result);
-			this->selectResponse = result;
-
-			if (resp.getStatus() == 0)
-			{
-				SCARD_DEBUG("response [%d] : %s", result.getLength(), result.toString());
-
-				fcp.releaseFCP();
-
-				if (result.getLength() > 2)
-				{
-					fcp.setFCP(resp.getDataField());
-
-					SCARD_DEBUG("FCP : %s", fcp.toString());
-				}
-
-				ret = SUCCESS;
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), result[result.getLength() - 2], result[result.getLength() - 1]);
-			}
-		}
-		else
-		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", ret, result.getLength());
-		}
+		ret = _select(command);
 
 		return ret;
 	}
@@ -224,51 +163,13 @@ namespace smartcard_service_api
 	int FileObject::selectParent()
 	{
 		int ret = ERROR_ILLEGAL_STATE;
-		ByteArray command, result;
-		APDUHelper apdu;
-
-		if (channel == NULL || channel->isClosed())
-		{
-			SCARD_DEBUG_ERR("channel is not open");
-
-			return ret;
-		}
+		ByteArray command;
 
 		/* make apdu command */
-		command = apdu.generateAPDU(APDUHelper::COMMAND_SELECT_PARENT_DF, 0, ByteArray::EMPTY);
+		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_PARENT_DF, 0, ByteArray::EMPTY);
 		SCARD_DEBUG("command : %s", command.toString());
 
-		ret = channel->transmitSync(command, result);
-
-		if (ret == 0 && result.getLength() >= 2)
-		{
-			ResponseHelper resp(result);
-			this->selectResponse = result;
-
-			if (resp.getStatus() == 0)
-			{
-				SCARD_DEBUG("response [%d] : %s", result.getLength(), result.toString());
-
-				fcp.releaseFCP();
-
-				if (result.getLength() > 2)
-				{
-					fcp.setFCP(resp.getDataField());
-
-					SCARD_DEBUG("FCP : %s", fcp.toString());
-				}
-
-				ret = SUCCESS;
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), result[result.getLength() - 2], result[result.getLength() - 1]);
-			}
-		}
-		else
-		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", ret, result.getLength());
-		}
+		ret = _select(command);
 
 		return ret;
 	}
@@ -308,7 +209,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), response[response.getLength() - 2], response[response.getLength() - 1]);
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
@@ -354,7 +255,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), response[response.getLength() - 2], response[response.getLength() - 1]);
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
@@ -388,7 +289,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), response[response.getLength() - 2], response[response.getLength() - 1]);
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else

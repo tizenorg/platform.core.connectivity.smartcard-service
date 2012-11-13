@@ -44,16 +44,17 @@ namespace smartcard_service_api
 
 		ReaderHelper();
 
-		virtual SessionHelper *openSessionSync() = 0;
-
 	public:
 		~ReaderHelper();
 
 		const char *getName();
 		SEServiceHelper *getSEService();
 		bool isSecureElementPresent();
-		virtual int openSession(openSessionCallback callback, void *userData) = 0;
+		
 		virtual void closeSessions() = 0;
+
+		virtual int openSession(openSessionCallback callback, void *userData) = 0;
+		virtual SessionHelper *openSessionSync() = 0;
 	};
 
 } /* namespace smartcard_service_api */

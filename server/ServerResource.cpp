@@ -32,6 +32,10 @@
 #include "SignatureHelper.h"
 #include "GPSEACL.h"
 
+#ifndef EXTERN_API
+#define EXTERN_API __attribute__((visibility("default")))
+#endif
+
 namespace smartcard_service_api
 {
 	unsigned int IntegerHandle::newHandle = 0;
@@ -75,7 +79,7 @@ namespace smartcard_service_api
 
 #define OMAPI_SE_PATH "/usr/lib/se"
 
-	ServerResource::ServerResource()
+	ServerResource::ServerResource() : mainLoop(NULL)
 	{
 		SCARD_BEGIN();
 
@@ -148,6 +152,11 @@ namespace smartcard_service_api
 		}
 	}
 
+	int ServerResource::getClientCount()
+	{
+		return (int)mapClients.size();
+	}
+
 	void ServerResource::removeClient(int socket)
 	{
 		map<int, ClientInstance *>::iterator item;
@@ -161,7 +170,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG("client exists already [%d]", socket);
+			SCARD_DEBUG("client removed already [%d]", socket);
 		}
 	}
 
@@ -278,7 +287,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	unsigned int ServerResource::createSession(int socket, unsigned int context, unsigned int terminalID, ByteArray packageCert, void *caller)
+	unsigned int ServerResource::createSession(int socket, unsigned int context, unsigned int terminalID, vector<ByteArray> &certHashes, void *caller)
 	{
 		unsigned int result = -1;
 		Terminal *temp = NULL;
@@ -288,7 +297,7 @@ namespace smartcard_service_api
 		{
 			if ((temp = getTerminal(terminalID)) != NULL)
 			{
-				result = instance->openSession(temp, packageCert, caller);
+				result = instance->openSession(temp, certHashes, caller);
 			}
 		}
 		else
@@ -347,126 +356,133 @@ namespace smartcard_service_api
 		}
 	}
 
+	bool ServerResource::_isAuthorizedAccess(Terminal *terminal, int pid, ByteArray aid, vector<ByteArray> &hashes)
+	{
+		bool result = true;
+
+#if 1 /* disable for temporary */
+		char filename[1024] = { 0, };
+		AccessControlList *acList = NULL;
+
+		/* check exceptional case */
+		SignatureHelper::getProcessName(pid, filename, sizeof(filename));
+		if (strncmp(filename, "ozD3Dw1MZruTDKHWGgYaDib2B2LV4/nfT+8b/g1Vsk8=", sizeof(filename)) != 0)
+		{
+			/* request open channel sequence */
+			if ((acList = getAccessControlList(terminal)) != NULL)
+			{
+#if 1
+				result = acList->isAuthorizedAccess(aid, hashes);
+#else
+				result = acList->isAuthorizedAccess(aid, session->packageCert);
+#endif
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("acList is null");
+				result = false;
+			}
+		}
+#endif
+
+		return result;
+	}
+
+	unsigned int ServerResource::_createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid)
+	{
+		unsigned int result = IntegerHandle::INVALID_HANDLE;
+		int rv = 0;
+		int channelNum = 0;
+		ByteArray command;
+		ByteArray response;
+
+		if (channelType == 1)
+		{
+			/* open channel */
+			command = APDUHelper::generateAPDU(APDUHelper::COMMAND_OPEN_LOGICAL_CHANNEL, 0, ByteArray::EMPTY);
+			rv = terminal->transmitSync(command, response);
+
+			if (rv == 0 && response.getLength() >= 2)
+			{
+				ResponseHelper resp(response);
+
+				if (resp.getStatus() == 0)
+				{
+					channelNum = resp.getDataField()[0];
+
+					SCARD_DEBUG("channelNum [%d]", channelNum);
+				}
+				else
+				{
+					SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+
+					return result;
+				}
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+
+				return result;
+			}
+		}
+
+		/* select aid */
+		APDUCommand apdu;
+		apdu.setCommand(0, APDUCommand::INS_SELECT_FILE, APDUCommand::P1_SELECT_BY_DF_NAME, APDUCommand::P2_SELECT_GET_FCP, aid, 0);
+		apdu.setChannel(1, channelNum);
+		apdu.getBuffer(command);
+
+		rv = terminal->transmitSync(command, response);
+		if (rv == 0 && response.getLength() >= 2)
+		{
+			ResponseHelper resp(response);
+
+			if (resp.getStatus() == 0)
+			{
+				result = service->openChannel(sessionID, channelNum, response);
+				if (result == IntegerHandle::INVALID_HANDLE)
+				{
+					SCARD_DEBUG_ERR("channel is null.");
+				}
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+			}
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+		}
+
+		return result;
+	}
+
 	unsigned int ServerResource::createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid)
 	{
 		unsigned int result = -1;
-		ServiceInstance *client = NULL;
+		ServiceInstance *service = NULL;
 
-		if ((client = getService(socket, context)) != NULL)
+		if ((service = getService(socket, context)) != NULL)
 		{
-			if (client->isVaildSessionHandle(sessionID) == true)
+			if (service->isVaildSessionHandle(sessionID) == true)
 			{
-				AccessControlList *acList = NULL;
 				ServerSession *session = NULL;
 				Terminal *terminal = NULL;
 
-				terminal = client->getTerminal(sessionID);
-				session = client->getSession(sessionID);
+				terminal = service->getTerminal(sessionID);
+				session = service->getSession(sessionID);
 				if (terminal != NULL && session != NULL)
 				{
-					int rv = 0;
-					int channelNum = 0;
-					ByteArray certHash;
-					ByteArray selectResponse;
-					ByteArray command;
-					char filename[1024] = { 0, };
-
-					/* check exceptional case */
-					SignatureHelper::getProcessName(client->getParent()->getPID(), filename, sizeof(filename));
-					if (strncmp(filename, "ozD3Dw1MZruTDKHWGgYaDib2B2LV4/nfT+8b/g1Vsk8=", sizeof(filename)) != 0)
+					if (_isAuthorizedAccess(terminal, service->getParent()->getPID(), aid, service->getParent()->getCertificationHashes()) == true)
 					{
-#if 1
-						certHash = session->packageCert;
-#else
-						certHash = client->getParent()->getCertificationHash();
-#endif
-						/* request open channel sequence */
-						if ((acList = getAccessControlList(terminal)) == NULL)
-						{
-							SCARD_DEBUG_ERR("acList is null");
-
-							return result;
-						}
-
-						if (acList->isAuthorizedAccess(aid, certHash) == false)
-						{
-							SCARD_DEBUG_ERR("unauthorized access, aid %s, hash %s", aid.toString(), certHash.toString());
-
-							return result;
-						}
-					}
-
-					if (channelType == 1)
-					{
-						ByteArray response;
-
-						/* open channel */
-						command = APDUHelper::generateAPDU(APDUHelper::COMMAND_OPEN_LOGICAL_CHANNEL, 0, ByteArray::EMPTY);
-						rv = terminal->transmitSync(command, response);
-
-						if (rv == 0 && response.getLength() >= 2)
-						{
-							ResponseHelper resp(response);
-
-							if (resp.getStatus() == 0)
-							{
-								channelNum = resp.getDataField()[0];
-
-								SCARD_DEBUG("channelNum [%d]", channelNum);
-							}
-							else
-							{
-								SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), response[response.getLength() - 2], response[response.getLength() - 1]);
-
-								return result;
-							}
-						}
-						else
-						{
-							SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
-
-							return result;
-						}
-					}
-
-					/* select aid */
-					command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_DF_NAME, channelNum, aid);
-					rv = terminal->transmitSync(command, selectResponse);
-					if (rv == 0 && selectResponse.getLength() >= 2)
-					{
-						ResponseHelper resp(selectResponse);
-
-						if (resp.getStatus() == 0)
-						{
-							result = client->openChannel(sessionID, channelNum);
-							if (result != IntegerHandle::INVALID_HANDLE)
-							{
-								ServerChannel *temp = (ServerChannel *)client->getChannel(result);
-								if (temp != NULL)
-								{
-									/* set select response */
-									temp->selectResponse = selectResponse;
-								}
-								else
-								{
-									SCARD_DEBUG_ERR("IS IT POSSIBLE??????????????????");
-								}
-							}
-							else
-							{
-								SCARD_DEBUG_ERR("channel is null.");
-							}
-						}
-						else
-						{
-							SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), selectResponse[selectResponse.getLength() - 2], selectResponse[selectResponse.getLength() - 1]);
-						}
+						result = _createChannel(terminal, service, channelType, sessionID, aid);
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, selectResponse.getLength());
+						SCARD_DEBUG_ERR("access denied [%d]", sessionID);
 					}
-
 				}
 				else
 				{
@@ -480,7 +496,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getClient is failed [%d] [%d]", socket, context);
+			SCARD_DEBUG_ERR("getService is failed [%d] [%d]", socket, context);
 		}
 
 		return result;
@@ -531,8 +547,6 @@ namespace smartcard_service_api
 				result = new GPSEACL(channel);
 				if (result != NULL)
 				{
-					result->loadACL();
-
 					mapACL.insert(make_pair(terminal, result));
 				}
 				else
@@ -779,8 +793,7 @@ namespace smartcard_service_api
 				Message msg;
 
 				SCARD_DEBUG("[NOTIFY_SE_AVAILABLE]");
-
-				SCARD_DEBUG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
+				SCARD_DEBUG("terminal [%s], error [%d], user_param [%p]", (char *)terminal, error, user_param);
 
 				/* send all client to refresh reader */
 				msg.message = msg.MSG_NOTIFY_SE_INSERTED;
@@ -795,8 +808,7 @@ namespace smartcard_service_api
 				Message msg;
 
 				SCARD_DEBUG("[NOTIFY_SE_NOT_AVAILABLE]");
-
-				SCARD_DEBUG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
+				SCARD_DEBUG("terminal [%s], error [%d], user_param [%p]", (char *)terminal, error, user_param);
 
 				/* send all client to refresh reader */
 				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
@@ -807,6 +819,7 @@ namespace smartcard_service_api
 			break;
 
 		default :
+			SCARD_DEBUG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
 			break;
 		}
 
@@ -814,3 +827,10 @@ namespace smartcard_service_api
 	}
 
 } /* namespace smartcard_service_api */
+
+using namespace smartcard_service_api;
+
+EXTERN_API void server_resource_set_main_loop_instance(void *instance)
+{
+	ServerResource::getInstance().setMainLoopInstance(instance);
+}

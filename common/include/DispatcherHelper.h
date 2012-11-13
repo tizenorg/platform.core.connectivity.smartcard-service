@@ -53,6 +53,7 @@ namespace smartcard_service_api
 		void clearQueue();
 
 		void pushMessage(DispatcherMsg *msg);
+		void processMessage(DispatcherMsg *msg);
 
 		bool runDispatcherThread();
 		void stopDispatcherThread();

@@ -94,6 +94,9 @@ namespace smartcard_service_api
 					{
 						instance->setPID(msg->error);
 						SCARD_DEBUG_ERR("update PID [%d]", msg->error);
+
+						/* generate certification hashes */
+						instance->generateCertificationHashes();
 					}
 
 					/* create service */
@@ -213,7 +216,12 @@ namespace smartcard_service_api
 
 				if (resource->isValidReaderHandle(msg->param1))
 				{
+#if 1
+					vector<ByteArray> temp;
+					handle = resource->createSession(socket, msg->error/* service context */, msg->param1, temp, msg->caller);
+#else
 					handle = resource->createSession(socket, msg->error/* service context */, msg->param1, msg->data, msg->caller);
+#endif
 					if (handle != IntegerHandle::INVALID_HANDLE)
 					{
 						response.param1 = handle;
@@ -343,9 +351,9 @@ namespace smartcard_service_api
 					if (temp != NULL)
 					{
 						response.param1 = channelID;
-						response.param2 = temp->channelNum;
+						response.param2 = temp->getChannelNumber();
 						response.error = 0;
-						response.data = temp->selectResponse;
+						response.data = temp->getSelectResponse();
 					}
 					else
 					{
@@ -579,6 +587,14 @@ namespace smartcard_service_api
 				SCARD_DEBUG("[MSG_OPERATION_RELEASE_CLIENT]");
 
 				resource->removeClient(msg->param1);
+				SCARD_DEBUG("remain client [%d]", resource->getClientCount());
+			}
+#endif
+#ifdef USE_AUTOSTART
+			if (resource->getClientCount() == 0)
+			{
+				SCARD_DEBUG("There is no client. shutting down service");
+				g_main_loop_quit((GMainLoop *)resource->getMainLoopInstance());
 			}
 #endif
 			break;

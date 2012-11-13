@@ -109,14 +109,17 @@ namespace smartcard_service_api
 
 	ServerSession *ServerReader::openSessionSync()
 	{
-		return openSessionSync(ByteArray::EMPTY, NULL);
+		vector<ByteArray> temp;
+
+		return openSessionSync(temp, NULL);
 	}
 
-	ServerSession *ServerReader::openSessionSync(ByteArray packageCert, void *caller)
+
+	ServerSession *ServerReader::openSessionSync(vector<ByteArray> &certHashes, void *caller)
 	{
 		ServerSession *session = NULL;
 
-		session = new ServerSession(this, packageCert, caller, terminal);
+		session = new ServerSession(this, certHashes, caller, terminal);
 		if (session == NULL)
 			return session;
 

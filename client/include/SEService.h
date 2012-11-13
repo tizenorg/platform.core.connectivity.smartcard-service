@@ -50,6 +50,7 @@ namespace smartcard_service_api
 		bool parseReaderInformation(unsigned int count, ByteArray data);
 
 		bool _initialize();
+
 		bool initialize(void *context, serviceConnected handler);
 		bool initialize(void *context, SEServiceListener *listener);
 		SEService *initializeSync(void *context, serviceConnected handler);
@@ -60,6 +61,7 @@ namespace smartcard_service_api
 		~SEService();
 
 		void shutdown();
+		void shutdownSync();
 
 		friend class ClientDispatcher;
 	};
@@ -76,7 +78,7 @@ extern "C"
 se_service_h se_service_create_instance(void *user_data, se_service_connected_cb callback);
 se_service_h se_service_create_instance_with_event_callback(void *user_data, se_service_connected_cb connected, se_service_event_cb event, se_sesrvice_error_cb error);
 int se_service_get_readers_count(se_service_h handle);
-bool se_service_get_readers(se_service_h handle, reader_h *readers, int count);
+bool se_service_get_readers(se_service_h handle, reader_h *readers, int *count);
 bool se_service_is_connected(se_service_h handle);
 void se_service_shutdown(se_service_h handle);
 void se_service_destroy_instance(se_service_h handle);

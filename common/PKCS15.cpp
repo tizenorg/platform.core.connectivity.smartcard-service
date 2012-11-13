@@ -60,6 +60,14 @@ namespace smartcard_service_api
 		if (odf == NULL)
 		{
 			odf = new PKCS15ODF(channel);
+
+			if (odf != NULL && odf->isClosed() == true)
+			{
+				SCARD_DEBUG_ERR("failed to open ODF");
+
+				delete odf;
+				odf = NULL;
+			}
 		}
 
 		SCARD_DEBUG("odf [%p]", odf);

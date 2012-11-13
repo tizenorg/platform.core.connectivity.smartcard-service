@@ -59,7 +59,9 @@ namespace smartcard_service_api
 		length = (length < sizeof(this->name)) ? length : sizeof(this->name);
 		memcpy(this->name, name, length);
 
+#if 0
 		getPackageCert();
+#endif
 
 		SCARD_END();
 	}
@@ -75,7 +77,8 @@ namespace smartcard_service_api
 
 		for (i = 0; i < sessions.size(); i++)
 		{
-			sessions[i]->close(NULL, this);
+			sessions[i]->closeSync();
+			delete (Session *)sessions[i];
 		}
 
 		sessions.clear();
@@ -91,10 +94,13 @@ namespace smartcard_service_api
 		Message msg;
 		int rv;
 
+#ifdef CLIENT_IPC_THREAD
 		/* request channel handle from server */
 		msg.message = Message::MSG_REQUEST_OPEN_SESSION;
 		msg.param1 = (unsigned int)handle;
+#if 0
 		msg.data = packageCert;
+#endif
 		msg.error = (unsigned int)context; /* using error to context */
 		msg.caller = (void *)this;
 		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
@@ -109,9 +115,9 @@ namespace smartcard_service_api
 		{
 			SCARD_DEBUG_ERR("time over");
 
-			return NULL;
+			openedSession = NULL;
 		}
-
+#endif
 		return (Session *)openedSession;
 	}
 
@@ -119,16 +125,22 @@ namespace smartcard_service_api
 	{
 		Message msg;
 
+		SCARD_BEGIN();
+
 		/* request channel handle from server */
 		msg.message = Message::MSG_REQUEST_OPEN_SESSION;
 		msg.param1 = (unsigned int)handle;
+#if 0
 		msg.data = packageCert;
+#endif
 		msg.error = (unsigned int)context; /* using error to context */
 		msg.caller = (void *)this;
 		msg.callback = (void *)callback;
 		msg.userParam = userData;
 
 		ClientIPC::getInstance().sendMessage(&msg);
+
+		SCARD_END();
 
 		return 0;
 	}
@@ -262,6 +274,19 @@ EXTERN_API int reader_open_session(reader_h handle, reader_open_session_cb callb
 	READER_EXTERN_BEGIN;
 	result = reader->openSession((openSessionCallback)callback, userData);
 	READER_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API session_h reader_open_session_sync(reader_h handle)
+{
+	session_h result = NULL;
+
+#ifdef CLIENT_IPC_THREAD
+	READER_EXTERN_BEGIN;
+	result = (session_h)reader->openSessionSync();
+	READER_EXTERN_END;
+#endif
 
 	return result;
 }

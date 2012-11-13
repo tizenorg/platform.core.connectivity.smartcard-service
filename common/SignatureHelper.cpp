@@ -16,14 +16,15 @@
 
 
 /* standard library header */
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include <list>
 #include <string>
+#include <vector>
 
 /* SLP library header */
-#include "dpl/wrt-dao-ro/WrtDatabase.h"
-#include "dpl/wrt-dao-ro/widget_dao_read_only.h"
-#include "dpl/wrt-dao-ro/wrt_db_types.h"
-#include "dpl/db/sql_connection.h"
+#include "package-manager.h"
 #include "aul.h"
 
 /* local header */
@@ -35,32 +36,27 @@
 #define EXTERN_API __attribute__((visibility("default")))
 #endif
 
-using namespace WrtDB;
-using namespace std;
-
 namespace smartcard_service_api
 {
 	int SignatureHelper::getProcessName(int pid, char *processName, uint32_t length)
 	{
 		int ret = -1;
-		FILE *file = NULL;
-		char filename[1024] = { 0, };
+		char buffer[1024] = { 0, };
+		char filename[2048] = { 0, };
+		int len = 0;
 
 		if (pid < 0 || processName == NULL || length == 0)
 			return ret;
 
-		snprintf(filename, sizeof(filename), "/proc/%d/cmdline", pid);
-		SCARD_DEBUG("pid : %d, file name : %s", pid, filename);
+		snprintf(buffer, sizeof(buffer), "/proc/%d/exec", pid);
+		SCARD_DEBUG("pid : %d, exec : %s", pid, buffer);
 
-		if ((file = fopen(filename, "r")) != NULL)
+		if ((len = readlink(buffer, filename, sizeof(filename))) < sizeof(filename))
 		{
 			char *name = NULL;
 			ByteArray hash, result;
-			size_t len;
 
-			memset(filename, 0, sizeof(filename));
-			len = fread(filename, 1, sizeof(filename) - 1, file);
-			fclose(file);
+			filename[len] = '\0';
 
 			name = basename(filename);
 			SCARD_DEBUG("file name : %s", name);
@@ -77,7 +73,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-
+			SCARD_DEBUG_ERR("readlink failed");
 		}
 
 		return ret;
@@ -86,94 +82,46 @@ namespace smartcard_service_api
 	ByteArray SignatureHelper::getCertificationHash(const char *packageName)
 	{
 		ByteArray result;
-		list<string>::iterator item;
-		CertificateChainList certList;
+		int ret = 0;
+		pkgmgr_certinfo_h handle = NULL;
+
 
 		SCARD_DEBUG("package name : %s", packageName);
 
-		try
+		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			WrtDatabase::attachToThreadRO();
-
-			int handle = WidgetDAOReadOnly::getHandle(DPL::FromUTF8String(packageName));
-			WidgetDAOReadOnly widget(handle);
-			certList = widget.getWidgetCertificate();
-
-			SCARD_DEBUG("certList.size [%d]", certList.size());
-
-			WrtDatabase::detachFromThread();
-		}
-		catch(...)
-		{
-			SCARD_DEBUG_ERR("exception occurs!!!");
-			return result;
-		}
-
-		if (certList.size() > 0)
-		{
-			string certString;
-			ByteArray certArray;
-
-#if 0
-			for (item = certList.begin(); item != certList.end(); item++)
+			if ((ret = pkgmgr_pkginfo_load_certinfo(packageName, handle)) == 0)
 			{
-				SCARD_DEBUG("certList : %s", item->data());
-			}
-#endif
-			certString = certList.back();
-			SCARD_DEBUG("certString[%d] :\n%s", certString.size(), certString.data());
+				int type;
 
-			/* base64 decoding */
-			if (OpensslHelper::decodeBase64String(certString.data(), certArray) == true)
-			{
-				int count = 0, offset = 0, length;
-//				int i;
-				ByteArray cert;
-
-				SCARD_DEBUG("decoded[%d] : %s", certArray.getLength(), certArray.toString());
-
-				/* get count */
-				count = *(int *)certArray.getBuffer();
-				offset += sizeof(int);
-				SCARD_DEBUG("certificate count [%d]", count);
-
-//				for (i = 0; i < count; i++)
-				if (count > 0)
+				for (type = (int)PM_AUTHOR_ROOT_CERT; type <= (int)PM_DISTRIBUTOR2_SIGNER_CERT; type++)
 				{
-					/* certificate length */
-					length = *(int *)certArray.getBuffer(offset);
-					offset += sizeof(int);
-					SCARD_DEBUG("certificate length [%d]", length);
+					const char *value = NULL;
 
-					/* certificate byte stream */
-					cert.setBuffer(certArray.getBuffer(offset), length);
-					offset += length;
-
-					SCARD_DEBUG("certificate buffer [%d] : %s", cert.getLength(), cert.toString());
-
-					/* sha1 digest */
-					if (OpensslHelper::digestBuffer("sha1", cert, result) == true)
+					if ((ret = pkgmgr_pkginfo_get_cert_value(handle, (pkgmgr_cert_type)type, &value)) == 0)
 					{
-						SCARD_DEBUG("digest[%d] : %s", result.getLength(), result.toString());
+						if (value != NULL && strlen(value) > 0)
+						{
+							OpensslHelper::decodeBase64String(value, result, false);
+							if (result.getLength() > 0)
+							{
+								SCARD_DEBUG("type [%d] hash [%d] : %s", type, result.getLength(), result.toString());
+								break;
+							}
+						}
 					}
-					else
-					{
-						SCARD_DEBUG_ERR("digestBuffer failed");
-					}
-				}
-				else
-				{
-					SCARD_DEBUG_ERR("invalid certificate count [%d]", count);
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("decodeBase64String failed");
+				SCARD_DEBUG_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
 			}
+
+			pkgmgr_pkginfo_destroy_certinfo(handle);
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("certList.size is zero");
+			SCARD_DEBUG_ERR("pkgmgr_pkginfo_create_certinfo failed [%d]", ret);
 		}
 
 		return result;
@@ -197,6 +145,75 @@ namespace smartcard_service_api
 		return result;
 	}
 
+	bool SignatureHelper::getCertificationHashes(int pid, vector<ByteArray> &certHashes)
+	{
+		bool result = false;
+		int error = 0;
+		char pkgName[256] = { 0, };
+
+		if ((error = aul_app_get_pkgname_bypid(pid, pkgName, sizeof(pkgName))) == 0)
+		{
+			result = getCertificationHashes(pkgName, certHashes);
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("aul_app_get_pkgname_bypid failed [%d]", error);
+		}
+
+		return result;
+	}
+
+	bool SignatureHelper::getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes)
+	{
+		bool result = false;
+		int ret = 0;
+		pkgmgr_certinfo_h handle = NULL;
+
+		SCARD_DEBUG("package name : %s", packageName);
+
+		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
+		{
+			if ((ret = pkgmgr_pkginfo_load_certinfo(packageName, handle)) == 0)
+			{
+				int type;
+
+				for (type = (int)PM_AUTHOR_ROOT_CERT; type <= (int)PM_DISTRIBUTOR2_SIGNER_CERT; type++)
+				{
+					const char *value = NULL;
+
+					if ((ret = pkgmgr_pkginfo_get_cert_value(handle, (pkgmgr_cert_type)type, &value)) == 0)
+					{
+						if (value != NULL && strlen(value) > 0)
+						{
+							ByteArray hash;
+
+							OpensslHelper::decodeBase64String(value, hash, false);
+							if (hash.getLength() > 0)
+							{
+								SCARD_DEBUG("type [%d] hash [%d] : %s", type, hash.getLength(), hash.toString());
+
+								certHashes.push_back(hash);
+							}
+						}
+					}
+				}
+
+				result = true;
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
+			}
+
+			pkgmgr_pkginfo_destroy_certinfo(handle);
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("pkgmgr_pkginfo_create_certinfo failed [%d]", ret);
+		}
+
+		return result;
+	}
 } /* namespace smartcard_service_api */
 
 /* export C API */
@@ -264,3 +281,48 @@ EXTERN_API int signature_helper_get_process_name(int pid, char *processName, uin
 	return ret;
 }
 
+EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, signature_helper_get_certificate_hashes_cb cb, void *user_param)
+{
+	int ret = -1;
+	vector<ByteArray> hashes;
+
+	if (packageName == NULL || cb == NULL)
+		return ret;
+
+	if (SignatureHelper::getCertificationHashes(packageName, hashes) == true)
+	{
+		vector<ByteArray>::iterator item;
+
+		for (item = hashes.begin(); item != hashes.end(); item++)
+		{
+			cb(user_param, (*item).getBuffer(), (*item).getLength());
+		}
+
+		ret = 0;
+	}
+
+	return ret;
+}
+
+EXTERN_API int signature_helper_get_certificate_hashes_by_pid(int pid, signature_helper_get_certificate_hashes_cb cb, void *user_param)
+{
+	int ret = -1;
+	vector<ByteArray> hashes;
+
+	if (pid <= 0 || cb == NULL)
+		return ret;
+
+	if (SignatureHelper::getCertificationHashes(pid, hashes) == true)
+	{
+		vector<ByteArray>::iterator item;
+
+		for (item = hashes.begin(); item != hashes.end(); item++)
+		{
+			cb(user_param, (*item).getBuffer(), (*item).getLength());
+		}
+
+		ret = 0;
+	}
+
+	return ret;
+}

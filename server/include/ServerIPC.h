@@ -18,13 +18,18 @@
 #define SERVERIPC_H_
 
 /* standard library header */
+#ifdef __cplusplus
 #include <map>
+#endif /* __cplusplus */
 
 /* SLP library header */
 
 /* local header */
+#ifdef __cplusplus
 #include "IPCHelper.h"
+#endif /* __cplusplus */
 
+#ifdef __cplusplus
 using namespace std;
 
 namespace smartcard_service_api
@@ -45,9 +50,24 @@ namespace smartcard_service_api
 
 	public:
 		static ServerIPC *getInstance();
+		Message *retrieveMessage(int socket);
 
 		friend class ServerResource;
 	};
 
 } /* namespace smartcard_service_api */
+#endif /* __cplusplus */
+
+/* export C API */
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+void server_ipc_create_listen_socket();
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
 #endif /* SERVERIPC_H_ */

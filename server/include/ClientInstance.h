@@ -20,7 +20,10 @@
 
 /* standard library header */
 #include <map>
-//#include <hash_map>
+#include <vector>
+#if 1
+#include <glib.h>
+#endif
 
 /* SLP library header */
 
@@ -38,11 +41,10 @@ namespace smartcard_service_api
 		int watchID;
 		int state;
 		int pid;
-		ByteArray certHash;
-
+		vector<ByteArray> certHashes;
 		map<unsigned int, ServiceInstance *> mapServices;
 
-		inline ByteArray getCertificationHash() { return certHash; }
+		static gboolean _getCertificationHashes(gpointer user_data);
 
 	public:
 		ClientInstance(void *ioChannel, int socket, int watchID, int state, int pid)
@@ -65,14 +67,17 @@ namespace smartcard_service_api
 		void setPID(int pid);
 		inline int getPID() { return pid; }
 
-
 		bool createService(unsigned int context);
 		ServiceInstance *getService(unsigned int context);
 		void removeService(unsigned int context);
 		void removeServices();
 
 		bool sendMessageToAllServices(int socket, Message &msg);
-	};
+		void generateCertificationHashes();
 
+		inline vector<ByteArray> &getCertificationHashes() { return certHashes; }
+
+		friend gboolean _getCertificationHashes(gpointer user_data);
+	};
 } /* namespace smartcard_service_api */
 #endif /* CLIENTINSTANCE_H_ */

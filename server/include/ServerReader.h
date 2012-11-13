@@ -56,7 +56,7 @@ namespace smartcard_service_api
 		AccessControlList *getAccessControlList();
 
 		ServerSession *openSessionSync();
-		ServerSession *openSessionSync(ByteArray packageCert, void *caller);
+		ServerSession *openSessionSync(vector<ByteArray> &certHashes, void *caller);
 
 		friend class ServerSEService;
 	};

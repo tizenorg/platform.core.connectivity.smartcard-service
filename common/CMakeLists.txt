@@ -15,15 +15,12 @@ AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} SRCS)
 #MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_common REQUIRED dlog glib-2.0 gthread-2.0 dpl-wrt-dao-ro aul libssl)
+pkg_check_modules(pkgs_common REQUIRED dlog glib-2.0 aul libssl pkgmgr)
 
 MESSAGE("${LIB_NAME} ld flag : ${pkgs_common_LDFLAGS}")
 
 FOREACH(flag ${pkgs_common_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
-ENDFOREACH(flag)
-
-FOREACH(flag ${pkgs_common_CFLAGS})
 	SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} ${flag}")
 ENDFOREACH(flag)
 
@@ -49,12 +46,7 @@ MESSAGE("CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DSLP_DEBUG")
 ADD_DEFINITIONS("-DUSE_UNIX_DOMAIN")
-
 ADD_DEFINITIONS("-DLOG_TAG=\"SCARD_COMMON\"")
-
-# Temporary add #############
-ADD_DEFINITIONS("-std=c++0x")
-#############################
 
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed")
 
@@ -76,7 +68,6 @@ SET(EXPORT_HEADER
 	include/GPSEACL.h
 )
 
-#CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc.in ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc DESTINATION lib/pkgconfig)
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION lib)
 FOREACH(hfile ${EXPORT_HEADER})

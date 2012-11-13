@@ -41,9 +41,9 @@ namespace smartcard_service_api
 	private:
 		void *caller;
 		Terminal *terminal;
-		ByteArray packageCert;
+		vector<ByteArray> certHashes;
 
-		ServerSession(ServerReader *reader, ByteArray packageCert, void *caller, Terminal *terminal);
+		ServerSession(ServerReader *reader, vector<ByteArray> &certHashes, void *caller, Terminal *terminal);
 
 		int getATR(getATRCallback callback, void *userData){ return -1; }
 		int close(closeSessionCallback callback, void *userData){ return -1; }

@@ -17,7 +17,9 @@
 
 /* standard library header */
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 /* SLP library header */
 
@@ -61,7 +63,8 @@ namespace smartcard_service_api
 
 		for (i = 0; i < channels.size(); i++)
 		{
-			channels[i]->close(NULL, this);
+			channels[i]->closeSync();
+			delete (ClientChannel *)channels[i];
 		}
 
 		channels.clear();
@@ -72,6 +75,7 @@ namespace smartcard_service_api
 		Message msg;
 		int rv;
 
+#ifdef CLIENT_IPC_THREAD
 		/* request channel handle from server */
 		msg.message = Message::MSG_REQUEST_GET_ATR;
 		msg.param1 = (unsigned int)handle;
@@ -91,6 +95,7 @@ namespace smartcard_service_api
 
 			atr.releaseBuffer();
 		}
+#endif
 
 		return atr;
 	}
@@ -117,6 +122,7 @@ namespace smartcard_service_api
 		Message msg;
 		int rv;
 
+#ifdef CLIENT_IPC_THREAD
 		if (isClosed() == false)
 		{
 			closed = true;
@@ -140,6 +146,7 @@ namespace smartcard_service_api
 				SCARD_DEBUG_ERR("time over");
 			}
 		}
+#endif
 	}
 
 	int Session::close(closeSessionCallback callback, void *userData)
@@ -165,27 +172,12 @@ namespace smartcard_service_api
 		return 0;
 	}
 
-	unsigned int Session::getChannelCount(getChannelCountCallback callback, void *userData)
-	{
-		Message msg;
-
-		msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
-		msg.param1 = (unsigned int)handle;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)callback;
-		msg.userParam = userData;
-
-		ClientIPC::getInstance().sendMessage(&msg);
-
-		return 0;
-	}
-
 	unsigned int Session::getChannelCountSync()
 	{
 		Message msg;
 		int rv;
 
+#ifdef CLIENT_IPC_THREAD
 		/* request channel handle from server */
 		msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
 		msg.param1 = (unsigned int)handle;
@@ -203,10 +195,27 @@ namespace smartcard_service_api
 		{
 			SCARD_DEBUG_ERR("time over");
 
-			return -1;
+			channelCount = -1;
 		}
+#endif
 
 		return channelCount;
+	}
+
+	int Session::getChannelCount(getChannelCountCallback callback, void *userData)
+	{
+		Message msg;
+
+		msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
+		msg.param1 = (unsigned int)handle;
+		msg.error = (unsigned int)context; /* using error to context */
+		msg.caller = (void *)this;
+		msg.callback = (void *)callback;
+		msg.userParam = userData;
+
+		ClientIPC::getInstance().sendMessage(&msg);
+
+		return 0;
 	}
 
 	Channel *Session::openChannelSync(int id, ByteArray aid)
@@ -214,6 +223,7 @@ namespace smartcard_service_api
 		Message msg;
 		int rv;
 
+#ifdef CLIENT_IPC_THREAD
 		/* request channel handle from server */
 		msg.message = Message::MSG_REQUEST_OPEN_CHANNEL;
 		msg.param1 = id;
@@ -233,8 +243,9 @@ namespace smartcard_service_api
 		{
 			SCARD_DEBUG_ERR("time over");
 
-			return NULL;
+			openedChannel = NULL;
 		}
+#endif
 
 		return (Channel *)openedChannel;
 	}
@@ -531,9 +542,9 @@ EXTERN_API int session_open_logical_channel(session_h handle, unsigned char *aid
 	return result;
 }
 
-EXTERN_API unsigned int session_get_channel_count(session_h handle, session_get_channel_count_cb callback, void * userData)
+EXTERN_API int session_get_channel_count(session_h handle, session_get_channel_count_cb callback, void * userData)
 {
-	unsigned int result = 0;
+	int result = -1;
 
 	SESSION_EXTERN_BEGIN;
 	result = session->getChannelCount((getChannelCountCallback)callback, userData);
@@ -547,4 +558,77 @@ EXTERN_API void session_destroy_instance(session_h handle)
 	SESSION_EXTERN_BEGIN;
 	delete session;
 	SESSION_EXTERN_END;
+}
+
+EXTERN_API int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length)
+{
+	ByteArray temp;
+	int result = -1;
+
+#ifdef CLIENT_IPC_THREAD
+	if (buffer == NULL || length == NULL)
+		return result;
+
+	SESSION_EXTERN_BEGIN;
+	temp = session->getATRSync();
+	if (temp.getLength() > 0)
+	{
+		*length = temp.getLength();
+		*buffer = (unsigned char *)calloc(1, *length);
+		memcpy(*buffer, temp.getBuffer(), *length);
+
+		result = 0;
+	}
+	SESSION_EXTERN_END;
+#endif
+
+	return result;
+}
+
+EXTERN_API void session_close_sync(session_h handle)
+{
+#ifdef CLIENT_IPC_THREAD
+	SESSION_EXTERN_BEGIN;
+	session->closeSync();
+	SESSION_EXTERN_END;
+#endif
+}
+
+EXTERN_API channel_h session_open_basic_channel_sync(session_h handle, unsigned char *aid, unsigned int length)
+{
+	channel_h result = NULL;
+
+#ifdef CLIENT_IPC_THREAD
+	SESSION_EXTERN_BEGIN;
+	result = session->openBasicChannelSync(aid, length);
+	SESSION_EXTERN_END;
+#endif
+
+	return result;
+}
+
+EXTERN_API channel_h session_open_logical_channel_sync(session_h handle, unsigned char *aid, unsigned int length)
+{
+	channel_h result = NULL;
+
+#ifdef CLIENT_IPC_THREAD
+	SESSION_EXTERN_BEGIN;
+	result = session->openBasicChannelSync(aid, length);
+	SESSION_EXTERN_END;
+#endif
+
+	return result;
+}
+
+EXTERN_API unsigned int session_get_channel_count_sync(session_h handle)
+{
+	unsigned int result = 0;
+
+#ifdef CLIENT_IPC_THREAD
+	SESSION_EXTERN_BEGIN;
+	result = session->getChannelCountSync();
+	SESSION_EXTERN_END;
+#endif
+
+	return result;
 }

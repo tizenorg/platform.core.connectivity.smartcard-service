@@ -39,11 +39,12 @@ namespace smartcard_service_api
 
 	public:
 		SEServiceHelper();
-		~SEServiceHelper();
+		virtual ~SEServiceHelper();
 
 		vector<ReaderHelper *> getReaders();
 		bool isConnected();
-		void shutdown();
+		virtual void shutdown();
+		virtual void shutdownSync();
 	};
 
 } /* namespace smartcard_service_api */

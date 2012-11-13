@@ -21,6 +21,9 @@
 /* standard library header */
 #include <glib.h>
 #include <pthread.h>
+#ifdef USE_IPC_EPOLL
+#include <sys/epoll.h>
+#endif
 
 /* SLP library header */
 
@@ -41,6 +44,19 @@ namespace smartcard_service_api
 		GIOChannel *ioChannel;
 		pthread_mutex_t ipcLock;
 		DispatcherHelper *dispatcher;
+#ifdef CLIENT_IPC_THREAD
+#ifdef USE_IPC_EPOLL
+		static const int EPOLL_SIZE = 128;
+		int fdPoll;
+		struct epoll_event *pollEvents;
+#else
+		fd_set fdSetRead;
+#endif
+		pthread_t readThread;
+
+		static void *threadRead(void *data);
+		int eventPoll();
+#endif
 
 		static gboolean channelCallbackFunc(GIOChannel* channel, GIOCondition condition, gpointer data);
 
@@ -50,18 +66,24 @@ namespace smartcard_service_api
 
 	public:
 		IPCHelper();
-		~IPCHelper();
+		virtual ~IPCHelper();
 
 		bool createListenSocket();
 		bool createConnectSocket();
+		void destroyListenSocket();
+		void destroyConnectSocket();
 
-		bool sendMessage(Message *msg);
 		bool sendMessage(int socket, Message *msg);
+		bool sendMessage(int socket, ByteArray &buffer);
 		Message *retrieveMessage();
+		ByteArray retrieveBuffer(int socket);
 		Message *retrieveMessage(int socket);
 
 		void setDispatcher(DispatcherHelper *dispatcher);
 
+#ifdef CLIENT_IPC_THREAD
+		friend void *threadRead(void *data);
+#endif
 		friend gboolean channelCallbackFunc(GIOChannel* channel, GIOCondition condition, gpointer data);
 	};
 

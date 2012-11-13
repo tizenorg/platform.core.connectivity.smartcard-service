@@ -19,13 +19,16 @@
 #define SERVERRESOURCE_H_
 
 /* standard library header */
+#ifdef __cplusplus
 #include <map>
 #include <vector>
 #include <set>
+#endif /* __cplusplus */
 
 /* SLP library header */
 
 /* local header */
+#ifdef __cplusplus
 #include "Terminal.h"
 #include "Lock.h"
 #include "ServerIPC.h"
@@ -34,7 +37,9 @@
 #include "ServerSession.h"
 #include "ClientInstance.h"
 #include "ServiceInstance.h"
+#endif /* __cplusplus */
 
+#ifdef __cplusplus
 using namespace std;
 
 namespace smartcard_service_api
@@ -61,7 +66,7 @@ namespace smartcard_service_api
 		map<unsigned int, Terminal *> mapTerminals; /* unique id <-> terminal instance map */
 		map<int, ClientInstance *> mapClients; /* client pid <-> client instance map */
 		map<Terminal *, AccessControlList *> mapACL; /* terminal instance <-> access control instance map */
-
+		void *mainLoop;
 		ServerIPC *serverIPC;
 		ServerDispatcher *serverDispatcher;
 
@@ -79,6 +84,15 @@ namespace smartcard_service_api
 		static ServerResource &getInstance();
 
 		/* non-static member */
+		inline void setMainLoopInstance(void *mainLoop)
+		{
+			this->mainLoop = mainLoop;
+		}
+		inline void *getMainLoopInstance()
+		{
+			return this->mainLoop;
+		}
+
 		int loadSecureElements();
 		void unloadSecureElements();
 
@@ -90,6 +104,7 @@ namespace smartcard_service_api
 		bool createClient(void *ioChannel, int socket, int watchID, int state, int pid);
 		ClientInstance *getClient(int socket);
 		void setPID(int socket, int pid);
+		int getClientCount();
 		void removeClient(int socket);
 		void removeClients();
 
@@ -98,12 +113,14 @@ namespace smartcard_service_api
 		void removeService(int socket, unsigned int context);
 		void removeServices(int socket);
 
-		unsigned int createSession(int socket, unsigned int context, unsigned int terminalID, ByteArray packageCert, void *caller);
+		unsigned int createSession(int socket, unsigned int context, unsigned int terminalID, vector<ByteArray> &certHashes, void *caller);
 		ServerSession *getSession(int socket, unsigned int context, unsigned int sessionID);
 		unsigned int getChannelCount(int socket, unsigned int context, unsigned int sessionID);
 		void removeSession(int socket, unsigned int context, unsigned int session);
 		bool isValidSessionHandle(int socket, unsigned int context, unsigned int sessionID);
 
+		bool _isAuthorizedAccess(Terminal *terminal, int pid, ByteArray aid, vector<ByteArray> &hashes);
+		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid);
 		unsigned int createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid);
 		Channel *getChannel(int socket, unsigned int context, unsigned int channelID);
 		void removeChannel(int socket, unsigned int context, unsigned int channelID);
@@ -116,4 +133,18 @@ namespace smartcard_service_api
 	};
 
 } /* namespace smartcard_service_api */
+#endif /* __cplusplus */
+
+/* export C API */
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+void server_resource_set_main_loop_instance(void *instance);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
 #endif /* SERVERRESOURCE_H_ */

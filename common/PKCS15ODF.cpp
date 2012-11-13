@@ -151,6 +151,13 @@ namespace smartcard_service_api
 				SCARD_DEBUG("fid [%X]", fid);
 
 				dodf = new PKCS15DODF(fid, channel);
+				if (dodf != NULL && dodf->isClosed() == true)
+				{
+					SCARD_DEBUG_ERR("failed to open DODF");
+
+					delete dodf;
+					dodf = NULL;
+				}
 			}
 			else
 			{

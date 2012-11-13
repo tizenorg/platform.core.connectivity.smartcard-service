@@ -20,12 +20,19 @@
 #include <unistd.h>
 
 /* SLP library header */
+#ifdef SECURITY_SERVER
+#include "security-server.h"
+#endif
 
 /* local header */
 #include "Debug.h"
 #include "ServerIPC.h"
 #include "ServerResource.h"
 #include "ServerDispatcher.h"
+
+#ifndef EXTERN_API
+#define EXTERN_API __attribute__((visibility("default")))
+#endif
 
 namespace smartcard_service_api
 {
@@ -47,6 +54,52 @@ namespace smartcard_service_api
 		static ServerIPC instance;
 
 		return &instance;
+	}
+
+	Message *ServerIPC::retrieveMessage(int socket)
+	{
+		ByteArray buffer;
+		Message *msg = NULL;
+
+		SCARD_BEGIN();
+
+		buffer = IPCHelper::retrieveBuffer(socket);
+		if (buffer.getLength() > 0)
+		{
+#ifdef SECURITY_SERVER
+			ByteArray cookie;
+			int result, gid;
+
+			if (buffer.getLength() < 20)
+				return msg;
+
+			cookie.setBuffer(buffer.getBuffer(), 20);
+
+			gid = security_server_get_gid("smartcard-daemon");
+			if ((result = security_server_check_privilege(cookie.getBuffer(), gid)) != SECURITY_SERVER_API_SUCCESS)
+			{
+				SCARD_DEBUG_ERR("security_server_check_privilege failed [%d]", result);
+				return msg;
+			}
+#endif
+			msg = new Message();
+			if (msg != NULL)
+			{
+				msg->deserialize(buffer);
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("alloc failed");
+			}
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("retrieveBuffer failed ");
+		}
+
+		SCARD_END();
+
+		return msg;
 	}
 
 	bool ServerIPC::acceptClient()
@@ -109,25 +162,7 @@ ERROR :
 
 	void ServerIPC::restartServerIPC()
 	{
-		if (watchId != 0)
-		{
-			g_source_remove(watchId);
-			watchId = 0;
-		}
-
-		if (ioChannel != NULL)
-		{
-			g_io_channel_unref(ioChannel);
-			ioChannel = NULL;
-		}
-
-		if (ipcSocket != -1)
-		{
-			shutdown(ipcSocket, SHUT_RDWR);
-			close(ipcSocket);
-
-			ipcSocket = -1;
-		}
+		destroyListenSocket();
 
 		createListenSocket();
 	}
@@ -244,3 +279,12 @@ ERROR :
 	}
 
 } /* namespace smartcard_service_api */
+
+using namespace smartcard_service_api;
+
+EXTERN_API void server_ipc_create_listen_socket()
+{
+	ServerIPC *ipc = ServerIPC::getInstance();
+
+	ipc->createListenSocket();
+}

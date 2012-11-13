@@ -6,6 +6,7 @@ SET(VERSION_MAJOR 1)
 SET(VERSION ${VERSION_MAJOR}.0.0)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../server/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} SRCS)
@@ -16,18 +17,14 @@ ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_client REQUIRED gthread-2.0 dlog)
+pkg_check_modules(pkgs_client REQUIRED gthread-2.0 dlog dbus-glib-1 security-server)
 
 MESSAGE("${LIB_NAME} ld flag : ${pkgs_client_LDFLAGS}")
 
 FOREACH(flag ${pkgs_client_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
-ENDFOREACH(flag)
-
-FOREACH(flag ${pkgs_client_CFLAGS})
 	SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} ${flag}")
 ENDFOREACH(flag)
-
 
 #SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} -finstrument-functions")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS}")
@@ -45,10 +42,11 @@ IF("${ARCH}" STREQUAL "arm")
 	ADD_DEFINITIONS("-DTARGET")
 	MESSAGE("add -DTARGET")
 ENDIF("${ARCH}" STREQUAL "arm")
+
 MESSAGE("CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+
 ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DSLP_DEBUG")
-
 ADD_DEFINITIONS("-DLOG_TAG=\"SCARD_CLIENT\"")
 
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed")
@@ -81,7 +79,6 @@ SET(EXPORT_HEADER
 #	include/
 )
 
-#CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc.in ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc DESTINATION lib/pkgconfig)
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION lib)
 FOREACH(hfile ${EXPORT_HEADER})

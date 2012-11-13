@@ -47,6 +47,23 @@ namespace smartcard_service_api
 		ByteArray atr;
 		bool closed;
 
+	public:
+		SessionHelper(ReaderHelper *reader);
+		virtual ~SessionHelper();
+
+		ReaderHelper *getReader();
+		bool isClosed();
+
+		virtual void closeChannels() = 0;
+
+		virtual int getATR(getATRCallback callback, void *userData) = 0;
+		virtual int close(closeSessionCallback callback, void *userData) = 0;
+
+		virtual int openBasicChannel(ByteArray aid, openChannelCallback callback, void *userData) = 0;
+		virtual int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
+		virtual int openLogicalChannel(ByteArray aid, openChannelCallback callback, void *userData) = 0;
+		virtual int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
+
 		virtual ByteArray getATRSync() = 0;
 		virtual void closeSync() = 0;
 
@@ -54,22 +71,6 @@ namespace smartcard_service_api
 		virtual Channel *openBasicChannelSync(unsigned char *aid, unsigned int length) = 0;
 		virtual Channel *openLogicalChannelSync(ByteArray aid) = 0;
 		virtual Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length) = 0;
-
-	public:
-		SessionHelper(ReaderHelper *reader);
-		virtual ~SessionHelper();
-
-		ReaderHelper *getReader();
-		virtual int getATR(getATRCallback callback, void *userData) = 0;
-		virtual int close(closeSessionCallback callback, void *userData) = 0;
-		bool isClosed();
-		virtual void closeChannels() = 0;
-
-		virtual int openBasicChannel(ByteArray aid, openChannelCallback callback, void *userData) = 0;
-		virtual int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
-		virtual int openLogicalChannel(ByteArray aid, openChannelCallback callback, void *userData) = 0;
-		virtual int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
-
 	};
 
 } /* namespace smartcard_service_api */

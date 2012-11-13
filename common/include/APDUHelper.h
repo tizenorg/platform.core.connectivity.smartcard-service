@@ -43,6 +43,9 @@ namespace smartcard_service_api
 
 		bool setResponse(const ByteArray &response);
 		int getStatus();
+		unsigned char getSW1();
+		unsigned char getSW2();
+
 //		char *getErrorString();
 		ByteArray getDataField();
 
@@ -69,6 +72,7 @@ namespace smartcard_service_api
 	public:
 		static const unsigned char INS_DEACTIVATE_FILE = (unsigned char)0x04;
 		static const unsigned char INS_TERMINAL_PROFILE = (unsigned char)0x10;
+		static const unsigned char INS_FETCH = (unsigned char)0x12;
 		static const unsigned char INS_TERMINAL_RESPONSE = (unsigned char)0x14;
 		static const unsigned char INS_VERIFY = (unsigned char)0x20;
 		static const unsigned char INS_CHANGE_PIN = (unsigned char)0x24;
@@ -81,12 +85,15 @@ namespace smartcard_service_api
 		static const unsigned char INS_AUTHENTICATE = (unsigned char)0x88;
 		static const unsigned char INS_AUTHENTICATE2 = (unsigned char)0x89;
 		static const unsigned char INS_MANAGE_CHANNEL = (unsigned char)0x70;
+		static const unsigned char INS_MANAGE_SECURE_CHANNEL = (unsigned char)0x73;
+		static const unsigned char INS_TRANSACT_DATA = (unsigned char)0x75;
 		static const unsigned char INS_SEARCH_RECORD = (unsigned char)0xA2;
 		static const unsigned char INS_SELECT_FILE = (unsigned char)0xA4;
 		static const unsigned char INS_TERMINAL_CAPABILITY = (unsigned char)0xAA;
 		static const unsigned char INS_READ_BINARY = (unsigned char)0xB0;
 		static const unsigned char INS_READ_RECORD = (unsigned char)0xB2;
 		static const unsigned char INS_GET_RESPONSE = (unsigned char)0xC0;
+		static const unsigned char INS_ENVELOPE = (unsigned char)0xC2;
 		static const unsigned char INS_RETRIEVE_DATA = (unsigned char)0xCB;
 		static const unsigned char INS_WRITE_BINARY = (unsigned char)0xD0;
 		static const unsigned char INS_UPDATE_BINARY = (unsigned char)0xD6;

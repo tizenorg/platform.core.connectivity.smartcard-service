@@ -41,8 +41,11 @@ namespace smartcard_service_api
 		map<ByteArray, AccessCondition> mapConditions;
 		Channel *channel;
 		Terminal *terminal;
+		bool allGranted;
 
 		void printAccessControlList();
+
+		bool isAuthorizedAccess(ByteArray aid, ByteArray certHash, bool update);
 
 	public:
 		static ByteArray AID_ALL;
@@ -51,7 +54,7 @@ namespace smartcard_service_api
 		AccessControlList();
 		AccessControlList(Channel *channel);
 		AccessControlList(Terminal *terminal);
-		~AccessControlList();
+		virtual ~AccessControlList();
 
 		int setChannel(Channel *channel);
 		virtual int setTerminal(Terminal *terminal) { this->terminal = terminal; return 0; }
@@ -63,6 +66,8 @@ namespace smartcard_service_api
 
 		bool isAuthorizedAccess(ByteArray aid, ByteArray certHash);
 		bool isAuthorizedAccess(unsigned char *aidBuffer, unsigned int aidLength, unsigned char *certHashBuffer, unsigned int certHashLength);
+
+		bool isAuthorizedAccess(ByteArray aid, vector<ByteArray> &certHashes);
 	};
 
 } /* namespace smartcard_service_api */

@@ -14,8 +14,8 @@
 * limitations under the License.
 */
 
-
 /* standard library header */
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -54,7 +54,7 @@ namespace smartcard_service_api
 
 	ClientChannel::~ClientChannel()
 	{
-		close(NULL, this);
+		closeSync();
 	}
 
 	void ClientChannel::closeSync()
@@ -62,6 +62,7 @@ namespace smartcard_service_api
 		Message msg;
 		int rv;
 
+#ifdef CLIENT_IPC_THREAD
 		if (isClosed() == false)
 		{
 			/* send message to server */
@@ -84,6 +85,7 @@ namespace smartcard_service_api
 
 			channelNum = -1;
 		}
+#endif
 	}
 
 	int ClientChannel::close(closeCallback callback, void *userParam)
@@ -113,6 +115,7 @@ namespace smartcard_service_api
 		Message msg;
 		int rv;
 
+#ifdef CLIENT_IPC_THREAD
 		/* send message to server */
 		msg.message = Message::MSG_REQUEST_TRANSMIT;
 		msg.param1 = (int)handle;
@@ -136,7 +139,7 @@ namespace smartcard_service_api
 		}
 
 		result = response;
-
+#endif
 		return 0;
 	}
 
@@ -273,6 +276,40 @@ EXTERN_API int channel_transmit(channel_h handle, unsigned char *command, unsign
 	temp.setBuffer(command, length);
 	result = channel->transmit(temp, (transmitCallback)callback, userParam);
 	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API void channel_close_sync(channel_h handle)
+{
+#ifdef CLIENT_IPC_THREAD
+	CHANNEL_EXTERN_BEGIN;
+	channel->closeSync();
+	CHANNEL_EXTERN_END;
+#endif
+}
+
+EXTERN_API int channel_transmit_sync(channel_h handle, unsigned char *command, unsigned int cmd_len, unsigned char **response, unsigned int *resp_len)
+{
+	int result = -1;
+
+#ifdef CLIENT_IPC_THREAD
+	if (command == NULL || cmd_len == 0 || response == NULL || resp_len == NULL)
+		return result;
+
+	CHANNEL_EXTERN_BEGIN;
+	ByteArray temp, resp;
+
+	temp.setBuffer(command, cmd_len);
+	result = channel->transmitSync(temp, resp);
+	if (resp.getLength() > 0)
+	{
+		*resp_len = resp.getLength();
+		*response = (unsigned char *)calloc(1, *resp_len);
+		memcpy(*response, resp.getBuffer(), *resp_len);
+	}
+	CHANNEL_EXTERN_END;
+#endif
 
 	return result;
 }

@@ -61,37 +61,56 @@ namespace smartcard_service_api
 
 	int GPSEACL::loadACL()
 	{
+		int result = 0;
 		ByteArray aid, certHash;
 		PKCS15ODF *odf;
 
-		if ((odf = pkcs15->getODF()) != NULL)
+		/* basically, all requests will be accepted when PKCS #15 doesn't exist or global platform OID is not placed */
+		allGranted = true;
+
+		if (pkcs15->isClosed() == false)
 		{
-			PKCS15DODF *dodf;
-
-			if ((dodf = odf->getDODF()) != NULL)
+			if ((odf = pkcs15->getODF()) != NULL)
 			{
-				loadAccessControl(dodf);
+				PKCS15DODF *dodf;
 
-				printAccessControlList();
+				if ((dodf = odf->getDODF()) != NULL)
+				{
+					if (loadAccessControl(dodf) == 0)
+					{
+						printAccessControlList();
+
+						result = 0;
+					}
+					else
+					{
+						SCARD_DEBUG_ERR("loadAccessControl failed, every request will be accepted.");
+					}
+				}
+				else
+				{
+					SCARD_DEBUG_ERR("dodf null, every request will be accepted.");
+				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("dodf null");
+				SCARD_DEBUG_ERR("odf null, every request will be accepted.");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("odf null");
+			SCARD_DEBUG_ERR("failed to open PKCS15, every request will be accepted.");
 		}
 
-		return 0;
+		return result;
 	}
 
 	int GPSEACL::loadAccessControl(PKCS15DODF *dodf)
 	{
+		int result = -1;
 		ByteArray path;
 
-		if (dodf->searchOID(OID_GLOBALPLATFORM, path) == 0)
+		if ((result = dodf->searchOID(OID_GLOBALPLATFORM, path)) == 0)
 		{
 			ByteArray data;
 			FileObject file(channel);
@@ -102,6 +121,9 @@ namespace smartcard_service_api
 			file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
 
 			SCARD_DEBUG("data : %s", data.toString());
+
+			/* PKCS #15 and DODF OID exists. apply access control rule!! */
+			allGranted = false;
 
 			SimpleTLV tlv(data);
 
@@ -150,10 +172,10 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("search failed");
+			SCARD_DEBUG_ERR("OID not found");
 		}
 
-		return 0;
+		return result;
 	}
 
 	int GPSEACL::loadRules(ByteArray path)

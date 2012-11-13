@@ -45,14 +45,14 @@ namespace smartcard_service_api
 
 		static bool dispatcherCallback(void *message);
 
-		void closeSync();
-		int transmitSync(ByteArray command, ByteArray &result);
-
 	public:
 		~ClientChannel();
 
 		int close(closeCallback callback, void *userParam);
 		int transmit(ByteArray command, transmitCallback callback, void *userParam);
+
+		void closeSync();
+		int transmitSync(ByteArray command, ByteArray &result);
 
 		friend class ClientDispatcher;
 		friend class Session;
@@ -67,8 +67,6 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-int channel_close(channel_h handle, channel_close_cb callback, void *userParam);
-int channel_transmit(channel_h handle, unsigned char *command, unsigned int length, channel_transmit_cb callback, void *userParam);
 bool channel_is_basic_channel(channel_h handle);
 bool channel_is_closed(channel_h handle);
 
@@ -76,6 +74,11 @@ unsigned int channel_get_select_response_length(channel_h handle);
 bool channel_get_select_response(channel_h handle, unsigned char *buffer, unsigned int length);
 session_h channel_get_session(channel_h handle);
 void channel_destroy_instance(channel_h handle);
+
+int channel_close(channel_h handle, channel_close_cb callback, void *userParam);
+int channel_transmit(channel_h handle, unsigned char *command, unsigned int length, channel_transmit_cb callback, void *userParam);
+void channel_close_sync(channel_h handle);
+int channel_transmit_sync(channel_h handle, unsigned char *command, unsigned int cmd_len, unsigned char **response, unsigned int *resp_len);
 
 #ifdef __cplusplus
 }

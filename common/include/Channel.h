@@ -35,7 +35,7 @@ namespace smartcard_service_api
 
 	class Channel : public Synchronous
 	{
-	protected:
+	protected :
 		ByteArray selectResponse;
 		SessionHelper *session;
 		int channelNum;
@@ -49,25 +49,20 @@ namespace smartcard_service_api
 			this->session = session;
 		}
 
-		virtual void closeSync() = 0;
-		virtual int transmitSync(ByteArray command, ByteArray &result) = 0;
+	public :
+		virtual ~Channel() {};
 
-	public:
-		virtual ~Channel() {}
-
-		virtual int close(closeCallback callback, void *userParam) = 0;
 		inline bool isBasicChannel() const { return (channelNum == 0); }
 		inline bool isClosed() const { return (channelNum < 0); }
 
 		inline ByteArray getSelectResponse() const { return selectResponse; }
 		inline SessionHelper *getSession() const { return session; }
+
+		virtual int close(closeCallback callback, void *userParam) = 0;
 		virtual int transmit(ByteArray command, transmitCallback callback, void *userData) = 0;
 
-		friend class FileObject;
-		friend class ServerSession;
-		friend class ServerChannel;
-		friend class ServerDispatcher;
-		friend class ServerResource;
+		virtual void closeSync() = 0;
+		virtual int transmitSync(ByteArray command, ByteArray &result) = 0;
 	};
 
 } /* namespace smartcard_service_api */

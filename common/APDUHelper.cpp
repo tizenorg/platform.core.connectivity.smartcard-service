@@ -74,7 +74,7 @@ namespace smartcard_service_api
 		switch (sw[0])
 		{
 		/* Normal processing */
-		case (unsigned char)0x90 : /* SW2:00, No further qulification */
+		case (unsigned char)0x90 : /* SW2:00, No further qualification */
 			break;
 
 		case (unsigned char)0x91 : /* extra information */
@@ -163,6 +163,16 @@ namespace smartcard_service_api
 		}
 
 		return status;
+	}
+
+	unsigned char ResponseHelper::getSW1()
+	{
+		return sw[0];
+	}
+
+	unsigned char ResponseHelper::getSW2()
+	{
+		return sw[1];
 	}
 
 	ByteArray ResponseHelper::getDataField()
@@ -277,23 +287,51 @@ namespace smartcard_service_api
 
 		if (channelNum != 0)
 		{
-			switch (type)
+			/* don't apply channel number to below command */
+			switch (getINS())
 			{
-			case 0 :
-				if (channelNum > 0 && channelNum < 4)
-				{
-					unsigned char temp;
-
-					temp = getCLA();
-					temp &= ~0x03;
-					temp |= (channelNum & 0x03);
-					setCLA(temp);
-
-					result = true;
-				}
+			case INS_TERMINAL_PROFILE :
+			case INS_FETCH :
+			case INS_ENVELOPE :
+			case INS_TERMINAL_RESPONSE :
+				result = true;
 				break;
 
+			/* apply channel number */
 			default :
+				switch (type)
+				{
+				case 0 : /* standard class byte, two logical channel bits (1~3) */
+					if (channelNum > 0 && channelNum < 4)
+					{
+						unsigned char temp;
+
+						temp = getCLA();
+						temp &= ~0x03;
+						temp |= (channelNum & 0x03);
+						setCLA(temp);
+
+						result = true;
+					}
+					break;
+
+				case 1 : /* extended class byte, four logical channel bits (1~15) */
+					if (channelNum > 0 && channelNum < 16)
+					{
+						unsigned char temp;
+
+						temp = getCLA();
+						temp &= ~0x0F;
+						temp |= (channelNum & 0x0F);
+						setCLA(temp);
+
+						result = true;
+					}
+					break;
+
+				default :
+					break;
+				}
 				break;
 			}
 		}

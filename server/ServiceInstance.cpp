@@ -27,11 +27,11 @@
 
 namespace smartcard_service_api
 {
-	unsigned int ServiceInstance::openSession(Terminal *terminal, ByteArray packageCert, void *caller)
+	unsigned int ServiceInstance::openSession(Terminal *terminal, vector<ByteArray> &certHashes, void *caller)
 	{
 		unsigned int handle = IntegerHandle::assignHandle();
 
-		ServerSession *session = new ServerSession((ServerReader *)0, packageCert, caller, terminal);
+		ServerSession *session = new ServerSession((ServerReader *)0, certHashes, caller, terminal);
 
 		mapSessions.insert(make_pair(handle, make_pair(session, terminal)));
 
@@ -97,7 +97,7 @@ namespace smartcard_service_api
 		mapSessions.clear();
 	}
 
-	unsigned int ServiceInstance::openChannel(unsigned int session, int channelNum)
+	unsigned int ServiceInstance::openChannel(unsigned int session, int channelNum, ByteArray response)
 	{
 		Terminal *terminal = getTerminal(session);
 		ServerChannel *channel = NULL;
@@ -109,6 +109,9 @@ namespace smartcard_service_api
 		{
 			handle = IntegerHandle::assignHandle();
 			mapChannels.insert(make_pair(handle, make_pair(session, channel)));
+
+			if (response != ByteArray::EMPTY)
+				channel->selectResponse = response;
 		}
 		else
 		{

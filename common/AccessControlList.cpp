@@ -38,12 +38,14 @@ namespace smartcard_service_api
 	{
 		channel = NULL;
 		terminal = NULL;
+		allGranted = false;
 	}
 
 	AccessControlList::AccessControlList(Channel *channel)
 	{
 		channel = NULL;
 		terminal = NULL;
+		allGranted = false;
 
 		setChannel(channel);
 	}
@@ -52,6 +54,7 @@ namespace smartcard_service_api
 	{
 		channel = NULL;
 		terminal = NULL;
+		allGranted = false;
 
 		setTerminal(terminal);
 	}
@@ -59,11 +62,6 @@ namespace smartcard_service_api
 	AccessControlList::~AccessControlList()
 	{
 		releaseACL();
-
-		if (terminal != NULL && channel != NULL)
-		{
-			delete channel;
-		}
 	}
 
 	int AccessControlList::setChannel(Channel *channel)
@@ -75,8 +73,6 @@ namespace smartcard_service_api
 
 	int AccessControlList::updateACL()
 	{
-		releaseACL();
-
 		return loadACL();
 	}
 
@@ -85,37 +81,71 @@ namespace smartcard_service_api
 		mapConditions.clear();
 	}
 
-	bool AccessControlList::isAuthorizedAccess(ByteArray aid, ByteArray certHash)
+	bool AccessControlList::isAuthorizedAccess(ByteArray aid, ByteArray certHash, bool update)
 	{
-		bool result = false;
+		bool result = allGranted;
 		map<ByteArray, AccessCondition>::iterator iterMap;
 
-		SCARD_DEBUG("aid : %s", aid.toString());
-		SCARD_DEBUG("hash : %s", certHash.toString());
-
-		/* null aid means default applet */
-		if (aid.isEmpty() == true)
+		if (update)
 		{
-			aid = AID_DEFAULT;
+			loadACL();
+			result = allGranted;
 		}
 
-		/* first.. find hashes matched with aid */
-		if ((iterMap = mapConditions.find(aid)) != mapConditions.end())
+		if (result == false)
 		{
-			result = iterMap->second.isAuthorizedAccess(certHash);
-		}
-		/* finally.. find hashes in 'all' list */
-		else if ((iterMap = mapConditions.find(AID_ALL)) != mapConditions.end())
-		{
-			result = iterMap->second.isAuthorizedAccess(certHash);
+			SCARD_DEBUG("aid : %s", aid.toString());
+			SCARD_DEBUG("hash : %s", certHash.toString());
+
+			/* null aid means default applet */
+			if (aid.isEmpty() == true)
+			{
+				aid = AID_DEFAULT;
+			}
+
+			/* first.. find hashes matched with aid */
+			if ((iterMap = mapConditions.find(aid)) != mapConditions.end())
+			{
+				result = iterMap->second.isAuthorizedAccess(certHash);
+			}
+			/* finally.. find hashes in 'all' list */
+			else if ((iterMap = mapConditions.find(AID_ALL)) != mapConditions.end())
+			{
+				result = iterMap->second.isAuthorizedAccess(certHash);
+			}
 		}
 
 		return result;
 	}
 
+	bool AccessControlList::isAuthorizedAccess(ByteArray aid, ByteArray certHash)
+	{
+		return isAuthorizedAccess(aid, certHash, true);
+	}
+
 	bool AccessControlList::isAuthorizedAccess(unsigned char *aidBuffer, unsigned int aidLength, unsigned char *certHashBuffer, unsigned int certHashLength)
 	{
-		return isAuthorizedAccess(ByteArray(aidBuffer, aidLength), ByteArray(certHashBuffer, certHashLength));
+		return isAuthorizedAccess(ByteArray(aidBuffer, aidLength), ByteArray(certHashBuffer, certHashLength), true);
+	}
+
+	bool AccessControlList::isAuthorizedAccess(ByteArray aid, vector<ByteArray> &certHashes)
+	{
+		bool result;
+		size_t i;
+
+		loadACL();
+
+		result = allGranted;
+
+		if (result == false)
+		{
+			for (i = 0; result == false && i < certHashes.size(); i++)
+			{
+				result = isAuthorizedAccess(aid, certHashes[i], false);
+			}
+		}
+
+		return result;
 	}
 
 	void AccessControlList::printAccessControlList()

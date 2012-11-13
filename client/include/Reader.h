@@ -44,15 +44,16 @@ namespace smartcard_service_api
 
 		Reader(void *context, char *name, void *handle);
 
-		SessionHelper *openSessionSync();
 		static bool dispatcherCallback(void *message);
 		void getPackageCert();
 
 	public:
 		~Reader();
 
-		int openSession(openSessionCallback callback, void *userData);
 		void closeSessions();
+
+		int openSession(openSessionCallback callback, void *userData);
+		SessionHelper *openSessionSync();
 
 		friend class SEService;
 		friend class ClientDispatcher;
@@ -71,6 +72,7 @@ const char *reader_get_name(reader_h handle);
 se_service_h reader_get_se_service(reader_h handle);
 bool reader_is_secure_element_present(reader_h handle);
 int reader_open_session(reader_h handle, reader_open_session_cb callback, void *userData);
+session_h reader_open_session_sync(reader_h handle);
 void reader_close_sessions(reader_h handle);
 void reader_destroy_instance(reader_h handle);
 

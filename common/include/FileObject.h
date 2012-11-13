@@ -38,10 +38,13 @@ namespace smartcard_service_api
 	private:
 		FCI fci;
 		FCP fcp;
+		bool opened;
+
+		int _select(ByteArray command);
 
 	protected:
 		ByteArray selectResponse;
-		bool setSelectResponse(ByteArray response);
+		bool setSelectResponse(ByteArray &response);
 
 	public:
 		static const int SUCCESS = 0;
@@ -57,6 +60,7 @@ namespace smartcard_service_api
 		FileObject(Channel *channel, ByteArray selectResponse);
 		~FileObject();
 
+		inline bool isClosed() { return (opened == false); }
 		int select(ByteArray aid);
 		int select(ByteArray path, bool fromCurrentDF);
 		int select(unsigned int fid);

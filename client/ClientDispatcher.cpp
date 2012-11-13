@@ -97,10 +97,20 @@ namespace smartcard_service_api
 		{
 		/* SE Service requests */
 		case Message::MSG_REQUEST_READERS :
+		case Message::MSG_REQUEST_SHUTDOWN :
 			{
 				DispatcherMsg *tempMsg = new DispatcherMsg(msg);
 
-				g_idle_add((GSourceFunc)&SEService::dispatcherCallback, (gpointer)tempMsg);
+				if (msg->callback != msg->caller)
+				{
+					/* Asynchronous call */
+					g_idle_add((GSourceFunc)&SEService::dispatcherCallback, (gpointer)tempMsg);
+				}
+				else
+				{
+					/* Synchronous call */
+					SEService::dispatcherCallback(tempMsg);
+				}
 			}
 			break;
 
@@ -109,7 +119,16 @@ namespace smartcard_service_api
 			{
 				DispatcherMsg *tempMsg = new DispatcherMsg(msg);
 
-				g_idle_add((GSourceFunc)&Reader::dispatcherCallback, (gpointer)tempMsg);
+				if (msg->callback != msg->caller)
+				{
+					/* Asynchronous call */
+					g_idle_add((GSourceFunc)&Reader::dispatcherCallback, (gpointer)tempMsg);
+				}
+				else
+				{
+					/* Synchronous call */
+					Reader::dispatcherCallback(tempMsg);
+				}
 			}
 			break;
 
@@ -121,7 +140,16 @@ namespace smartcard_service_api
 			{
 				DispatcherMsg *tempMsg = new DispatcherMsg(msg);
 
-				g_idle_add((GSourceFunc)&Session::dispatcherCallback, (gpointer)tempMsg);
+				if (msg->callback != msg->caller)
+				{
+					/* Asynchronous call */
+					g_idle_add((GSourceFunc)&Session::dispatcherCallback, (gpointer)tempMsg);
+				}
+				else
+				{
+					/* Synchronous call */
+					Session::dispatcherCallback(tempMsg);
+				}
 			}
 			break;
 
@@ -131,7 +159,16 @@ namespace smartcard_service_api
 			{
 				DispatcherMsg *tempMsg = new DispatcherMsg(msg);
 
-				g_idle_add((GSourceFunc)&ClientChannel::dispatcherCallback, (gpointer)tempMsg);
+				if (msg->callback != msg->caller)
+				{
+					/* Asynchronous call */
+					g_idle_add((GSourceFunc)&ClientChannel::dispatcherCallback, (gpointer)tempMsg);
+				}
+				else
+				{
+					/* Synchronous call */
+					ClientChannel::dispatcherCallback(tempMsg);
+				}
 			}
 			break;
 
@@ -146,6 +183,7 @@ namespace smartcard_service_api
 
 					tempMsg->caller = item->second;
 
+					/* Always asynchronous call */
 					g_idle_add((GSourceFunc)&SEService::dispatcherCallback, (gpointer)tempMsg);
 				}
 			}
@@ -162,6 +200,7 @@ namespace smartcard_service_api
 					tempMsg->caller = item->second;
 					tempMsg->error = -1;
 
+					/* Always asynchronous call */
 					g_idle_add((GSourceFunc)&SEService::dispatcherCallback, (gpointer)tempMsg);
 				}
 			}

@@ -53,14 +53,14 @@ namespace smartcard_service_api
 		inline bool isVaildChannelHandle(unsigned int handle) { return (mapChannels.find(handle) != mapChannels.end()); }
 		inline ClientInstance *getParent() { return parent; }
 
-		unsigned int openSession(Terminal *terminal, ByteArray packageCert, void *caller);
+		unsigned int openSession(Terminal *terminal, vector<ByteArray> &certHashes, void *caller);
 		ServerSession *getSession(unsigned int session);
 		void closeSession(unsigned int session);
 		void closeSessions();
 
 		Terminal *getTerminal(unsigned int session);
 
-		unsigned int openChannel(unsigned int session, int channelNum);
+		unsigned int openChannel(unsigned int session, int channelNum, ByteArray response = ByteArray::EMPTY);
 		ServerChannel *getChannel(/*unsigned int session, */unsigned int channel);
 		unsigned int getChannelCountBySession(unsigned int session);
 		void closeChannel(unsigned int channel);

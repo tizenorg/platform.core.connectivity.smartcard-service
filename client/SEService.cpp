@@ -75,20 +75,83 @@ namespace smartcard_service_api
 
 	SEService::~SEService()
 	{
+		shutdownSync();
 	}
 
 	void SEService::shutdown()
 	{
-		ClientDispatcher::getInstance().removeSEService(context);
+		uint32_t i;
+
+		for (i = 0; i < readers.size(); i++)
+		{
+			readers[i]->closeSessions();
+			delete (Reader *)readers[i];
+		}
+
+		readers.clear();
+
+		Message msg;
+
+		msg.message = Message::MSG_REQUEST_SHUTDOWN;
+		msg.error = (unsigned int)this; /* using error to context */
+		msg.caller = (void *)this;
+		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+
+		ClientIPC::getInstance().sendMessage(&msg);
+	}
+
+	void SEService::shutdownSync()
+	{
+#ifdef CLIENT_IPC_THREAD
+		if (connected == true)
+		{
+			uint32_t i;
+
+			for (i = 0; i < readers.size(); i++)
+			{
+				readers[i]->closeSessions();
+				delete (Reader *)readers[i];
+			}
+
+			readers.clear();
+
+			/* send message to load se */
+			int rv;
+			Message msg;
+
+			msg.message = Message::MSG_REQUEST_SHUTDOWN;
+			msg.error = (unsigned int)this; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+
+			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			{
+				syncLock();
+				rv = waitTimedCondition(0);
+				syncUnlock();
+
+				if (rv == 0)
+				{
+					ClientDispatcher::getInstance().removeSEService(context);
+
+					connected = false;
+				}
+				else
+				{
+					SCARD_DEBUG_ERR("time over");
+				}
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("sendMessage failed");
+			}
+		}
+#endif
 	}
 
 	bool SEService::_initialize()
 	{
 		bool result = false;
-#ifdef SECURITY_SERVER
-		int cookies_size;
-		char *cookies = NULL;
-#endif
 		ClientIPC *clientIPC = NULL;
 		ClientDispatcher *clientDispatcher = NULL;
 
@@ -100,44 +163,19 @@ namespace smartcard_service_api
 			g_thread_init(NULL);
 		}
 
-#ifdef SECURITY_SERVER
-		if ((cookies_size = security_server_get_cookie_size()) != 0)
-		{
-			_net_nfc_client_util_alloc_mem(cookies, cookies_size);
-			int error = 0;
-			if ((error = security_server_request_cookie(cookies, cookies_size)) != SECURITY_SERVER_API_SUCCESS)
-			{
-				DEBUG_CLIENT_MSG("security server request cookies error = [%d]", error);
-				_net_nfc_client_util_free_mem(cookies);
-			}
-			else
-			{
-				char printf_buff[BUFFER_LENGTH_MAX] = { 0, };
-				int buff_count = BUFFER_LENGTH_MAX;
-				int i = 0;
-
-				for (; i < cookies_size; i++)
-				{
-					buff_count -= snprintf((char *)(printf_buff + BUFFER_LENGTH_MAX - buff_count), buff_count, " %02X", cookies[i]);
-				}
-				DEBUG_CLIENT_MSG("client send cookies >>>> %s \n", printf_buff);
-
-				_net_nfc_client_set_cookies(cookies, cookies_size);
-			}
-		}
-#endif
-
 		clientDispatcher = &ClientDispatcher::getInstance();
 		clientIPC = &ClientIPC::getInstance();
 
 		clientIPC->setDispatcher(clientDispatcher);
 
+#ifndef CLIENT_IPC_THREAD
 		if (clientDispatcher->runDispatcherThread() == false)
 		{
 			SCARD_DEBUG_ERR("clientDispatcher->runDispatcherThread() failed");
 
 			return result;
 		}
+#endif
 
 		if (clientIPC->createConnectSocket() == false)
 		{
@@ -252,6 +290,8 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_READERS :
 			SCARD_DEBUG("[MSG_REQUEST_READERS]");
 
+			service->connected = true;
+
 			/* parse message data */
 			service->parseReaderInformation(msg->param1, msg->data);
 
@@ -263,6 +303,29 @@ namespace smartcard_service_api
 			else if (service->handler != NULL)
 			{
 				service->handler(service, service->context);
+			}
+			break;
+
+		case Message::MSG_REQUEST_SHUTDOWN :
+			SCARD_DEBUG("[MSG_REQUEST_SHUTDOWN]");
+
+			if (msg->callback == (void *)service) /* synchronized call */
+			{
+				/* sync call */
+				service->syncLock();
+
+				/* copy result */
+//				service->error = msg->error;
+
+				service->signalCondition();
+				service->syncUnlock();
+			}
+			else
+			{
+//				openSessionCallback cb = (openSessionCallback)msg->callback;
+//
+//				/* async call */
+//				cb(session, msg->error, msg->userParam);
 			}
 			break;
 
@@ -298,6 +361,9 @@ namespace smartcard_service_api
 			if (service->listener != NULL)
 			{
 				service->listener->errorHandler(service, msg->error, service->context);
+
+				ClientDispatcher::getInstance().removeSEService(service->context);
+				service->connected = false;
 			}
 			else
 			{
@@ -362,20 +428,26 @@ EXTERN_API int se_service_get_readers_count(se_service_h handle)
 	return count;
 }
 
-EXTERN_API bool se_service_get_readers(se_service_h handle, reader_h *readers, int count)
+EXTERN_API bool se_service_get_readers(se_service_h handle, reader_h *readers, int *count)
 {
 	bool result = false;
 
 	SE_SERVICE_EXTERN_BEGIN;
 	vector<ReaderHelper *> temp_readers;
 	size_t i;
+	int temp = 0;
 
 	temp_readers = service->getReaders();
 
-	for (i = 0; i < temp_readers.size() && i < (size_t)count; i++)
+	for (i = 0; i < temp_readers.size() && i < (size_t)*count; i++)
 	{
-		readers[i] = (reader_h)temp_readers[i];
+		if (temp_readers[i]->isSecureElementPresent())
+		{
+			readers[i] = (reader_h)temp_readers[i];
+			temp++;
+		}
 	}
+	*count = temp;
 	SE_SERVICE_EXTERN_END;
 
 	return result;

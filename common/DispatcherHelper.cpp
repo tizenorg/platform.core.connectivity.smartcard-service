@@ -95,6 +95,11 @@ namespace smartcard_service_api
 		return (void *)NULL;
 	}
 
+	void DispatcherHelper::processMessage(DispatcherMsg *msg)
+	{
+		dispatcherThreadFunc(msg, this);
+	}
+
 	bool DispatcherHelper::runDispatcherThread()
 	{
 		bool result = false;

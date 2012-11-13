@@ -21,6 +21,7 @@
 /* SLP library header */
 
 /* local header */
+#include "Debug.h"
 #include "SEServiceHelper.h"
 
 namespace smartcard_service_api
@@ -32,7 +33,9 @@ namespace smartcard_service_api
 
 	SEServiceHelper::~SEServiceHelper()
 	{
+		SCARD_BEGIN();
 		shutdown();
+		SCARD_END();
 	}
 
 	vector<ReaderHelper *> SEServiceHelper::getReaders()
@@ -47,14 +50,10 @@ namespace smartcard_service_api
 
 	void SEServiceHelper::shutdown()
 	{
-		uint32_t i;
+	}
 
-		for (i = 0; i < readers.size(); i++)
-		{
-			readers[i]->closeSessions();
-		}
-
-		readers.clear();
+	void SEServiceHelper::shutdownSync()
+	{
 	}
 
 } /* namespace smartcard_service_api */

@@ -30,7 +30,7 @@
 
 namespace smartcard_service_api
 {
-	ServerSession::ServerSession(ServerReader *reader, ByteArray packageCert, void *caller, Terminal *terminal):SessionHelper(reader)
+	ServerSession::ServerSession(ServerReader *reader, vector<ByteArray> &certHashes, void *caller, Terminal *terminal):SessionHelper(reader)
 	{
 		this->caller = NULL;
 		this->terminal = NULL;
@@ -44,7 +44,7 @@ namespace smartcard_service_api
 
 		this->caller = caller;
 		this->terminal = terminal;
-		this->packageCert = packageCert;
+		this->certHashes = certHashes;
 	}
 
 	ServerSession::~ServerSession()
@@ -104,9 +104,9 @@ namespace smartcard_service_api
 			return channel;
 		}
 
-		if (acList->isAuthorizedAccess(aid, packageCert) == false)
+		if (acList->isAuthorizedAccess(aid, certHashes) == false)
 		{
-			SCARD_DEBUG_ERR("unauthorized access, aid %s, hash %s", aid.toString(), packageCert.toString());
+			SCARD_DEBUG_ERR("unauthorized access, aid : %s", aid.toString());
 
 			return channel;
 		}
@@ -134,7 +134,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), result[result.getLength() - 2], result[result.getLength() - 1]);
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
@@ -176,9 +176,9 @@ namespace smartcard_service_api
 			return channel;
 		}
 
-		if (acList->isAuthorizedAccess(aid, packageCert) == false)
+		if (acList->isAuthorizedAccess(aid, certHashes) == false)
 		{
-			SCARD_DEBUG_ERR("unauthorized access, aid %s, hash %s", aid.toString(), packageCert.toString());
+			SCARD_DEBUG_ERR("unauthorized access, aid : %s", aid.toString());
 
 			return channel;
 		}
@@ -197,7 +197,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), result[result.getLength() - 2], result[result.getLength() - 1]);
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 
 				return channel;
 			}
@@ -233,7 +233,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ 0x%02X 0x%02X ]", resp.getStatus(), result[result.getLength() - 2], result[result.getLength() - 1]);
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else

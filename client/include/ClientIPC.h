@@ -18,27 +18,40 @@
 #define CLIENTIPC_H_
 
 /* standard library header */
+#ifdef USE_AUTOSTART
+#include <dbus/dbus-glib.h>
+#endif
 
 /* SLP library header */
 
 /* local header */
 #include "IPCHelper.h"
 #include "SEServiceListener.h"
+#ifdef USE_AUTOSTART
+#include "smartcard-service-glue.h"
+#endif
 
 namespace smartcard_service_api
 {
 	class ClientIPC: public IPCHelper
 	{
 	private:
+#ifdef SECURITY_SERVER
+		ByteArray cookie;
+#endif
 		ClientIPC();
 		~ClientIPC();
 
+#ifdef USE_AUTOSTART
+		void _launch_daemon();
+#endif
 		int handleIOErrorCondition(void *channel, GIOCondition condition);
 		int handleInvalidSocketCondition(void *channel, GIOCondition condition);
 		int handleIncomingCondition(void *channel, GIOCondition condition);
 
 	public:
 		static ClientIPC &getInstance();
+		bool sendMessage(Message *msg);
 	};
 
 } /* namespace open_mobile_api */

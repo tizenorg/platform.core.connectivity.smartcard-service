@@ -20,6 +20,9 @@
 #include <unistd.h>
 
 /* SLP library header */
+#ifdef SECURITY_SERVER
+#include "security-server.h"
+#endif
 
 /* local header */
 #include "Debug.h"
@@ -30,6 +33,40 @@ namespace smartcard_service_api
 {
 	ClientIPC::ClientIPC():IPCHelper()
 	{
+#ifdef USE_AUTOSTART
+		_launch_daemon();
+#endif
+#ifdef SECURITY_SERVER
+		int length = 0;
+
+		if ((length = security_server_get_cookie_size()) > 0)
+		{
+			uint8_t *buffer = NULL;
+
+			buffer = new uint8_t[length];
+			if (buffer != NULL)
+			{
+				int error = 0;
+
+				if ((error = security_server_request_cookie(buffer, length)) == SECURITY_SERVER_API_SUCCESS)
+				{
+					cookie.setBuffer(buffer, length);
+
+					SCARD_DEBUG("cookie : %s", cookie.toString());
+				}
+				else
+				{
+					SCARD_DEBUG_ERR("security_server_request_cookie failed [%d]", error);
+				}
+
+				delete []buffer;
+			}
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("security_server_get_cookie_size failed");
+		}
+#endif
 	}
 
 	ClientIPC::~ClientIPC()
@@ -43,30 +80,76 @@ namespace smartcard_service_api
 		return clientIPC;
 	}
 
+#ifdef USE_AUTOSTART
+	void ClientIPC::_launch_daemon()
+	{
+		DBusGConnection *connection = NULL;
+		DBusGProxy *proxy = NULL;
+		GError *error = NULL;
+		gint result = 0;
+
+		SCARD_BEGIN();
+
+		dbus_g_thread_init();
+
+		g_type_init();
+
+		connection = dbus_g_bus_get(DBUS_BUS_SYSTEM, &error);
+		if (error == NULL)
+		{
+			proxy = dbus_g_proxy_new_for_name(connection, "org.tizen.smartcard_service", "/org/tizen/smartcard_service", "org.tizen.smartcard_service");
+			if (proxy != NULL)
+			{
+				if (dbus_g_proxy_call(proxy, "launch", &error, G_TYPE_INVALID, G_TYPE_INT, &result, G_TYPE_INVALID) == false)
+				{
+					SCARD_DEBUG_ERR("org_tizen_smartcard_service_launch failed");
+					if (error != NULL)
+					{
+						SCARD_DEBUG_ERR("message : [%s]", error->message);
+						g_error_free(error);
+					}
+				}
+
+				g_object_unref(proxy);
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("ERROR: Can't make dbus proxy");
+			}
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("ERROR: Can't get on system bus [%s]", error->message);
+			g_error_free(error);
+		}
+
+		SCARD_END();
+	}
+#endif
+
+	bool ClientIPC::sendMessage(Message *msg)
+	{
+		ByteArray stream;
+		unsigned int length = 0;
+
+		if (ipcSocket == -1)
+			return false;
+
+#ifdef SECURITY_SERVER
+		stream = cookie + msg->serialize();
+#else
+		stream = msg->serialize();
+#endif
+		length = stream.getLength();
+
+		SCARD_DEBUG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]", ipcSocket, msg->message, stream.getLength());
+
+		return IPCHelper::sendMessage(ipcSocket, stream);
+	}
+
 	int ClientIPC::handleIOErrorCondition(void *channel, GIOCondition condition)
 	{
 		SCARD_BEGIN();
-
-		/* finalize context */
-		if (watchId != 0)
-		{
-			g_source_remove(watchId);
-			watchId = 0;
-		}
-
-		if (ioChannel != NULL)
-		{
-			g_io_channel_unref(ioChannel);
-			ioChannel = NULL;
-		}
-
-		if (ipcSocket != -1)
-		{
-			shutdown(ipcSocket, SHUT_RDWR);
-			close(ipcSocket);
-
-			ipcSocket = -1;
-		}
 
 		/* push disconnect message */
 		DispatcherMsg *dispMsg = new DispatcherMsg();
@@ -75,7 +158,13 @@ namespace smartcard_service_api
 		dispMsg->error = -1;
 
 		if (dispatcher != NULL)
+		{
+#ifdef CLIENT_IPC_THREAD
+			dispatcher->processMessage(dispMsg);
+#else
 			dispatcher->pushMessage(dispMsg);
+#endif
+		}
 
 		SCARD_END();
 
@@ -87,6 +176,7 @@ namespace smartcard_service_api
 		SCARD_BEGIN();
 
 		/* finalize context */
+		destroyConnectSocket();
 
 		SCARD_END();
 
@@ -99,8 +189,10 @@ namespace smartcard_service_api
 
 		SCARD_BEGIN();
 
+#ifndef CLIENT_IPC_THREAD
 		if (channel == ioChannel)
 		{
+#endif
 			Message *msg = NULL;
 
 			SCARD_DEBUG("message from server to client socket");
@@ -116,21 +208,32 @@ namespace smartcard_service_api
 
 				/* push to dispatcher */
 				if (dispatcher != NULL)
+				{
+#ifdef CLIENT_IPC_THREAD
+					dispatcher->processMessage(dispMsg);
+#else
 					dispatcher->pushMessage(dispMsg);
+#endif
+				}
 
-				result = TRUE;
+				delete msg;
 			}
 			else
 			{
 				/* clear client connection */
+#ifdef CLIENT_IPC_THREAD
+				handleIOErrorCondition(channel, condition);
+				result = -1;
+#endif
 			}
 
-			delete msg;
+#ifndef CLIENT_IPC_THREAD
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("Unknown channel event [%p]", channel);
 		}
+#endif
 
 		SCARD_END();
 
