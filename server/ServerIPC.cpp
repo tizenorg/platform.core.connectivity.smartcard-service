@@ -136,7 +136,7 @@ namespace smartcard_service_api
 			goto ERROR;
 		}
 
-		SCARD_DEBUG("client socket is bound with g_io_channel");
+		SCARD_DEBUG("client socket is bond with g_io_channel");
 
 		if (ServerResource::getInstance().createClient(client_channel, client_sock_fd, client_src_id, 0, -1) == false)
 		{
@@ -252,10 +252,10 @@ ERROR :
 				/* read message */
 				if ((msg = retrieveMessage(peerSocket)) != NULL)
 				{
-					DispatcherMsg *dispMsg = new DispatcherMsg(msg, peerSocket);
+					DispatcherMsg dispMsg(msg, peerSocket);
 
 					/* push to dispatcher */
-					ServerDispatcher::getInstance()->pushMessage(dispMsg);
+					ServerDispatcher::getInstance()->pushMessage(&dispMsg);
 
 					result = TRUE;
 

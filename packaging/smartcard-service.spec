@@ -1,7 +1,7 @@
 Name:       smartcard-service
 Summary:    Smartcard Service FW
 Version:    0.1.0
-Release:    26
+Release:    27
 Group:      libs
 License:    Samsung Proprietary License
 Source0:    %{name}-%{version}.tar.gz

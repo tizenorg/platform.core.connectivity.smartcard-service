@@ -62,9 +62,11 @@ namespace smartcard_service_api
 
 	void DispatcherHelper::pushMessage(DispatcherMsg *msg)
 	{
+		DispatcherMsg *pushMsg = new DispatcherMsg(msg);
+
 		syncLock();
 
-		messageQ.push(msg);
+		messageQ.push(pushMsg);
 
 		signalCondition();
 		syncUnlock();

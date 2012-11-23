@@ -51,6 +51,19 @@ namespace smartcard_service_api
 			userParam = msg->userParam;
 		}
 
+		DispatcherMsg(DispatcherMsg *msg):Message()
+		{
+			peerSocket = msg->peerSocket;
+			message = msg->message;
+			param1 = msg->param1;
+			param2 = msg->param2;
+			error = msg->error;
+			data = msg->data;
+			caller = msg->caller;
+			callback = msg->callback;
+			userParam = msg->userParam;
+		}
+
 		DispatcherMsg(Message *msg, int socket):Message()
 		{
 			peerSocket = socket;

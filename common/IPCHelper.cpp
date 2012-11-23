@@ -203,18 +203,17 @@ ERROR :
 			{
 				if (pollEvents[i].data.fd == fdPoll)
 				{
-					SCARD_DEBUG("pollEvents[%d].data.fd == fdPoll", i);
-					SCARD_DEBUG("pollEvents[%d].events [%X]", pollEvents[i].events);
+					SCARD_DEBUG("pollEvents[%d].events [%X]", i, pollEvents[i].events);
 
-					if (pollEvents[i].events & EPOLLIN)
-					{
-						result = 1;
-						break;
-					}
-					else if ((pollEvents[i].events & EPOLLHUP) || (pollEvents[i].events & EPOLLERR))
+					if ((pollEvents[i].events & EPOLLHUP) || (pollEvents[i].events & EPOLLERR))
 					{
 						SCARD_DEBUG_ERR("connection is closed");
 						result = 0;
+						break;
+					}
+					else if (pollEvents[i].events & EPOLLIN)
+					{
+						result = 1;
 						break;
 					}
 				}

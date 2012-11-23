@@ -202,19 +202,18 @@ namespace smartcard_service_api
 			msg = retrieveMessage();
 			if (msg != NULL)
 			{
-				DispatcherMsg *dispMsg = new DispatcherMsg(msg);
+				DispatcherMsg dispMsg(msg);
 
 				/* set peer socket */
-				dispMsg->setPeerSocket(ipcSocket);
+				dispMsg.setPeerSocket(ipcSocket);
 
 				/* push to dispatcher */
 				if (dispatcher != NULL)
 				{
 #ifdef CLIENT_IPC_THREAD
-					dispatcher->processMessage(dispMsg);
-					delete dispMsg;
+					dispatcher->processMessage(&dispMsg);
 #else
-					dispatcher->pushMessage(dispMsg);
+					dispatcher->pushMessage(&dispMsg);
 #endif
 				}
 

@@ -109,16 +109,20 @@ namespace smartcard_service_api
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-			ClientIPC::getInstance().sendMessage(&msg);
-
 			syncLock();
-			rv = waitTimedCondition(0);
-			syncUnlock();
-
-			if (rv != 0)
+			if (ClientIPC::getInstance().sendMessage(&msg) == true)
 			{
-				SCARD_DEBUG_ERR("time over");
+				rv = waitTimedCondition(0);
+				if (rv != 0)
+				{
+					SCARD_DEBUG_ERR("time over");
+				}
 			}
+			else
+			{
+				SCARD_DEBUG_ERR("sendMessage failed");
+			}
+			syncUnlock();
 #endif
 		}
 		else
@@ -150,9 +154,14 @@ namespace smartcard_service_api
 			msg.callback = (void *)callback;
 			msg.userParam = userData;
 
-			ClientIPC::getInstance().sendMessage(&msg);
-
-			result = 0;
+			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			{
+				result = 0;
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("sendMessage failed");
+			}
 		}
 		else
 		{
@@ -228,8 +237,6 @@ namespace smartcard_service_api
 			SCARD_DEBUG("unknown [%s]", msg->toString());
 			break;
 		}
-
-		delete msg;
 
 		SCARD_END();
 

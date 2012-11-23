@@ -124,11 +124,10 @@ namespace smartcard_service_api
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
+			syncLock();
 			if (ClientIPC::getInstance().sendMessage(&msg) == true)
 			{
-				syncLock();
 				rv = waitTimedCondition(0);
-				syncUnlock();
 
 				if (rv == 0)
 				{
@@ -145,6 +144,7 @@ namespace smartcard_service_api
 			{
 				SCARD_DEBUG_ERR("sendMessage failed");
 			}
+			syncUnlock();
 		}
 #endif
 	}
@@ -403,8 +403,6 @@ namespace smartcard_service_api
 			SCARD_DEBUG("unknown message [%s]", msg->toString());
 			break;
 		}
-
-		delete msg;
 
 		SCARD_END();
 
