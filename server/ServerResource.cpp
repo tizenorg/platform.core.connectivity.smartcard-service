@@ -287,7 +287,41 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	unsigned int ServerResource::createSession(int socket, unsigned int context, unsigned int terminalID, vector<ByteArray> &certHashes, void *caller)
+	Terminal *ServerResource::getTerminalByReaderID(unsigned int readerID)
+	{
+		Terminal *result = NULL;
+		map<unsigned int, unsigned int>::iterator item;
+
+		if ((item = mapReaders.find(readerID)) != mapReaders.end())
+		{
+			result = getTerminal(item->second);
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("Terminal doesn't exist, reader ID [%d]", readerID);
+		}
+
+		return result;
+	}
+
+	unsigned int ServerResource::getTerminalID(const char *name)
+	{
+		unsigned int result = IntegerHandle::INVALID_HANDLE;
+		map<unsigned int, Terminal *>::iterator item;
+
+		for (item = mapTerminals.begin(); item != mapTerminals.end(); item++)
+		{
+			if (strncmp(name, item->second->getName(), strlen(name)) == 0)
+			{
+				result = item->first;
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	unsigned int ServerResource::createSession(int socket, unsigned int context, unsigned int readerID, vector<ByteArray> &certHashes, void *caller)
 	{
 		unsigned int result = -1;
 		Terminal *temp = NULL;
@@ -295,7 +329,7 @@ namespace smartcard_service_api
 
 		if ((instance = getService(socket, context)) != NULL)
 		{
-			if ((temp = getTerminal(terminalID)) != NULL)
+			if ((temp = getTerminalByReaderID(readerID)) != NULL)
 			{
 				result = instance->openSession(temp, certHashes, caller);
 			}
@@ -616,6 +650,11 @@ namespace smartcard_service_api
 
 				SCARD_DEBUG("register success [%s] [%p] [%s] [%p]", library, libHandle, terminal->getName(), terminal);
 
+				if (terminal->isSecureElementPresence() == true)
+				{
+					createReader(handle);
+				}
+
 				result = true;
 			}
 			else
@@ -698,14 +737,14 @@ namespace smartcard_service_api
 
 	bool ServerResource::isValidReaderHandle(unsigned int reader)
 	{
-		return (getTerminal(reader) != NULL);
+		return (getTerminalByReaderID(reader) != NULL);
 	}
 
 	bool ServerResource::isValidSessionHandle(int socket, unsigned int context, unsigned int session)
 	{
 		ServiceInstance *instance = NULL;
 
-		return (((instance = getService(socket, context)) != NULL) && (getService(socket, context)->isVaildSessionHandle(session)));
+		return (((instance = getService(socket, context)) != NULL) && (instance->isVaildSessionHandle(session)));
 	}
 
 	int ServerResource::getReadersInformation(ByteArray &info)
@@ -716,16 +755,24 @@ namespace smartcard_service_api
 		unsigned int offset = 0;
 		unsigned int nameLen = 0;
 
-		if (mapTerminals.size() > 0)
+		if (mapReaders.size() > 0)
 		{
-			map<unsigned int, Terminal *>::iterator item;
+			Terminal *terminal = NULL;
+			map<unsigned int, unsigned int>::iterator item;
 
-			for (item = mapTerminals.begin(); item != mapTerminals.end(); item++)
+			for (item = mapReaders.begin(); item != mapReaders.end(); item++)
 			{
-				if (item->second->isSecureElementPresence())
+				if (item->second != IntegerHandle::INVALID_HANDLE)
 				{
-					length += sizeof(nameLen) + strlen(item->second->getName()) + sizeof(unsigned int);
-					result++;
+					terminal = getTerminal(item->second);
+					if (terminal != NULL)
+					{
+						if (terminal->isSecureElementPresence())
+						{
+							length += sizeof(nameLen) + strlen(terminal->getName()) + sizeof(unsigned int);
+							result++;
+						}
+					}
 				}
 			}
 
@@ -734,20 +781,27 @@ namespace smartcard_service_api
 			{
 				memset(buffer, 0, length);
 
-				for (item = mapTerminals.begin(); item != mapTerminals.end(); item++)
+				for (item = mapReaders.begin(); item != mapReaders.end(); item++)
 				{
-					if (item->second->isSecureElementPresence())
+					if (item->second != IntegerHandle::INVALID_HANDLE)
 					{
-						nameLen = strlen(item->second->getName());
+						terminal = getTerminal(item->second);
+						if (terminal != NULL)
+						{
+							if (terminal->isSecureElementPresence())
+							{
+								nameLen = strlen(terminal->getName());
 
-						memcpy(buffer + offset, &nameLen, sizeof(nameLen));
-						offset += sizeof(nameLen);
+								memcpy(buffer + offset, &nameLen, sizeof(nameLen));
+								offset += sizeof(nameLen);
 
-						memcpy(buffer + offset, item->second->getName(), nameLen);
-						offset += nameLen;
+								memcpy(buffer + offset, terminal->getName(), nameLen);
+								offset += nameLen;
 
-						memcpy(buffer + offset, &item->first, sizeof(unsigned int));
-						offset += sizeof(unsigned int);
+								memcpy(buffer + offset, &item->first, sizeof(unsigned int));
+								offset += sizeof(unsigned int);
+							}
+						}
 					}
 				}
 
@@ -784,37 +838,48 @@ namespace smartcard_service_api
 
 	void ServerResource::terminalCallback(void *terminal, int event, int error, void *user_param)
 	{
-		SCARD_BEGIN();
+		SCARD_DEBUG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
 
 		switch (event)
 		{
 		case Terminal::NOTIFY_SE_AVAILABLE :
 			{
+				ServerResource &instance = ServerResource::getInstance();
+				unsigned int terminalID = IntegerHandle::INVALID_HANDLE;
 				Message msg;
 
 				SCARD_DEBUG("[NOTIFY_SE_AVAILABLE]");
-				SCARD_DEBUG("terminal [%s], error [%d], user_param [%p]", (char *)terminal, error, user_param);
 
-				/* send all client to refresh reader */
-				msg.message = msg.MSG_NOTIFY_SE_INSERTED;
-				msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
+				terminalID = instance.getTerminalID((char *)terminal);
+				if (terminalID != IntegerHandle::INVALID_HANDLE)
+				{
+					/* send all client to refresh reader */
+					msg.message = msg.MSG_NOTIFY_SE_INSERTED;
+					msg.param1 = instance.createReader(terminalID);
+					msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
 
-				ServerResource::getInstance().sendMessageToAllClients(msg);
+					instance.sendMessageToAllClients(msg);
+				}
 			}
 			break;
 
 		case Terminal::NOTIFY_SE_NOT_AVAILABLE :
 			{
+				ServerResource &instance = ServerResource::getInstance();
+				unsigned int readerID = IntegerHandle::INVALID_HANDLE;
 				Message msg;
 
 				SCARD_DEBUG("[NOTIFY_SE_NOT_AVAILABLE]");
-				SCARD_DEBUG("terminal [%s], error [%d], user_param [%p]", (char *)terminal, error, user_param);
+
+				readerID = instance.getReaderID((char *)terminal);
 
 				/* send all client to refresh reader */
 				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
+				msg.param1 = readerID;
 				msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
 
-				ServerResource::getInstance().sendMessageToAllClients(msg);
+				instance.sendMessageToAllClients(msg);
+				instance.removeReader(readerID);
 			}
 			break;
 
@@ -822,8 +887,49 @@ namespace smartcard_service_api
 			SCARD_DEBUG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
 			break;
 		}
+	}
 
-		SCARD_END();
+	unsigned int ServerResource::createReader(unsigned int terminalID)
+	{
+		unsigned int result = -1;
+
+		result = IntegerHandle::assignHandle();
+
+		mapReaders.insert(make_pair(result, terminalID));
+
+		return result;
+	}
+
+	unsigned int ServerResource::getReaderID(const char *name)
+	{
+		unsigned int result = IntegerHandle::INVALID_HANDLE, terminalID = IntegerHandle::INVALID_HANDLE;
+
+		terminalID = getTerminalID(name);
+		if (terminalID != IntegerHandle::INVALID_HANDLE)
+		{
+			map<unsigned int, unsigned int>::iterator item;
+
+			for (item = mapReaders.begin(); item != mapReaders.end(); item++)
+			{
+				if (item->second == terminalID)
+				{
+					result = item->first;
+					break;
+				}
+			}
+		}
+
+		return result;
+	}
+
+	void ServerResource::removeReader(unsigned int readerID)
+	{
+		map<unsigned int, unsigned int>::iterator item;
+
+		if ((item = mapReaders.find(readerID)) != mapReaders.end())
+		{
+			item->second = IntegerHandle::INVALID_HANDLE;
+		}
 	}
 
 } /* namespace smartcard_service_api */

@@ -309,7 +309,7 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_SHUTDOWN :
 			SCARD_DEBUG("[MSG_REQUEST_SHUTDOWN]");
 
-			if (msg->callback == (void *)service) /* synchronized call */
+			if (msg->isSynchronousCall() == true) /* synchronized call */
 			{
 				/* sync call */
 				service->syncLock();
@@ -330,28 +330,56 @@ namespace smartcard_service_api
 			break;
 
 		case Message::MSG_NOTIFY_SE_INSERTED :
-			SCARD_DEBUG("[MSG_NOTIFY_SE_INSERTED]");
+			{
+				Reader *reader = NULL;
 
-			if (service->listener != NULL)
-			{
-				service->listener->eventHandler(service, (char *)msg->data.getBuffer(), 1, service->context);
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("service->listener is null");
+				SCARD_DEBUG("[MSG_NOTIFY_SE_INSERTED]");
+
+				/* add readers */
+				reader = new Reader(service->context, (char *)msg->data.getBuffer(), (void *)msg->param1);
+				if (reader != NULL)
+				{
+					service->readers.push_back(reader);
+				}
+				else
+				{
+					SCARD_DEBUG_ERR("alloc failed");
+				}
+
+				if (service->listener != NULL)
+				{
+					service->listener->eventHandler(service, (char *)msg->data.getBuffer(), 1, service->context);
+				}
+				else
+				{
+					SCARD_DEBUG("listener is null");
+				}
 			}
 			break;
 
 		case Message::MSG_NOTIFY_SE_REMOVED :
-			SCARD_DEBUG("[MSG_NOTIFY_SE_REMOVED]");
+			{
+				size_t i;
 
-			if (service->listener != NULL)
-			{
-				service->listener->eventHandler(service, (char *)msg->data.getBuffer(), 2, service->context);
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("service->listener is null");
+				SCARD_DEBUG("[MSG_NOTIFY_SE_REMOVED]");
+
+				for (i = 0; i < service->readers.size(); i++)
+				{
+					if (((Reader *)service->readers[i])->handle == (void *)msg->param1)
+					{
+						((Reader *)service->readers[i])->present = false;
+						break;
+					}
+				}
+
+				if (service->listener != NULL)
+				{
+					service->listener->eventHandler(service, (char *)msg->data.getBuffer(), 2, service->context);
+				}
+				else
+				{
+					SCARD_DEBUG("listener is null");
+				}
 			}
 			break;
 

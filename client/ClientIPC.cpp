@@ -161,6 +161,7 @@ namespace smartcard_service_api
 		{
 #ifdef CLIENT_IPC_THREAD
 			dispatcher->processMessage(dispMsg);
+			delete dispMsg;
 #else
 			dispatcher->pushMessage(dispMsg);
 #endif
@@ -211,6 +212,7 @@ namespace smartcard_service_api
 				{
 #ifdef CLIENT_IPC_THREAD
 					dispatcher->processMessage(dispMsg);
+					delete dispMsg;
 #else
 					dispatcher->pushMessage(dispMsg);
 #endif

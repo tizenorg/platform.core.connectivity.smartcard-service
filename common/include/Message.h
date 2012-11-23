@@ -64,6 +64,8 @@ namespace smartcard_service_api
 		void deserialize(unsigned char *buffer, unsigned int length);
 		void deserialize(ByteArray buffer);
 
+		inline bool isSynchronousCall() { return (caller == callback); }
+
 		const char *toString();
 	};
 

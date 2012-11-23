@@ -51,12 +51,10 @@ namespace smartcard_service_api
 		snprintf(buffer, sizeof(buffer), "/proc/%d/exec", pid);
 		SCARD_DEBUG("pid : %d, exec : %s", pid, buffer);
 
-		if ((len = readlink(buffer, filename, sizeof(filename))) < sizeof(filename))
+		if ((len = readlink(buffer, filename, sizeof(filename) - 1)) < sizeof(filename) - 1)
 		{
 			char *name = NULL;
 			ByteArray hash, result;
-
-			filename[len] = '\0';
 
 			name = basename(filename);
 			SCARD_DEBUG("file name : %s", name);

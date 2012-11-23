@@ -58,9 +58,25 @@ class TestEventHandler : public SEServiceListener
 
 	void eventHandler(SEServiceHelper *service, char *seName, int event, void *userData)
 	{
+		user_context_t *context = (user_context_t *)userData;
+		vector<ReaderHelper *> readers;
+		size_t i;
+
 		SCARD_BEGIN();
 
-		SCARD_DEBUG("event occured service [%p], seName[%p], event [%d]", service, seName, event);
+		SCARD_DEBUG("event occured service [%p], seName[%s], event [%d], userData [%p]", service, seName, event, userData);
+
+		readers = service->getReaders();
+
+		for (i = 0; i < readers.size(); i++)
+		{
+			SCARD_DEBUG("Reader[%d] : name [%s], %s", i, readers[i]->getName(), readers[i]->isSecureElementPresent() ? "available" : "unavailable");
+		}
+
+		if (event == 1)
+		{
+			testConnectedCallback(service, userData);
+		}
 
 		SCARD_END();
 	}

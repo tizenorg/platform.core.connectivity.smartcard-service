@@ -41,16 +41,17 @@ namespace smartcard_service_api
 		char name[30];
 		vector<SessionHelper *> sessions;
 		SEServiceHelper *seService;
+		bool present;
 
 		ReaderHelper();
 
 	public:
-		~ReaderHelper();
+		virtual ~ReaderHelper() {}
 
-		const char *getName();
-		SEServiceHelper *getSEService();
-		bool isSecureElementPresent();
-		
+		inline const char *getName() { return name; }
+		inline SEServiceHelper *getSEService() { return seService; }
+		inline bool isSecureElementPresent() { return present; }
+
 		virtual void closeSessions() = 0;
 
 		virtual int openSession(openSessionCallback callback, void *userData) = 0;

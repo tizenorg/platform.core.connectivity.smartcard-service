@@ -31,28 +31,6 @@ namespace smartcard_service_api
 	{
 		memset(name, 0, sizeof(name));
 		seService = NULL;
+		present = false;
 	}
-
-	ReaderHelper::~ReaderHelper()
-	{
-	}
-
-	const char *ReaderHelper::getName()
-	{
-		return (const char *)name;
-	}
-
-	SEServiceHelper *ReaderHelper::getSEService()
-	{
-		return seService;
-	}
-
-	bool ReaderHelper::isSecureElementPresent()
-	{
-		/* get checkse() symbol of se library (dlsym) */
-		/* invoke checkse() and return result */
-
-		return true /* checkse() */;
-	}
-
 } /* namespace smartcard_service_api */

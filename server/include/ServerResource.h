@@ -63,7 +63,8 @@ namespace smartcard_service_api
 	private:
 		/* non-static member */
 		vector<void *> libraries;
-		map<unsigned int, Terminal *> mapTerminals; /* unique id <-> terminal instance map */
+		map<unsigned int, Terminal *> mapTerminals; /* terminal unique id <-> terminal instance map */
+		map<unsigned int, unsigned int> mapReaders; /* reader unique id <-> terminal unique id map */
 		map<int, ClientInstance *> mapClients; /* client pid <-> client instance map */
 		map<Terminal *, AccessControlList *> mapACL; /* terminal instance <-> access control instance map */
 		void *mainLoop;
@@ -98,8 +99,14 @@ namespace smartcard_service_api
 
 		Terminal *getTerminal(unsigned int terminalID);
 		Terminal *getTerminal(const char *name);
+		Terminal *getTerminalByReaderID(unsigned int readerID);
+		unsigned int getTerminalID(const char *name);
 		int getReadersInformation(ByteArray &info);
 		bool isValidReaderHandle(unsigned int reader);
+
+		unsigned int createReader(unsigned int terminalID);
+		unsigned int getReaderID(const char *name);
+		void removeReader(unsigned int readerID);
 
 		bool createClient(void *ioChannel, int socket, int watchID, int state, int pid);
 		ClientInstance *getClient(int socket);
@@ -113,7 +120,7 @@ namespace smartcard_service_api
 		void removeService(int socket, unsigned int context);
 		void removeServices(int socket);
 
-		unsigned int createSession(int socket, unsigned int context, unsigned int terminalID, vector<ByteArray> &certHashes, void *caller);
+		unsigned int createSession(int socket, unsigned int context, unsigned int readerID, vector<ByteArray> &certHashes, void *caller);
 		ServerSession *getSession(int socket, unsigned int context, unsigned int sessionID);
 		unsigned int getChannelCount(int socket, unsigned int context, unsigned int sessionID);
 		void removeSession(int socket, unsigned int context, unsigned int session);

@@ -26,6 +26,7 @@
 #include "Message.h"
 #include "ClientIPC.h"
 #include "ClientChannel.h"
+#include "ReaderHelper.h"
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -59,15 +60,85 @@ namespace smartcard_service_api
 
 	void ClientChannel::closeSync()
 	{
-		Message msg;
-		int rv;
-
 #ifdef CLIENT_IPC_THREAD
 		if (isClosed() == false)
 		{
+			if (getSession()->getReader()->isSecureElementPresent() == true)
+			{
+				Message msg;
+				int rv;
+
+				/* send message to server */
+				msg.message = Message::MSG_REQUEST_CLOSE_CHANNEL;
+				msg.param1 = (int)handle;
+				msg.error = (unsigned int)context; /* using error to context */
+				msg.caller = (void *)this;
+				msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+
+				ClientIPC::getInstance().sendMessage(&msg);
+
+				syncLock();
+				rv = waitTimedCondition(0);
+				syncUnlock();
+
+				if (rv < 0)
+				{
+					SCARD_DEBUG_ERR("closeSync failed [%d]", rv);
+				}
+
+				channelNum = -1;
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("unavailable channel");
+			}
+		}
+#endif
+	}
+
+	int ClientChannel::close(closeCallback callback, void *userParam)
+	{
+		if (isClosed() == false)
+		{
+			if (getSession()->getReader()->isSecureElementPresent() == true)
+			{
+				Message msg;
+
+				channelNum = -1;
+
+				/* send message to server */
+				msg.message = Message::MSG_REQUEST_CLOSE_CHANNEL;
+				msg.param1 = (int)handle;
+				msg.error = (unsigned int)context; /* using error to context */
+				msg.caller = (void *)this;
+				msg.callback = (void *)callback;
+				msg.userParam = userParam;
+
+				ClientIPC::getInstance().sendMessage(&msg);
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("unavailable channel");
+			}
+		}
+
+		return 0;
+	}
+
+	int ClientChannel::transmitSync(ByteArray command, ByteArray &result)
+	{
+		int rv = -1;
+
+		if (getSession()->getReader()->isSecureElementPresent() == true)
+		{
+			Message msg;
+
+#ifdef CLIENT_IPC_THREAD
 			/* send message to server */
-			msg.message = Message::MSG_REQUEST_CLOSE_CHANNEL;
+			msg.message = Message::MSG_REQUEST_TRANSMIT;
 			msg.param1 = (int)handle;
+			msg.param2 = 0;
+			msg.data = command;
 			msg.error = (unsigned int)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
@@ -78,27 +149,41 @@ namespace smartcard_service_api
 			rv = waitTimedCondition(0);
 			syncUnlock();
 
-			if (rv < 0)
+			if (rv >= 0)
 			{
-				SCARD_DEBUG_ERR("closeSync failed [%d]", rv);
-			}
+				result = response;
 
-			channelNum = -1;
-		}
+				rv = 0;
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("clientIPC is null");
+
+				rv = -1;
+			}
 #endif
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable channel");
+
+			rv = -1;
+		}
+
+		return rv;
 	}
 
-	int ClientChannel::close(closeCallback callback, void *userParam)
+	int ClientChannel::transmit(ByteArray command, transmitCallback callback, void *userParam)
 	{
-		Message msg;
-
-		if (isClosed() == false)
+		if (getSession()->getReader()->isSecureElementPresent() == true)
 		{
-			channelNum = -1;
+			Message msg;
 
 			/* send message to server */
-			msg.message = Message::MSG_REQUEST_CLOSE_CHANNEL;
+			msg.message = Message::MSG_REQUEST_TRANSMIT;
 			msg.param1 = (int)handle;
+			msg.param2 = 0;
+			msg.data = command;
 			msg.error = (unsigned int)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)callback;
@@ -106,58 +191,10 @@ namespace smartcard_service_api
 
 			ClientIPC::getInstance().sendMessage(&msg);
 		}
-
-		return 0;
-	}
-
-	int ClientChannel::transmitSync(ByteArray command, ByteArray &result)
-	{
-		Message msg;
-		int rv;
-
-#ifdef CLIENT_IPC_THREAD
-		/* send message to server */
-		msg.message = Message::MSG_REQUEST_TRANSMIT;
-		msg.param1 = (int)handle;
-		msg.param2 = 0;
-		msg.data = command;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
-
-		ClientIPC::getInstance().sendMessage(&msg);
-
-		syncLock();
-		rv = waitTimedCondition(0);
-		syncUnlock();
-
-		if (rv < 0)
+		else
 		{
-			SCARD_DEBUG_ERR("clientIPC is null");
-
-			return -1;
+			SCARD_DEBUG_ERR("unavailable channel");
 		}
-
-		result = response;
-#endif
-		return 0;
-	}
-
-	int ClientChannel::transmit(ByteArray command, transmitCallback callback, void *userParam)
-	{
-		Message msg;
-
-		/* send message to server */
-		msg.message = Message::MSG_REQUEST_TRANSMIT;
-		msg.param1 = (int)handle;
-		msg.param2 = 0;
-		msg.data = command;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)callback;
-		msg.userParam = userParam;
-
-		ClientIPC::getInstance().sendMessage(&msg);
 
 		return 0;
 	}
@@ -183,7 +220,7 @@ namespace smartcard_service_api
 				/* transmit result */
 				SCARD_DEBUG("MSG_REQUEST_TRANSMIT");
 
-				if (msg->callback == (void *)channel) /* synchronized call */
+				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
 					/* sync call */
 					channel->syncLock();
@@ -209,7 +246,7 @@ namespace smartcard_service_api
 			{
 				SCARD_DEBUG("MSG_REQUEST_CLOSE_CHANNEL");
 
-				if (msg->callback == (void *)channel) /* synchronized call */
+				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
 					/* sync call */
 					channel->syncLock();

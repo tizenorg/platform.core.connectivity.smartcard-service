@@ -72,6 +72,7 @@ namespace smartcard_service_api
 
 	void *DispatcherHelper::_dispatcherThreadFunc(void *data)
 	{
+		int result = 0;
 		DispatcherMsg *msg = NULL;
 		DispatcherHelper *helper = (DispatcherHelper *)data;
 
@@ -80,7 +81,7 @@ namespace smartcard_service_api
 			helper->syncLock();
 			if ((msg = helper->fetchMessage()) == NULL)
 			{
-				helper->waitTimedCondition(0);
+				result = helper->waitTimedCondition(0);
 				helper->syncUnlock();
 				continue;
 			}

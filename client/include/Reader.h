@@ -42,7 +42,9 @@ namespace smartcard_service_api
 		int error;
 		Session *openedSession;
 
-		Reader(void *context, char *name, void *handle);
+		Reader(void *context, const char *name, void *handle);
+
+		void unavailable();
 
 		static bool dispatcherCallback(void *message);
 		void getPackageCert();

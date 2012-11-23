@@ -36,7 +36,7 @@
 
 namespace smartcard_service_api
 {
-	Reader::Reader(void *context, char *name, void *handle):ReaderHelper()
+	Reader::Reader(void *context, const char *name, void *handle):ReaderHelper()
 	{
 		unsigned int length = 0;
 
@@ -58,6 +58,8 @@ namespace smartcard_service_api
 		length = strlen(name);
 		length = (length < sizeof(this->name)) ? length : sizeof(this->name);
 		memcpy(this->name, name, length);
+
+		present = true;
 
 #if 0
 		getPackageCert();
@@ -91,58 +93,75 @@ namespace smartcard_service_api
 
 	SessionHelper *Reader::openSessionSync()
 	{
-		Message msg;
-		int rv;
+		openedSession = NULL;
+
+		if (isSecureElementPresent() == true)
+		{
+			Message msg;
+			int rv;
 
 #ifdef CLIENT_IPC_THREAD
-		/* request channel handle from server */
-		msg.message = Message::MSG_REQUEST_OPEN_SESSION;
-		msg.param1 = (unsigned int)handle;
-#if 0
-		msg.data = packageCert;
+			/* request channel handle from server */
+			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
+			msg.param1 = (unsigned int)handle;
+			msg.data = packageCert;
+			msg.error = (unsigned int)context; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+
+			ClientIPC::getInstance().sendMessage(&msg);
+
+			syncLock();
+			rv = waitTimedCondition(0);
+			syncUnlock();
+
+			if (rv != 0)
+			{
+				SCARD_DEBUG_ERR("time over");
+			}
 #endif
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
-
-		ClientIPC::getInstance().sendMessage(&msg);
-
-		syncLock();
-		rv = waitTimedCondition(0);
-		syncUnlock();
-
-		if (rv != 0)
-		{
-			SCARD_DEBUG_ERR("time over");
-
-			openedSession = NULL;
 		}
-#endif
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable reader");
+		}
+
 		return (Session *)openedSession;
 	}
 
 	int Reader::openSession(openSessionCallback callback, void *userData)
 	{
-		Message msg;
+		int result = -1;
 
 		SCARD_BEGIN();
 
-		/* request channel handle from server */
-		msg.message = Message::MSG_REQUEST_OPEN_SESSION;
-		msg.param1 = (unsigned int)handle;
-#if 0
-		msg.data = packageCert;
-#endif
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)callback;
-		msg.userParam = userData;
+		if (isSecureElementPresent() == true)
+		{
+			Message msg;
 
-		ClientIPC::getInstance().sendMessage(&msg);
+			/* request channel handle from server */
+			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
+			msg.param1 = (unsigned int)handle;
+#if 0
+			msg.data = packageCert;
+#endif
+			msg.error = (unsigned int)context; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)callback;
+			msg.userParam = userData;
+
+			ClientIPC::getInstance().sendMessage(&msg);
+
+			result = 0;
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable reader");
+		}
 
 		SCARD_END();
 
-		return 0;
+		return result;
 	}
 
 	bool Reader::dispatcherCallback(void *message)
@@ -183,7 +202,7 @@ namespace smartcard_service_api
 					reader->sessions.push_back(session);
 				}
 
-				if (msg->callback == (void *)reader) /* synchronized call */
+				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
 					/* sync call */
 					reader->syncLock();

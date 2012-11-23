@@ -72,49 +72,67 @@ namespace smartcard_service_api
 
 	ByteArray Session::getATRSync()
 	{
-		Message msg;
-		int rv;
+		atr.releaseBuffer();
+
+		if (getReader()->isSecureElementPresent() == true)
+		{
+			Message msg;
+			int rv;
 
 #ifdef CLIENT_IPC_THREAD
-		/* request channel handle from server */
-		msg.message = Message::MSG_REQUEST_GET_ATR;
-		msg.param1 = (unsigned int)handle;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+			/* request channel handle from server */
+			msg.message = Message::MSG_REQUEST_GET_ATR;
+			msg.param1 = (unsigned int)handle;
+			msg.error = (unsigned int)context; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-		ClientIPC::getInstance().sendMessage(&msg);
+			ClientIPC::getInstance().sendMessage(&msg);
 
-		syncLock();
-		rv = waitTimedCondition(0);
-		syncUnlock();
+			syncLock();
+			rv = waitTimedCondition(0);
+			syncUnlock();
 
-		if (rv != 0)
-		{
-			SCARD_DEBUG_ERR("time over");
-
-			atr.releaseBuffer();
-		}
+			if (rv != 0)
+			{
+				SCARD_DEBUG_ERR("time over");
+			}
 #endif
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable session");
+		}
 
 		return atr;
 	}
 
 	int Session::getATR(getATRCallback callback, void *userData)
 	{
-		Message msg;
+		int result = -1;
 
-		/* request channel handle from server */
-		msg.message = Message::MSG_REQUEST_GET_ATR;
-		msg.param1 = (unsigned int)handle;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)callback;
-		msg.userParam = userData;
+		if (getReader()->isSecureElementPresent() == true)
+		{
+			Message msg;
 
-		ClientIPC::getInstance().sendMessage(&msg);
+			/* request channel handle from server */
+			msg.message = Message::MSG_REQUEST_GET_ATR;
+			msg.param1 = (unsigned int)handle;
+			msg.error = (unsigned int)context; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)callback;
+			msg.userParam = userData;
 
-		return 0;
+			ClientIPC::getInstance().sendMessage(&msg);
+
+			result = 0;
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable session");
+		}
+
+		return result;
 	}
 
 	void Session::closeSync()
@@ -174,99 +192,137 @@ namespace smartcard_service_api
 
 	unsigned int Session::getChannelCountSync()
 	{
-		Message msg;
-		int rv;
+		channelCount = -1;
+
+		if (getReader()->isSecureElementPresent() == true)
+		{
+			Message msg;
+			int rv;
 
 #ifdef CLIENT_IPC_THREAD
-		/* request channel handle from server */
-		msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
-		msg.param1 = (unsigned int)handle;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+			/* request channel handle from server */
+			msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
+			msg.param1 = (unsigned int)handle;
+			msg.error = (unsigned int)context; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-		ClientIPC::getInstance().sendMessage(&msg);
+			ClientIPC::getInstance().sendMessage(&msg);
 
-		syncLock();
-		rv = waitTimedCondition(0);
-		syncUnlock();
+			syncLock();
+			rv = waitTimedCondition(0);
+			syncUnlock();
 
-		if (rv != 0)
-		{
-			SCARD_DEBUG_ERR("time over");
+			if (rv != 0)
+			{
+				SCARD_DEBUG_ERR("time over");
 
-			channelCount = -1;
-		}
+				channelCount = -1;
+			}
 #endif
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable session");
+		}
 
 		return channelCount;
 	}
 
 	int Session::getChannelCount(getChannelCountCallback callback, void *userData)
 	{
-		Message msg;
+		int result = -1;
 
-		msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
-		msg.param1 = (unsigned int)handle;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)callback;
-		msg.userParam = userData;
+		if (getReader()->isSecureElementPresent() == true)
+		{
+			Message msg;
 
-		ClientIPC::getInstance().sendMessage(&msg);
+			msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
+			msg.param1 = (unsigned int)handle;
+			msg.error = (unsigned int)context; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)callback;
+			msg.userParam = userData;
 
-		return 0;
+			ClientIPC::getInstance().sendMessage(&msg);
+
+			result = 0;
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable session");
+		}
+
+		return result;
 	}
 
 	Channel *Session::openChannelSync(int id, ByteArray aid)
 	{
-		Message msg;
-		int rv;
+		openedChannel = NULL;
+
+		if (getReader()->isSecureElementPresent() == true)
+		{
+			Message msg;
+			int rv;
 
 #ifdef CLIENT_IPC_THREAD
-		/* request channel handle from server */
-		msg.message = Message::MSG_REQUEST_OPEN_CHANNEL;
-		msg.param1 = id;
-		msg.param2 = (unsigned int)handle;
-		msg.data = aid;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+			/* request channel handle from server */
+			msg.message = Message::MSG_REQUEST_OPEN_CHANNEL;
+			msg.param1 = id;
+			msg.param2 = (unsigned int)handle;
+			msg.data = aid;
+			msg.error = (unsigned int)context; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-		ClientIPC::getInstance().sendMessage(&msg);
+			ClientIPC::getInstance().sendMessage(&msg);
 
-		syncLock();
-		rv = waitTimedCondition(0);
-		syncUnlock();
+			syncLock();
+			rv = waitTimedCondition(0);
+			syncUnlock();
 
-		if (rv != 0)
-		{
-			SCARD_DEBUG_ERR("time over");
-
-			openedChannel = NULL;
-		}
+			if (rv != 0)
+			{
+				SCARD_DEBUG_ERR("time over");
+			}
 #endif
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable session");
+		}
 
 		return (Channel *)openedChannel;
 	}
 
 	int Session::openChannel(int id, ByteArray aid, openChannelCallback callback, void *userData)
 	{
-		Message msg;
+		int result = -1;
 
-		/* request channel handle from server */
-		msg.message = Message::MSG_REQUEST_OPEN_CHANNEL;
-		msg.param1 = id;
-		msg.param2 = (unsigned int)handle;
-		msg.data = aid;
-		msg.error = (unsigned int)context; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)callback;
-		msg.userParam = userData;
+		if (getReader()->isSecureElementPresent() == true)
+		{
+			Message msg;
 
-		ClientIPC::getInstance().sendMessage(&msg);
+			/* request channel handle from server */
+			msg.message = Message::MSG_REQUEST_OPEN_CHANNEL;
+			msg.param1 = id;
+			msg.param2 = (unsigned int)handle;
+			msg.data = aid;
+			msg.error = (unsigned int)context; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)callback;
+			msg.userParam = userData;
 
-		return 0;
+			ClientIPC::getInstance().sendMessage(&msg);
+
+			result = 0;
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("unavailable session");
+		}
+
+		return result;
 	}
 
 	Channel *Session::openBasicChannelSync(ByteArray aid)
@@ -347,7 +403,7 @@ namespace smartcard_service_api
 					}
 				}
 
-				if (msg->callback == (void *)session) /* synchronized call */
+				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
 					/* sync call */
 					session->syncLock();
@@ -373,7 +429,7 @@ namespace smartcard_service_api
 			{
 				SCARD_DEBUG("MSG_REQUEST_GET_ATR");
 
-				if (msg->callback == (void *)session) /* synchronized call */
+				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
 					/* sync call */
 					session->syncLock();
@@ -398,7 +454,7 @@ namespace smartcard_service_api
 			{
 				SCARD_DEBUG("MSG_REQUEST_CLOSE_SESSION");
 
-				if (msg->callback == (void *)session) /* synchronized call */
+				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
 					/* sync call */
 					session->syncLock();
@@ -422,7 +478,7 @@ namespace smartcard_service_api
 			{
 				SCARD_DEBUG("MSG_REQUEST_GET_CHANNEL_COUNT");
 
-				if (msg->callback == (void *)session) /* synchronized call */
+				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
 					/* sync call */
 					session->syncLock();
