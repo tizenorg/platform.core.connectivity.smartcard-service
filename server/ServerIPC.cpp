@@ -197,20 +197,18 @@ ERROR :
 		}
 		else
 		{
-			DispatcherMsg *dispMsg = NULL;
+			DispatcherMsg dispMsg;
 			int peerSocket = g_io_channel_unix_get_fd((GIOChannel *)channel);
 
 			SCARD_DEBUG("client socket is closed, socket [%d]", peerSocket);
 
 			/* push messsage to dispatcher */
-			dispMsg = new DispatcherMsg();
-
-			dispMsg->message = Message::MSG_OPERATION_RELEASE_CLIENT;
-			dispMsg->param1 = peerSocket;
-			dispMsg->setPeerSocket(peerSocket);
+			dispMsg.message = Message::MSG_OPERATION_RELEASE_CLIENT;
+			dispMsg.param1 = peerSocket;
+			dispMsg.setPeerSocket(peerSocket);
 
 			/* push to dispatcher */
-			ServerDispatcher::getInstance()->pushMessage(dispMsg);
+			ServerDispatcher::getInstance()->pushMessage(&dispMsg);
 		}
 
 		SCARD_END();

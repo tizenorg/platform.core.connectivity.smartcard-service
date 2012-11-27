@@ -97,7 +97,10 @@ namespace smartcard_service_api
 		msg.caller = (void *)this;
 		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-		ClientIPC::getInstance().sendMessage(&msg);
+		if (ClientIPC::getInstance().sendMessage(&msg) == false)
+		{
+			SCARD_DEBUG_ERR("time over");
+		}
 	}
 
 	void SEService::shutdownSync()

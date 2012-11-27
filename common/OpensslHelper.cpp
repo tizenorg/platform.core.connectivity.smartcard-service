@@ -146,7 +146,10 @@ namespace smartcard_service_api
 				memset(temp, 0, EVP_MAX_MD_SIZE);
 
 				EVP_DigestInit(&mdCtx, md);
-				EVP_DigestUpdate(&mdCtx, buffer.getBuffer(), buffer.getLength());
+				if (EVP_DigestUpdate(&mdCtx, buffer.getBuffer(), buffer.getLength()) != 0)
+				{
+					SCARD_DEBUG_ERR("EVP_DigestUpdate failed");
+				}
 				EVP_DigestFinal(&mdCtx, temp, &resultLen);
 
 				result.setBuffer(temp, resultLen);

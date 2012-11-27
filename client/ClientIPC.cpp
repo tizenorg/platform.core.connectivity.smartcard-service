@@ -149,21 +149,20 @@ namespace smartcard_service_api
 
 	int ClientIPC::handleIOErrorCondition(void *channel, GIOCondition condition)
 	{
+		DispatcherMsg dispMsg;
+
 		SCARD_BEGIN();
 
-		/* push disconnect message */
-		DispatcherMsg *dispMsg = new DispatcherMsg();
-
-		dispMsg->message = Message::MSG_OPERATION_RELEASE_CLIENT;
-		dispMsg->error = -1;
+		/* push or process disconnect message */
+		dispMsg.message = Message::MSG_OPERATION_RELEASE_CLIENT;
+		dispMsg.error = -1;
 
 		if (dispatcher != NULL)
 		{
 #ifdef CLIENT_IPC_THREAD
-			dispatcher->processMessage(dispMsg);
-			delete dispMsg;
+			dispatcher->processMessage(&dispMsg);
 #else
-			dispatcher->pushMessage(dispMsg);
+			dispatcher->pushMessage(&dispMsg);
 #endif
 		}
 
