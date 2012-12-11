@@ -18,6 +18,7 @@
 /* standard library header */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <list>
 #include <string>
@@ -183,14 +184,17 @@ namespace smartcard_service_api
 					{
 						if (value != NULL && strlen(value) > 0)
 						{
-							ByteArray hash;
+							ByteArray decodeValue, hash;
 
-							OpensslHelper::decodeBase64String(value, hash, false);
-							if (hash.getLength() > 0)
+							OpensslHelper::decodeBase64String(value, decodeValue, false);
+							if (decodeValue.getLength() > 0)
 							{
-								SCARD_DEBUG("type [%d] hash [%d] : %s", type, hash.getLength(), hash.toString());
-
-								certHashes.push_back(hash);
+								OpensslHelper::digestBuffer("sha1", decodeValue.getBuffer(), decodeValue.getLength(), hash);
+								if(hash.getLength() > 0)
+								{
+									SCARD_DEBUG("type [%d] hash [%d] : %s", type, hash.getLength(), hash.toString());
+									certHashes.push_back(hash);
+								}
 							}
 						}
 					}
@@ -217,54 +221,52 @@ namespace smartcard_service_api
 /* export C API */
 using namespace smartcard_service_api;
 
-EXTERN_API int signature_helper_get_certificate_hash(const char *packageName, uint8_t *hash, uint32_t *length)
+certiHash* __signature_helper_vector_to_linked_list(vector<ByteArray> &certHashes)
 {
-	int ret = -1;
-	ByteArray result;
+	vector<ByteArray>::iterator item;
+	certiHash *head, *tail, *tmp;
 
-	if (packageName == NULL || strlen(packageName) == 0 || hash == NULL || length == NULL || *length < 20)
-		return ret;
+	head = tail = NULL;
 
-	result = SignatureHelper::getCertificationHash(packageName);
-
-	if (result.isEmpty() == false)
+	for (item = certHashes.begin(); item != certHashes.end(); item++)
 	{
-		memcpy(hash, result.getBuffer(), (result.getLength() < *length) ? result.getLength() : *length);
-		*length = result.getLength();
+		if((tmp = (certiHash*)calloc(1, sizeof(certiHash)))== NULL)
+			goto ERROR;
 
-		ret = 0;
+		tmp->length = (*item).getLength();
+
+		if((tmp->value = (uint8_t*)calloc(tmp->length, sizeof(uint8_t))) == NULL)
+			goto ERROR;
+
+		memcpy(tmp->value, (*item).getBuffer(), tmp->length);
+		tmp->next = NULL;
+
+		if(head == NULL)
+		{
+			head = tail = tmp;
+		}
+		else
+		{
+			tail->next = tmp;
+			tail = tmp;
+		}
 	}
-	else
-	{
-		ret = -1;
-	}
+	return head;
 
-	return ret;
-}
+ERROR :
+		SCARD_DEBUG_ERR("mem alloc fail");
 
-EXTERN_API int signature_helper_get_certificate_hash_by_pid(int pid, uint8_t *hash, uint32_t *length)
-{
-	int ret = -1;
-	ByteArray result;
+		while(head)
+		{
+			tmp = head;
+			head = head->next;
+			if(tmp->value != NULL)
+				free(tmp->value);
+			free(tmp);
+		}
 
-	if (pid < 0 || hash == NULL || length == NULL || *length < 20)
-		return ret;
+		return NULL;
 
-	result = SignatureHelper::getCertificationHash(pid);
-
-	if (result.isEmpty() == false && result.getLength() < *length)
-	{
-		memcpy(hash, result.getBuffer(), result.getLength());
-		*length = result.getLength();
-
-		ret = 0;
-	}
-	else
-	{
-		ret = -1;
-	}
-
-	return ret;
 }
 
 EXTERN_API int signature_helper_get_process_name(int pid, char *processName, uint32_t length)
@@ -279,48 +281,37 @@ EXTERN_API int signature_helper_get_process_name(int pid, char *processName, uin
 	return ret;
 }
 
-EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, signature_helper_get_certificate_hashes_cb cb, void *user_param)
+EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, certiHash **hash)
 {
 	int ret = -1;
 	vector<ByteArray> hashes;
 
-	if (packageName == NULL || cb == NULL)
+	if (packageName == NULL)
 		return ret;
 
 	if (SignatureHelper::getCertificationHashes(packageName, hashes) == true)
 	{
-		vector<ByteArray>::iterator item;
-
-		for (item = hashes.begin(); item != hashes.end(); item++)
-		{
-			cb(user_param, (*item).getBuffer(), (*item).getLength());
-		}
-
+		*hash = __signature_helper_vector_to_linked_list(hashes);
 		ret = 0;
 	}
 
 	return ret;
 }
 
-EXTERN_API int signature_helper_get_certificate_hashes_by_pid(int pid, signature_helper_get_certificate_hashes_cb cb, void *user_param)
+EXTERN_API int signature_helper_get_certificate_hashes_by_pid(int pid, certiHash **hash)
 {
 	int ret = -1;
 	vector<ByteArray> hashes;
 
-	if (pid <= 0 || cb == NULL)
+	if (pid <= 0)
 		return ret;
 
 	if (SignatureHelper::getCertificationHashes(pid, hashes) == true)
 	{
-		vector<ByteArray>::iterator item;
-
-		for (item = hashes.begin(); item != hashes.end(); item++)
-		{
-			cb(user_param, (*item).getBuffer(), (*item).getLength());
-		}
-
+		*hash = __signature_helper_vector_to_linked_list(hashes);
 		ret = 0;
 	}
 
 	return ret;
 }
+

@@ -55,13 +55,18 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+typedef struct _certiHash
+{
+   uint8_t *value;
+   uint32_t length;
+   struct _certiHash *next;
+}certiHash;
+
 typedef void (*signature_helper_get_certificate_hashes_cb)(void *user_param, uint8_t *hash, uint32_t length);
 
 int signature_helper_get_process_name(int pid, char *processName, uint32_t length);
-int signature_helper_get_certificate_hash(const char *packageName, uint8_t *hash, uint32_t *length);
-int signature_helper_get_certificate_hash_by_pid(int pid, uint8_t *hash, uint32_t *length);
-int signature_helper_get_certificate_hashes(const char *packageName, signature_helper_get_certificate_hashes_cb cb, void *user_param);
-int signature_helper_get_certificate_hashes_by_pid(int pid, signature_helper_get_certificate_hashes_cb cb, void *user_param);
+int signature_helper_get_certificate_hashes(const char *packageName, certiHash **hash);
+int signature_helper_get_certificate_hashes_by_pid(int pid, certiHash **hash);
 
 #ifdef __cplusplus
 }

@@ -201,21 +201,18 @@ ERROR :
 
 			for (i = 0; i < events; i++)
 			{
-				if (pollEvents[i].data.fd == fdPoll)
-				{
-					SCARD_DEBUG("pollEvents[%d].events [%X]", i, pollEvents[i].events);
+				SCARD_DEBUG("pollEvents[%d].events [%X]", i, pollEvents[i].events);
 
-					if ((pollEvents[i].events & EPOLLHUP) || (pollEvents[i].events & EPOLLERR))
-					{
-						SCARD_DEBUG_ERR("connection is closed");
-						result = 0;
-						break;
-					}
-					else if (pollEvents[i].events & EPOLLIN)
-					{
-						result = 1;
-						break;
-					}
+				if ((pollEvents[i].events & EPOLLHUP) || (pollEvents[i].events & EPOLLERR))
+				{
+					SCARD_DEBUG_ERR("connection is closed");
+					result = 0;
+					break;
+				}
+				else if (pollEvents[i].events & EPOLLIN)
+				{
+					result = 1;
+					break;
 				}
 			}
 		}
@@ -369,7 +366,7 @@ ERROR :
 		struct epoll_event ev;
 
 		ev.events = EPOLLIN | EPOLLHUP | EPOLLERR;
-		ev.data.fd = fdPoll;
+		ev.data.fd = ipcSocket;
 
 		epoll_ctl(fdPoll, EPOLL_CTL_ADD, ipcSocket, &ev);
 #else

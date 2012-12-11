@@ -46,7 +46,7 @@ namespace smartcard_service_api
 		DispatcherHelper *dispatcher;
 #ifdef CLIENT_IPC_THREAD
 #ifdef USE_IPC_EPOLL
-		static const int EPOLL_SIZE = 128;
+		static const int EPOLL_SIZE = 5;
 		int fdPoll;
 		struct epoll_event *pollEvents;
 #else
