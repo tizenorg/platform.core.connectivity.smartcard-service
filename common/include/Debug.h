@@ -37,25 +37,25 @@
 #define SCARD_DEBUG(fmt, ...)\
 	do\
 	{\
-		LOGD("[%s(): %d] " fmt, __FUNCTION__, __LINE__,##__VA_ARGS__);\
+		LOGD(fmt, ##__VA_ARGS__);\
 	} while (0)
 
 #define SCARD_DEBUG_ERR(fmt, ...)\
 	do\
 	{\
-		LOGE(COLOR_RED"[%s(): %d] " fmt COLOR_END, __FUNCTION__, __LINE__,##__VA_ARGS__);\
+		LOGE(COLOR_RED fmt COLOR_END, ##__VA_ARGS__);\
 	}while (0)
 
 #define SCARD_BEGIN() \
 	do\
     {\
-		LOGD(COLOR_BLUE"[%s(): %d] BEGIN >>>>"COLOR_END, __FUNCTION__ ,__LINE__);\
+		LOGD(COLOR_BLUE"BEGIN >>>>"COLOR_END);\
     } while( 0 )
 
 #define SCARD_END() \
 	do\
     {\
-		LOGD(COLOR_BLUE"[%s(): %d] END <<<<"COLOR_END, __FUNCTION__,__LINE__ );\
+		LOGD(COLOR_BLUE"END <<<<"COLOR_END);\
     } \
     while( 0 )
 
