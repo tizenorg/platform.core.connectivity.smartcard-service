@@ -221,7 +221,7 @@ namespace smartcard_service_api
 /* export C API */
 using namespace smartcard_service_api;
 
-certiHash* __signature_helper_vector_to_linked_list(vector<ByteArray> &certHashes)
+certiHash *__signature_helper_vector_to_linked_list(vector<ByteArray> &certHashes)
 {
 	vector<ByteArray>::iterator item;
 	certiHash *head, *tail, *tmp;
@@ -230,18 +230,21 @@ certiHash* __signature_helper_vector_to_linked_list(vector<ByteArray> &certHashe
 
 	for (item = certHashes.begin(); item != certHashes.end(); item++)
 	{
-		if((tmp = (certiHash*)calloc(1, sizeof(certiHash)))== NULL)
+		if ((tmp = (certiHash *)calloc(1, sizeof(certiHash))) == NULL)
 			goto ERROR;
 
 		tmp->length = (*item).getLength();
 
-		if((tmp->value = (uint8_t*)calloc(tmp->length, sizeof(uint8_t))) == NULL)
+		if ((tmp->value = (uint8_t *)calloc(tmp->length, sizeof(uint8_t))) == NULL)
+		{
+			free(tmp);
 			goto ERROR;
+		}
 
 		memcpy(tmp->value, (*item).getBuffer(), tmp->length);
 		tmp->next = NULL;
 
-		if(head == NULL)
+		if (head == NULL)
 		{
 			head = tail = tmp;
 		}
@@ -254,19 +257,18 @@ certiHash* __signature_helper_vector_to_linked_list(vector<ByteArray> &certHashe
 	return head;
 
 ERROR :
-		SCARD_DEBUG_ERR("mem alloc fail");
+	SCARD_DEBUG_ERR("mem alloc fail");
 
-		while(head)
-		{
-			tmp = head;
-			head = head->next;
-			if(tmp->value != NULL)
-				free(tmp->value);
-			free(tmp);
-		}
+	while (head)
+	{
+		tmp = head;
+		head = head->next;
+		if (tmp->value != NULL)
+			free(tmp->value);
+		free(tmp);
+	}
 
-		return NULL;
-
+	return NULL;
 }
 
 EXTERN_API int signature_helper_get_process_name(int pid, char *processName, uint32_t length)
