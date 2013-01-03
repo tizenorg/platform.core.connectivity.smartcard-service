@@ -49,8 +49,8 @@ namespace smartcard_service_api
 		if (pid < 0 || processName == NULL || length == 0)
 			return ret;
 
-		snprintf(buffer, sizeof(buffer), "/proc/%d/exec", pid);
-		SCARD_DEBUG("pid : %d, exec : %s", pid, buffer);
+		snprintf(buffer, sizeof(buffer), "/proc/%d/exe", pid);
+		SCARD_DEBUG("pid : %d, exe : %s", pid, buffer);
 
 		if ((len = readlink(buffer, filename, sizeof(filename) - 1)) < sizeof(filename) - 1)
 		{

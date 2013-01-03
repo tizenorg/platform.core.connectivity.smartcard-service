@@ -127,12 +127,15 @@ namespace smartcard_service_api
 		bool isValidSessionHandle(int socket, unsigned int context, unsigned int sessionID);
 
 		bool _isAuthorizedAccess(Terminal *terminal, int pid, ByteArray aid, vector<ByteArray> &hashes);
+		bool _isAuthorizedAccess(Terminal *terminal, int pid, ByteArray aid, vector<ByteArray> &hashes, int channelNum);
+
 		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid);
 		unsigned int createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid);
 		Channel *getChannel(int socket, unsigned int context, unsigned int channelID);
 		void removeChannel(int socket, unsigned int context, unsigned int channelID);
 
 		AccessControlList *getAccessControlList(Terminal *terminal);
+		AccessControlList *getAccessControlList(Terminal *termina, int channelNuml);
 
 		bool sendMessageToAllClients(Message &msg);
 

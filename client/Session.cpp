@@ -691,7 +691,7 @@ EXTERN_API channel_h session_open_logical_channel_sync(session_h handle, unsigne
 
 #ifdef CLIENT_IPC_THREAD
 	SESSION_EXTERN_BEGIN;
-	result = session->openBasicChannelSync(aid, length);
+	result = session->openLogicalChannelSync(aid, length);
 	SESSION_EXTERN_END;
 #endif
 
