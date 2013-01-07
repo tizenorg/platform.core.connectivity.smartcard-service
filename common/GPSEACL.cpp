@@ -37,75 +37,77 @@ namespace smartcard_service_api
 	static unsigned char oid_globalplatform[] = { 0x2A, 0x86, 0x48, 0x86, 0xFC, 0x6B, 0x81, 0x48, 0x01, 0x01 };
 	ByteArray GPSEACL::OID_GLOBALPLATFORM(ARRAY_AND_SIZE(oid_globalplatform));
 
-	GPSEACL::GPSEACL(Channel *channel):AccessControlList(channel)
+	GPSEACL::GPSEACL():AccessControlList()
 	{
-		this->channel = channel;
-
-		if (channel->getSelectResponse().isEmpty() == true)
-		{
-			pkcs15 = new PKCS15(channel);
-		}
-		else
-		{
-			pkcs15 = new PKCS15(channel, channel->getSelectResponse());
-		}
 	}
 
 	GPSEACL::~GPSEACL()
 	{
-		if (pkcs15 != NULL)
-		{
-			delete pkcs15;
-		}
 	}
 
-	int GPSEACL::loadACL()
+	int GPSEACL::loadACL(Channel *channel)
 	{
 		int result = 0;
-		ByteArray aid, certHash;
-		PKCS15ODF *odf;
+		PKCS15 *pkcs15;
 
-		/* basically, all requests will be accepted when PKCS #15 doesn't exist or global platform OID is not placed */
-		allGranted = true;
-
-		if (pkcs15->isClosed() == false)
+		if (channel == NULL)
 		{
-			if ((odf = pkcs15->getODF()) != NULL)
+			return -1;
+		}
+
+		pkcs15 = new PKCS15(channel, channel->getSelectResponse());
+		if (pkcs15 != NULL)
+		{
+			/* basically, all requests will be accepted when PKCS #15 doesn't exist or global platform OID is not placed */
+			allGranted = true;
+
+			if (pkcs15->isClosed() == false)
 			{
-				PKCS15DODF *dodf;
+				PKCS15ODF *odf;
 
-				if ((dodf = odf->getDODF()) != NULL)
+				if ((odf = pkcs15->getODF()) != NULL)
 				{
-					if (loadAccessControl(dodf) == 0)
-					{
-						printAccessControlList();
+					PKCS15DODF *dodf;
 
-						result = 0;
+					if ((dodf = odf->getDODF()) != NULL)
+					{
+						if (loadAccessControl(channel, dodf) == 0)
+						{
+							printAccessControlList();
+
+							result = 0;
+						}
+						else
+						{
+							SCARD_DEBUG_ERR("loadAccessControl failed, every request will be accepted.");
+						}
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("loadAccessControl failed, every request will be accepted.");
+						SCARD_DEBUG_ERR("dodf null, every request will be accepted.");
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("dodf null, every request will be accepted.");
+					SCARD_DEBUG_ERR("odf null, every request will be accepted.");
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("odf null, every request will be accepted.");
+				SCARD_DEBUG_ERR("failed to open PKCS15, every request will be accepted.");
 			}
+
+			delete pkcs15;
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("failed to open PKCS15, every request will be accepted.");
+			return -1;
 		}
 
 		return result;
 	}
 
-	int GPSEACL::loadAccessControl(PKCS15DODF *dodf)
+	int GPSEACL::loadAccessControl(Channel *channel, PKCS15DODF *dodf)
 	{
 		int result = -1;
 		ByteArray path;
@@ -153,7 +155,7 @@ namespace smartcard_service_api
 						path = SimpleTLV::getOctetString(tlv.getValue());
 						SCARD_DEBUG("access control rule path : %s", path.toString());
 
-						if (loadRules(path) == 0)
+						if (loadRules(channel, path) == 0)
 						{
 							SCARD_DEBUG("loadRules success");
 						}
@@ -178,7 +180,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	int GPSEACL::loadRules(ByteArray path)
+	int GPSEACL::loadRules(Channel *channel, ByteArray path)
 	{
 		FileObject file(channel);
 		ByteArray data, aid;
@@ -223,7 +225,7 @@ namespace smartcard_service_api
 					path = SimpleTLV::getOctetString(tlv.getValue());
 					SCARD_DEBUG("path : %s", path.toString());
 
-					if (loadAccessConditions(aid, path) == 0)
+					if (loadAccessConditions(channel, aid, path) == 0)
 					{
 						SCARD_DEBUG("loadCertHashes success");
 					}
@@ -247,7 +249,7 @@ namespace smartcard_service_api
 		return 0;
 	}
 
-	int GPSEACL::loadAccessConditions(ByteArray aid, ByteArray path)
+	int GPSEACL::loadAccessConditions(Channel *channel, ByteArray aid, ByteArray path)
 	{
 		FileObject file(channel);
 		ByteArray data;
@@ -285,30 +287,30 @@ namespace smartcard_service_api
 
 using namespace smartcard_service_api;
 
-EXTERN_API gp_se_acl_h gp_se_acl_create_instance(channel_h channel)
+EXTERN_API gp_se_acl_h gp_se_acl_create_instance()
 {
-	GPSEACL *acl = new GPSEACL((Channel *)channel);
+	GPSEACL *acl = new GPSEACL();
 
 	return (gp_se_acl_h)acl;
 }
 
-EXTERN_API int gp_se_acl_load_acl(gp_se_acl_h handle)
+EXTERN_API int gp_se_acl_load_acl(gp_se_acl_h handle, channel_h channel)
 {
 	int result = -1;
 
 	GP_SE_ACL_EXTERN_BEGIN;
-	result = acl->loadACL();
+	result = acl->loadACL((Channel *)channel);
 	GP_SE_ACL_EXTERN_END;
 
 	return result;
 }
 
-EXTERN_API int gp_se_acl_update_acl(gp_se_acl_h handle)
+EXTERN_API int gp_se_acl_update_acl(gp_se_acl_h handle, channel_h channel)
 {
 	int result = -1;
 
 	GP_SE_ACL_EXTERN_BEGIN;
-	acl->updateACL();
+	acl->updateACL((Channel *)channel);
 	GP_SE_ACL_EXTERN_END;
 
 	return result;

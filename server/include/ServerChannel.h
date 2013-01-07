@@ -34,8 +34,11 @@ namespace smartcard_service_api
 	private:
 		Terminal *terminal;
 		void *caller;
+		bool privilege;
 
 		ServerChannel(ServerSession *session, void *caller, int channelNum, Terminal *terminal);
+		void setChannelNumber(int channelNum) { this->channelNum = channelNum; }
+		void unsetPrivilegeMode() { this->privilege = false; }
 
 	protected:
 		void closeSync();
@@ -44,7 +47,8 @@ namespace smartcard_service_api
 	public:
 		~ServerChannel();
 
-		int getChannelNumber();
+		int getChannelNumber() { return channelNum; }
+		Terminal *getTerminal() { return terminal; }
 
 		int close(closeCallback callback, void *userParam) { return -1; }
 		int transmit(ByteArray command, transmitCallback callback, void *userParam) { return -1; };

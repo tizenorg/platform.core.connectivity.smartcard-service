@@ -390,7 +390,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	bool ServerResource::_isAuthorizedAccess(Terminal *terminal, int pid, ByteArray aid, vector<ByteArray> &hashes)
+	bool ServerResource::_isAuthorizedAccess(ServerChannel *channel, int pid, ByteArray aid, vector<ByteArray> &hashes)
 	{
 		bool result = true;
 
@@ -403,9 +403,12 @@ namespace smartcard_service_api
 		if (strncmp(filename, "ozD3Dw1MZruTDKHWGgYaDib2B2LV4/nfT+8b/g1Vsk8=", sizeof(filename)) != 0)
 		{
 			/* request open channel sequence */
-			if ((acList = getAccessControlList(terminal)) != NULL)
+			if ((acList = getAccessControlList(channel)) != NULL)
 			{
 #if 1
+				PKCS15 pkcs15(channel);
+
+				acList->loadACL(channel);
 				result = acList->isAuthorizedAccess(aid, hashes);
 #else
 				result = acList->isAuthorizedAccess(aid, session->packageCert);
@@ -422,46 +425,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	bool ServerResource::_isAuthorizedAccess(Terminal *terminal, int pid, ByteArray aid, vector<ByteArray> &hashes, int channelNum)
-	{
-		bool result = true;
-
-#if 1 /* disable for temporary */
-		char filename[1024] = { 0, };
-		AccessControlList *acList = NULL;
-
-		SCARD_DEBUG_ERR("=== _isAuthorizedAccess22");
-
-		/* check exceptional case */
-		SignatureHelper::getProcessName(pid, filename, sizeof(filename));
-		if (strncmp(filename, "ozD3Dw1MZruTDKHWGgYaDib2B2LV4/nfT+8b/g1Vsk8=", sizeof(filename)) != 0)
-		{
-			/* request open channel sequence */
-			if ((acList = getAccessControlList(terminal, channelNum)) != NULL)
-			{
-#if 1
-				result = acList->isAuthorizedAccess(aid, hashes);
-
-				SCARD_DEBUG_ERR("AC result [%d]", result);
-
-#else
-				SCARD_DEBUG_ERR("=== Get access control done");
-
-//				result = acList->isAuthorizedAccess(aid, session->packageCert);
-#endif
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("acList is null");
-				result = false;
-			}
-		}
-#endif
-
-		return result;
-	}
-
-
+#if 0
 	unsigned int ServerResource::_createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid)
 	{
 		unsigned int result = IntegerHandle::INVALID_HANDLE;
@@ -501,27 +465,164 @@ namespace smartcard_service_api
 			}
 		}
 
+		/* select aid */
+		APDUCommand apdu;
+		apdu.setCommand(0, APDUCommand::INS_SELECT_FILE, APDUCommand::P1_SELECT_BY_DF_NAME, APDUCommand::P2_SELECT_GET_FCP, aid, 0);
+		apdu.setChannel(1, channelNum);
+		apdu.getBuffer(command);
 
-		if (_isAuthorizedAccess(terminal, service->getParent()->getPID(), aid, service->getParent()->getCertificationHashes(), channelNum) == true)
+		rv = terminal->transmitSync(command, response);
+		if (rv == 0 && response.getLength() >= 2)
 		{
-			/* select aid */
-			APDUCommand apdu;
-			apdu.setCommand(0, APDUCommand::INS_SELECT_FILE, APDUCommand::P1_SELECT_BY_DF_NAME, APDUCommand::P2_SELECT_GET_FCP, aid, 0);
-			apdu.setChannel(1, channelNum);
-			apdu.getBuffer(command);
+			ResponseHelper resp(response);
 
-			rv = terminal->transmitSync(command, response);
+			if (resp.getStatus() == 0)
+			{
+				result = service->openChannel(sessionID, channelNum, response);
+				if (result == IntegerHandle::INVALID_HANDLE)
+				{
+					SCARD_DEBUG_ERR("channel is null.");
+				}
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+			}
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+		}
+
+		return result;
+	}
+#else
+	int ServerResource::_openLogicalChannel(Terminal *terminal)
+	{
+		int result = -1;
+		int rv = 0;
+		ByteArray command;
+		ByteArray response;
+
+		/* open channel */
+		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_OPEN_LOGICAL_CHANNEL, 0, ByteArray::EMPTY);
+		rv = terminal->transmitSync(command, response);
+		if (rv == 0 && response.getLength() >= 2)
+		{
+			ResponseHelper resp(response);
+
+			if (resp.getStatus() == 0)
+			{
+				result = resp.getDataField()[0];
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				if (0)
+				{
+					/* TODO : if there is no more channel, return error code */
+					SCARD_DEBUG_ERR("no more logical channel");
+					result = -2;
+				}
+			}
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+		}
+
+		return result;
+	}
+
+	int ServerResource::_closeLogicalChannel(Terminal *terminal, int channelNum)
+	{
+		int result = -1;
+		int rv = 0;
+		ByteArray command;
+		ByteArray response;
+
+		/* open channel */
+		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_CLOSE_LOGICAL_CHANNEL, channelNum, ByteArray::EMPTY);
+		rv = terminal->transmitSync(command, response);
+		if (rv == 0 && response.getLength() >= 2)
+		{
+			ResponseHelper resp(response);
+
+			if (resp.getStatus() == 0)
+			{
+				SCARD_DEBUG("channel closed [%d]", channelNum);
+				result = 0;
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+			}
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+		}
+
+		return result;
+	}
+
+	unsigned int ServerResource::_createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid)
+	{
+		unsigned int result = IntegerHandle::INVALID_HANDLE;
+		int channelNum = 0;
+		ServerChannel *channel = NULL;
+
+		/* open logical channel */
+		if (channelType == 1)
+		{
+			channelNum = _openLogicalChannel(terminal);
+			if (channelNum > 0)
+			{
+				SCARD_DEBUG("channelNum [%d]", result);
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("_openLogicalChannel failed [%d]", channelNum);
+				return result;
+			}
+		}
+
+		/* create channel instance */
+		result = service->openChannel(sessionID, channelNum, ByteArray::EMPTY);
+		if (result == IntegerHandle::INVALID_HANDLE)
+		{
+			SCARD_DEBUG_ERR("channel is null.");
+
+			/* close logical channel */
+			if (channelNum > 0)
+			{
+				_closeLogicalChannel(terminal, channelNum);
+			}
+			return result;
+		}
+
+		channel = service->getChannel(result);
+
+		/* check */
+		if (_isAuthorizedAccess(channel, service->getParent()->getPID(),
+				aid, service->getParent()->getCertificationHashes()) == true)
+		{
+			int rv = 0;
+			ByteArray command;
+			ByteArray response;
+
+			/* select aid */
+			command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_DF_NAME, channelNum, aid);
+			rv = channel->transmitSync(command, response);
 			if (rv == 0 && response.getLength() >= 2)
 			{
 				ResponseHelper resp(response);
 
 				if (resp.getStatus() == 0)
 				{
-					result = service->openChannel(sessionID, channelNum, response);
-					if (result == IntegerHandle::INVALID_HANDLE)
-					{
-						SCARD_DEBUG_ERR("channel is null.");
-					}
+					channel->selectResponse = response;
+					/* remove privilege mode */
+					channel->unsetPrivilegeMode();
 				}
 				else
 				{
@@ -533,57 +634,19 @@ namespace smartcard_service_api
 				SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
 			}
 		}
-		return result;
-	}
-
-#if 0
-	unsigned int ServerResource::createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid)
-	{
-		unsigned int result = -1;
-		ServiceInstance *service = NULL;
-
-		if ((service = getService(socket, context)) != NULL)
-		{
-			if (service->isVaildSessionHandle(sessionID) == true)
-			{
-				ServerSession *session = NULL;
-				Terminal *terminal = NULL;
-
-				terminal = service->getTerminal(sessionID);
-				session = service->getSession(sessionID);
-				if (terminal != NULL && session != NULL)
-				{
-					if (_isAuthorizedAccess(terminal, service->getParent()->getPID(), aid, service->getParent()->getCertificationHashes()) == true)
-					{
-						result = _createChannel(terminal, service, channelType, sessionID, aid);
-					}
-					else
-					{
-						SCARD_DEBUG_ERR("access denied [%d]", sessionID);
-					}
-				}
-				else
-				{
-					SCARD_DEBUG_ERR("session is invalid [%d]", sessionID);
-				}
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("session is invalid [%d]", sessionID);
-			}
-		}
 		else
 		{
-			SCARD_DEBUG_ERR("getService is failed [%d] [%d]", socket, context);
+			SCARD_DEBUG_ERR("unauthorized access");
+
+			service->closeChannel(result);
+			result = IntegerHandle::INVALID_HANDLE;
 		}
+
 
 		return result;
 	}
-
 #endif
 
-
-/****************************************************************************************************/
 	unsigned int ServerResource::createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid)
 	{
 		unsigned int result = -1;
@@ -601,6 +664,10 @@ namespace smartcard_service_api
 				if (terminal != NULL && session != NULL)
 				{
 					result = _createChannel(terminal, service, channelType, sessionID, aid);
+					if (result == IntegerHandle::INVALID_HANDLE)
+					{
+						SCARD_DEBUG_ERR("create channel failed [%d]", sessionID);
+					}
 				}
 				else
 				{
@@ -658,19 +725,11 @@ namespace smartcard_service_api
 
 		if ((item = mapACL.find(terminal)) == mapACL.end())
 		{
-			ServerChannel *channel = new ServerChannel(NULL, NULL, 0, terminal);
-			if (channel != NULL)
+			/* load access control */
+			result = new GPSEACL();
+			if (result != NULL)
 			{
-				/* load access control */
-				result = new GPSEACL(channel);
-				if (result != NULL)
-				{
-					mapACL.insert(make_pair(terminal, result));
-				}
-				else
-				{
-					SCARD_DEBUG_ERR("alloc failed");
-				}
+				mapACL.insert(make_pair(terminal, result));
 			}
 			else
 			{
@@ -685,26 +744,18 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	AccessControlList *ServerResource::getAccessControlList(Terminal *terminal, int channelNuml)
+	AccessControlList *ServerResource::getAccessControlList(ServerChannel *channel)
 	{
 		AccessControlList *result = NULL;
 		map<Terminal *, AccessControlList *>::iterator item;
 
-		if ((item = mapACL.find(terminal)) == mapACL.end())
+		if ((item = mapACL.find(channel->getTerminal())) == mapACL.end())
 		{
-			ServerChannel *channel = new ServerChannel(NULL, NULL, channelNuml, terminal);
-			if (channel != NULL)
+			/* load access control */
+			result = new GPSEACL();
+			if (result != NULL)
 			{
-				/* load access control */
-				result = new GPSEACL(channel);
-				if (result != NULL)
-				{
-					mapACL.insert(make_pair(terminal, result));
-				}
-				else
-				{
-					SCARD_DEBUG_ERR("alloc failed");
-				}
+				mapACL.insert(make_pair(channel->getTerminal(), result));
 			}
 			else
 			{

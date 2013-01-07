@@ -89,6 +89,7 @@ namespace smartcard_service_api
 	Channel *ServerSession::openBasicChannelSync(ByteArray aid, void *caller)
 	{
 		ServerChannel *channel = NULL;
+#if 0
 		AccessControlList *acList = NULL;
 		ByteArray command, result;
 		int channelID = 0;
@@ -141,7 +142,7 @@ namespace smartcard_service_api
 		{
 			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, result.getLength());
 		}
-
+#endif
 		return channel;
 	}
 
@@ -163,6 +164,7 @@ namespace smartcard_service_api
 	Channel *ServerSession::openLogicalChannelSync(ByteArray aid, void *caller)
 	{
 		ServerChannel *channel = NULL;
+#if 0
 		AccessControlList *acList = NULL;
 		ByteArray command, result;
 		int channelID = 1;
@@ -240,7 +242,7 @@ namespace smartcard_service_api
 		{
 			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, result.getLength());
 		}
-
+#endif
 		return channel;
 	}
 

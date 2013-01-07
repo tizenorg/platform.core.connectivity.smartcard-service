@@ -58,7 +58,7 @@ class TestEventHandler : public SEServiceListener
 
 	void eventHandler(SEServiceHelper *service, char *seName, int event, void *userData)
 	{
-		user_context_t *context = (user_context_t *)userData;
+//		user_context_t *context = (user_context_t *)userData;
 		vector<ReaderHelper *> readers;
 		size_t i;
 

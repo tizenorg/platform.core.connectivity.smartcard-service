@@ -93,10 +93,10 @@ namespace smartcard_service_api
 		if (acList == NULL)
 		{
 			/* load access control */
-			acList = new GPSEACL(adminChannel);
+			acList = new GPSEACL();
 			if (acList != NULL)
 			{
-				acList->loadACL();
+				acList->loadACL(adminChannel);
 			}
 			else
 			{

@@ -30,6 +30,7 @@ namespace smartcard_service_api
 		this->terminal = terminal;
 		this->caller = caller;
 		this->channelNum = channelNum;
+		this->privilege = true;
 	}
 
 	ServerChannel::~ServerChannel()
@@ -74,31 +75,31 @@ namespace smartcard_service_api
 		channelNum = -1;
 	}
 
-	int ServerChannel::getChannelNumber()
-	{
-		return channelNum;
-	}
-
 	int ServerChannel::transmitSync(ByteArray command, ByteArray &result)
 	{
 		APDUCommand helper;
 
-		if (session != NULL) /* admin channel */
+		if (isClosed() == true)
 		{
-			helper.setCommand(command);
+			return -1;
+		}
 
-			/* filter command */
+		helper.setCommand(command);
+
+		/* filter command */
+		if (privilege == false)
+		{
 			if ((helper.getINS() == APDUCommand::INS_SELECT_FILE && helper.getP1() == APDUCommand::P1_SELECT_BY_DF_NAME) ||
 				(helper.getINS() == APDUCommand::INS_MANAGE_CHANNEL))
 			{
 				return -4; /* security reason */
 			}
-
-			/* insert channel ID */
-			helper.setChannel(0, channelNum);
-
-			helper.getBuffer(command);
 		}
+
+		/* TODO : insert channel ID using atr information */
+		helper.setChannel(APDUCommand::CLA_CHANNEL_STANDARD, channelNum);
+
+		helper.getBuffer(command);
 
 		SCARD_DEBUG("command [%d] : %s", command.getLength(), command.toString());
 

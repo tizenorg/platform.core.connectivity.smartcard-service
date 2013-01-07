@@ -80,6 +80,10 @@ namespace smartcard_service_api
 
 		static void terminalCallback(void *terminal, int event, int error, void *user_param);
 
+		int _openLogicalChannel(Terminal *terminal);
+		int _closeLogicalChannel(Terminal *terminal, int channelNum);
+		bool _isAuthorizedAccess(ServerChannel *channel, int pid, ByteArray aid, vector<ByteArray> &hashes);
+		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid);
 	public:
 		/* static member */
 		static ServerResource &getInstance();
@@ -126,16 +130,12 @@ namespace smartcard_service_api
 		void removeSession(int socket, unsigned int context, unsigned int session);
 		bool isValidSessionHandle(int socket, unsigned int context, unsigned int sessionID);
 
-		bool _isAuthorizedAccess(Terminal *terminal, int pid, ByteArray aid, vector<ByteArray> &hashes);
-		bool _isAuthorizedAccess(Terminal *terminal, int pid, ByteArray aid, vector<ByteArray> &hashes, int channelNum);
-
-		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid);
 		unsigned int createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid);
 		Channel *getChannel(int socket, unsigned int context, unsigned int channelID);
 		void removeChannel(int socket, unsigned int context, unsigned int channelID);
 
 		AccessControlList *getAccessControlList(Terminal *terminal);
-		AccessControlList *getAccessControlList(Terminal *termina, int channelNuml);
+		AccessControlList *getAccessControlList(ServerChannel *channel);
 
 		bool sendMessageToAllClients(Message &msg);
 

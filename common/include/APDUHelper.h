@@ -115,6 +115,9 @@ namespace smartcard_service_api
 		static const unsigned char P2_SELECT_GET_FCP = (unsigned char)0x04;
 //		static const unsigned char P2_ = (unsigned char)0x;
 
+		static const unsigned char CLA_CHANNEL_STANDARD = (unsigned char)0x00;
+		static const unsigned char CLA_CHANNEL_EXTENDED = (unsigned char)0x01;
+
 		APDUCommand();
 		~APDUCommand();
 

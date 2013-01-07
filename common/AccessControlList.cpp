@@ -36,27 +36,7 @@ namespace smartcard_service_api
 
 	AccessControlList::AccessControlList()
 	{
-		channel = NULL;
-		terminal = NULL;
 		allGranted = false;
-	}
-
-	AccessControlList::AccessControlList(Channel *channel)
-	{
-		channel = NULL;
-		terminal = NULL;
-		allGranted = false;
-
-		setChannel(channel);
-	}
-
-	AccessControlList::AccessControlList(Terminal *terminal)
-	{
-		channel = NULL;
-		terminal = NULL;
-		allGranted = false;
-
-		setTerminal(terminal);
 	}
 
 	AccessControlList::~AccessControlList()
@@ -64,33 +44,16 @@ namespace smartcard_service_api
 		releaseACL();
 	}
 
-	int AccessControlList::setChannel(Channel *channel)
-	{
-		this->channel = channel;
-
-		return 0;
-	}
-
-	int AccessControlList::updateACL()
-	{
-		return loadACL();
-	}
-
 	void AccessControlList::releaseACL()
 	{
 		mapConditions.clear();
+		allGranted = false;
 	}
 
 	bool AccessControlList::isAuthorizedAccess(ByteArray aid, ByteArray certHash, bool update)
 	{
 		bool result = allGranted;
 		map<ByteArray, AccessCondition>::iterator iterMap;
-
-		if (update)
-		{
-			loadACL();
-			result = allGranted;
-		}
 
 		if (result == false)
 		{
@@ -132,8 +95,6 @@ namespace smartcard_service_api
 	{
 		bool result;
 		size_t i;
-
-		loadACL();
 
 		result = allGranted;
 

@@ -35,20 +35,19 @@ namespace smartcard_service_api
 	class GPSEACL: public AccessControlList
 	{
 	private:
-		PKCS15 *pkcs15;
 		ByteArray refreshTag;
 
 		static ByteArray OID_GLOBALPLATFORM;
 
-		int loadAccessControl(PKCS15DODF *dodf);
-		int loadRules(ByteArray path);
-		int loadAccessConditions(ByteArray aid, ByteArray path);
+		int loadAccessControl(Channel *channel, PKCS15DODF *dodf);
+		int loadRules(Channel *channel, ByteArray path);
+		int loadAccessConditions(Channel *channel, ByteArray aid, ByteArray path);
 
 	public:
-		GPSEACL(Channel *channel);
+		GPSEACL();
 		~GPSEACL();
 
-		int loadACL();
+		int loadACL(Channel *channel);
 
 	};
 
@@ -63,9 +62,9 @@ extern "C"
 
 typedef void *gp_se_acl_h;
 
-gp_se_acl_h gp_se_acl_create_instance(channel_h channel);
-int gp_se_acl_load_acl(gp_se_acl_h handle);
-int gp_se_acl_update_acl(gp_se_acl_h handle);
+gp_se_acl_h gp_se_acl_create_instance();
+int gp_se_acl_load_acl(gp_se_acl_h handle, channel_h channel);
+int gp_se_acl_update_acl(gp_se_acl_h handle, channel_h channel);
 void gp_se_acl_release_acl(gp_se_acl_h handle);
 bool gp_se_acl_is_authorized_access(gp_se_acl_h handle, unsigned char *aidBuffer, unsigned int aidLength, unsigned char *certHashBuffer, unsigned int certHashLength);
 void gp_se_acl_destroy_instance(gp_se_acl_h handle);

@@ -32,19 +32,15 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class Terminal;
 	class AccessCondition;
 
 	class AccessControlList
 	{
 	protected:
 		map<ByteArray, AccessCondition> mapConditions;
-		Channel *channel;
-		Terminal *terminal;
 		bool allGranted;
 
 		void printAccessControlList();
-
 		bool isAuthorizedAccess(ByteArray aid, ByteArray certHash, bool update);
 
 	public:
@@ -52,21 +48,15 @@ namespace smartcard_service_api
 		static ByteArray AID_DEFAULT;
 
 		AccessControlList();
-		AccessControlList(Channel *channel);
-		AccessControlList(Terminal *terminal);
 		virtual ~AccessControlList();
 
-		int setChannel(Channel *channel);
-		virtual int setTerminal(Terminal *terminal) { this->terminal = terminal; return 0; }
+		virtual int loadACL(Channel *channel) = 0;
 
-		virtual int loadACL() = 0;
-
-		int updateACL();
+		int updateACL(Channel *channel) { return loadACL(channel); }
 		void releaseACL();
 
 		bool isAuthorizedAccess(ByteArray aid, ByteArray certHash);
 		bool isAuthorizedAccess(unsigned char *aidBuffer, unsigned int aidLength, unsigned char *certHashBuffer, unsigned int certHashLength);
-
 		bool isAuthorizedAccess(ByteArray aid, vector<ByteArray> &certHashes);
 	};
 

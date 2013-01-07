@@ -301,7 +301,7 @@ namespace smartcard_service_api
 			default :
 				switch (type)
 				{
-				case 0 : /* standard class byte, two logical channel bits (1~3) */
+				case CLA_CHANNEL_STANDARD : /* standard class byte, two logical channel bits (1~3) */
 					if (channelNum > 0 && channelNum < 4)
 					{
 						unsigned char temp;
@@ -315,7 +315,7 @@ namespace smartcard_service_api
 					}
 					break;
 
-				case 1 : /* extended class byte, four logical channel bits (1~15) */
+				case CLA_CHANNEL_EXTENDED : /* extended class byte, four logical channel bits (1~15) */
 					if (channelNum > 0 && channelNum < 16)
 					{
 						unsigned char temp;
