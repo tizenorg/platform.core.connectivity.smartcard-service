@@ -55,6 +55,9 @@ namespace smartcard_service_api
 #if 0
 		bool isValidReaderHandle(void *handle);
 #endif
+
+		void shutdown() {}
+		void shutdownSync() {}
 		friend void terminalCallback(char *name, int event, int error, void *user_param);
 		friend bool dispatcherCallback(void *message, int socket);
 		friend class ServerDispatcher;

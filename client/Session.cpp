@@ -54,7 +54,16 @@ namespace smartcard_service_api
 
 	Session::~Session()
 	{
-		close(NULL, this);
+		size_t i;
+
+		closeSync();
+
+		for (i = 0; i < channels.size(); i++)
+		{
+			delete (ClientChannel *)channels[i];
+		}
+
+		channels.clear();
 	}
 
 	void Session::closeChannels()
@@ -64,10 +73,7 @@ namespace smartcard_service_api
 		for (i = 0; i < channels.size(); i++)
 		{
 			channels[i]->closeSync();
-			delete (ClientChannel *)channels[i];
 		}
-
-		channels.clear();
 	}
 
 	ByteArray Session::getATRSync()

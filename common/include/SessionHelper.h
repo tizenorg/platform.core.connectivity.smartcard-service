@@ -49,10 +49,10 @@ namespace smartcard_service_api
 
 	public:
 		SessionHelper(ReaderHelper *reader);
-		virtual ~SessionHelper();
+		virtual ~SessionHelper() {}
 
-		ReaderHelper *getReader();
-		bool isClosed();
+		ReaderHelper *getReader() { return reader; }
+		bool isClosed() { return closed; }
 
 		virtual void closeChannels() = 0;
 

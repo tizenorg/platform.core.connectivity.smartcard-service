@@ -75,31 +75,39 @@ namespace smartcard_service_api
 
 	SEService::~SEService()
 	{
+		uint32_t i;
+
 		shutdownSync();
+
+		for (i = 0; i < readers.size(); i++)
+		{
+			delete (Reader *)readers[i];
+		}
+		readers.clear();
 	}
 
 	void SEService::shutdown()
 	{
-		uint32_t i;
-
-		for (i = 0; i < readers.size(); i++)
+		if (connected == true)
 		{
-			readers[i]->closeSessions();
-			delete (Reader *)readers[i];
-		}
+			uint32_t i;
 
-		readers.clear();
+			for (i = 0; i < readers.size(); i++)
+			{
+				readers[i]->closeSessions();
+			}
 
-		Message msg;
+			Message msg;
 
-		msg.message = Message::MSG_REQUEST_SHUTDOWN;
-		msg.error = (unsigned int)this; /* using error to context */
-		msg.caller = (void *)this;
-		msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+			msg.message = Message::MSG_REQUEST_SHUTDOWN;
+			msg.error = (unsigned int)this; /* using error to context */
+			msg.caller = (void *)this;
+			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-		if (ClientIPC::getInstance().sendMessage(&msg) == false)
-		{
-			SCARD_DEBUG_ERR("time over");
+			if (ClientIPC::getInstance().sendMessage(&msg) == false)
+			{
+				SCARD_DEBUG_ERR("time over");
+			}
 		}
 	}
 
@@ -113,10 +121,7 @@ namespace smartcard_service_api
 			for (i = 0; i < readers.size(); i++)
 			{
 				readers[i]->closeSessions();
-				delete (Reader *)readers[i];
 			}
-
-			readers.clear();
 
 			/* send message to load se */
 			int rv;

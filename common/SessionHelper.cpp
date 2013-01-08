@@ -27,33 +27,13 @@
 
 namespace smartcard_service_api
 {
-	SessionHelper::SessionHelper(ReaderHelper *reader)
+	SessionHelper::SessionHelper(ReaderHelper *reader) : closed(true)
 	{
-		closed = true;
-
-		if (reader == NULL)
-			return;
-
 		this->reader = reader;
-	}
-
-	SessionHelper::~SessionHelper()
-	{
-	}
-
-	ReaderHelper *SessionHelper::getReader()
-	{
-		return reader;
 	}
 
 //	ByteArray SessionHelper::getATR()
 //	{
 //		return atr;
 //	}
-
-	bool SessionHelper::isClosed()
-	{
-		return closed;
-	}
-
 } /* namespace smartcard_service_api */

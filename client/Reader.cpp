@@ -70,7 +70,16 @@ namespace smartcard_service_api
 
 	Reader::~Reader()
 	{
+		size_t i;
+
 		closeSessions();
+
+		for (i = 0; i < sessions.size(); i++)
+		{
+			delete (Session *)sessions[i];
+		}
+
+		sessions.clear();
 	}
 
 	void Reader::closeSessions()
@@ -80,10 +89,7 @@ namespace smartcard_service_api
 		for (i = 0; i < sessions.size(); i++)
 		{
 			sessions[i]->closeSync();
-			delete (Session *)sessions[i];
 		}
-
-		sessions.clear();
 	}
 
 	void Reader::getPackageCert()

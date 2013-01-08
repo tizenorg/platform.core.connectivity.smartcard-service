@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 
-
 #ifndef SESERVICEHELPER_H_
 #define SESERVICEHELPER_H_
 
@@ -34,17 +33,17 @@ namespace smartcard_service_api
 	class SEServiceHelper : public Synchronous
 	{
 	protected:
-		bool connected;
 		vector<ReaderHelper *> readers;
+		bool connected;
 
 	public:
-		SEServiceHelper();
+		SEServiceHelper() : connected(false) {}
 		virtual ~SEServiceHelper();
 
-		vector<ReaderHelper *> getReaders();
-		bool isConnected();
-		virtual void shutdown();
-		virtual void shutdownSync();
+		vector<ReaderHelper *> getReaders() { return readers; }
+		bool isConnected() { return connected; }
+		virtual void shutdown() = 0;
+		virtual void shutdownSync() = 0;
 	};
 
 } /* namespace smartcard_service_api */

@@ -26,34 +26,10 @@
 
 namespace smartcard_service_api
 {
-	SEServiceHelper::SEServiceHelper()
-	{
-		connected = false;
-	}
-
 	SEServiceHelper::~SEServiceHelper()
 	{
 		SCARD_BEGIN();
-		shutdown();
 		SCARD_END();
-	}
-
-	vector<ReaderHelper *> SEServiceHelper::getReaders()
-	{
-		return readers;
-	}
-
-	bool SEServiceHelper::isConnected()
-	{
-		return (readers.size() > 0);
-	}
-
-	void SEServiceHelper::shutdown()
-	{
-	}
-
-	void SEServiceHelper::shutdownSync()
-	{
 	}
 
 } /* namespace smartcard_service_api */
