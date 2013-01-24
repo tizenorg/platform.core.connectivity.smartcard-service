@@ -14,6 +14,8 @@ BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(libssl)
 BuildRequires: pkgconfig(dbus-glib-1)
 BuildRequires: pkgconfig(pkgmgr)
+BuildRequires: pkgconfig(vconf)
+BuildRequires: pkgconfig(aul)
 BuildRequires: cmake
 BuildRequires: gettext-tools
 
