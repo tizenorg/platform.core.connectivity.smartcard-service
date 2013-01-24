@@ -3,7 +3,7 @@ Summary:    Smartcard Service FW
 Version:    0.1.9
 Release:    1
 Group:      libs
-License:    Samsung Proprietary License
+License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
 #IFNDEF USE_AUTOSTART
 #Source1:    smartcard-service-server.init
