@@ -1,18 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <stdio.h>
@@ -125,7 +125,6 @@ namespace smartcard_service_api
 	bool OpensslHelper::digestBuffer(const char *algorithm, const ByteArray &buffer, ByteArray &result)
 	{
 		const EVP_MD *md;
-		unsigned char *temp;
 		bool ret = false;
 
 		if (algorithm == NULL || buffer.getLength() == 0)
@@ -137,30 +136,23 @@ namespace smartcard_service_api
 
 		if ((md = EVP_get_digestbyname(algorithm)) != NULL)
 		{
-			temp = new unsigned char[EVP_MAX_MD_SIZE];
-			if (temp != NULL)
+			uint8_t temp[EVP_MAX_MD_SIZE] = { 0, };
+			EVP_MD_CTX mdCtx;
+			unsigned int resultLen = 0;
+
+			if (EVP_DigestInit(&mdCtx, md) > 0)
 			{
-				EVP_MD_CTX mdCtx;
-				unsigned int resultLen = 0;
-
-				memset(temp, 0, EVP_MAX_MD_SIZE);
-
-				EVP_DigestInit(&mdCtx, md);
-				if (EVP_DigestUpdate(&mdCtx, buffer.getBuffer(), buffer.getLength()) != 0)
+				if (EVP_DigestUpdate(&mdCtx, buffer.getBuffer(), buffer.getLength()) == 0)
 				{
 					SCARD_DEBUG_ERR("EVP_DigestUpdate failed");
 				}
-				EVP_DigestFinal(&mdCtx, temp, &resultLen);
 
-				result.setBuffer(temp, resultLen);
-
-				delete []temp;
-
-				ret = true;
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("alloc failed");
+				if (EVP_DigestFinal(&mdCtx, temp, &resultLen) > 0 &&
+					resultLen > 0)
+				{
+					result.setBuffer(temp, resultLen);
+					ret = true;
+				}
 			}
 		}
 		else
