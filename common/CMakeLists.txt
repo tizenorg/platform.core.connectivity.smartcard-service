@@ -15,7 +15,7 @@ AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} SRCS)
 #MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_common REQUIRED dlog glib-2.0 aul libssl pkgmgr)
+pkg_check_modules(pkgs_common REQUIRED dlog glib-2.0 aul libssl pkgmgr pkgmgr-info)
 
 MESSAGE("${LIB_NAME} ld flag : ${pkgs_common_LDFLAGS}")
 

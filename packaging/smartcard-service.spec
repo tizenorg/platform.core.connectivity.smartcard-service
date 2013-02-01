@@ -1,6 +1,6 @@
 Name:       smartcard-service
 Summary:    Smartcard Service FW
-Version:    0.1.11
+Version:    0.1.12
 Release:    0
 Group:      libs
 License:    Apache License, Version 2.0
@@ -14,6 +14,7 @@ BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(libssl)
 BuildRequires: pkgconfig(dbus-glib-1)
 BuildRequires: pkgconfig(pkgmgr)
+BuildRequires: pkgconfig(pkgmgr-info)
 BuildRequires: pkgconfig(vconf)
 BuildRequires: pkgconfig(aul)
 BuildRequires: cmake

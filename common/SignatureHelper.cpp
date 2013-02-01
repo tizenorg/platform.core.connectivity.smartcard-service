@@ -26,6 +26,7 @@
 
 /* SLP library header */
 #include "package-manager.h"
+#include "pkgmgr-info.h"
 #include "aul.h"
 
 /* local header */
@@ -83,13 +84,28 @@ namespace smartcard_service_api
 		ByteArray result;
 		int ret = 0;
 		pkgmgr_certinfo_h handle = NULL;
+		pkgmgrinfo_appinfo_h handle_appinfo;
+		char *pkgid = NULL;
 
+		if(pkgmgrinfo_appinfo_get_appinfo(packageName, &handle_appinfo) != PMINFO_R_OK)
+		{
+			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
+			return result;
+		}
 
-		SCARD_DEBUG("package name : %s", packageName);
+		if(pkgmgrinfo_appinfo_get_pkgid(handle_appinfo, &pkgid) != PMINFO_R_OK)
+		{
+			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
+			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
+			return result;
+		}
+		pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
+
+		SCARD_DEBUG("package name : %s", pkgid);
 
 		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			if ((ret = pkgmgr_pkginfo_load_certinfo(packageName, handle)) == 0)
+			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle)) == 0)
 			{
 				int type;
 
@@ -167,12 +183,28 @@ namespace smartcard_service_api
 		bool result = false;
 		int ret = 0;
 		pkgmgr_certinfo_h handle = NULL;
+		pkgmgrinfo_appinfo_h handle_appinfo;
+		char *pkgid = NULL;
 
-		SCARD_DEBUG("package name : %s", packageName);
+		if(pkgmgrinfo_appinfo_get_appinfo(packageName, &handle_appinfo) != PMINFO_R_OK)
+		{
+			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
+			return result;
+		}
+
+		if(pkgmgrinfo_appinfo_get_pkgid(handle_appinfo, &pkgid) != PMINFO_R_OK)
+		{
+			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
+			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
+			return result;
+		}
+		pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
+
+		SCARD_DEBUG("package name : %s", pkgid);
 
 		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			if ((ret = pkgmgr_pkginfo_load_certinfo(packageName, handle)) == 0)
+			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle)) == 0)
 			{
 				int type;
 
