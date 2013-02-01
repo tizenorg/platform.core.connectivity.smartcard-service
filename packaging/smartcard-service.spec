@@ -3,7 +3,7 @@ Summary:    Smartcard Service FW
 Version:    0.1.15
 Release:    0
 Group:      libs
-License:    Apache License, Version 2.0
+License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 #IFNDEF USE_AUTOSTART
 #Source1:    smartcard-service-server.init
@@ -50,6 +50,7 @@ common smartcard service.
 Summary:    common smartcard service
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
+Requires:   smartcard-service-common = %{version}-%{release}
 
 %description -n smartcard-service-common-devel
 common smartcard service.
@@ -68,7 +69,7 @@ cd obj-arm-limux-qnueabi
 #IFNDEF USE_AUTOSTART
 #cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix}
 #ELSE
-cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix} -DUSE_AUTOSTART=1 # daemon will be started when client makes instance by DBUS
+%cmake .. -DUSE_AUTOSTART=1 # daemon will be started when client makes instance by DBUS
 #ENDIF
 #make %{?jobs:-j%jobs}
 
@@ -104,33 +105,33 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 %files
 %manifest smartcard-service.manifest
 %defattr(-,root,root,-)
-/usr/lib/libsmartcard-service.so.*
+%{_libdir}/libsmartcard-service.so.*
 /usr/share/license/smartcard-service
 
 %files  devel
 %manifest smartcard-service-devel.manifest
 %defattr(-,root,root,-)
-/usr/include/smartcard-service/*
-/usr/lib/libsmartcard-service.so
-/usr/lib/pkgconfig/smartcard-service.pc
+%{_includedir}/smartcard-service/*
+%{_libdir}/libsmartcard-service.so
+%{_libdir}/pkgconfig/smartcard-service.pc
 
 %files -n smartcard-service-common
 %manifest smartcard-service-common.manifest
 %defattr(-,root,root,-)
-/usr/lib/libsmartcard-service-common.so.*
+%{_libdir}/libsmartcard-service-common.so.*
 /usr/share/license/smartcard-service-common
 
 %files -n smartcard-service-common-devel
 %manifest smartcard-service-common-devel.manifest
 %defattr(-,root,root,-)
-/usr/include/smartcard-service-common/*
-/usr/lib/libsmartcard-service-common.so
-/usr/lib/pkgconfig/smartcard-service-common.pc
+%{_includedir}/smartcard-service-common/*
+%{_libdir}/libsmartcard-service-common.so
+%{_libdir}/pkgconfig/smartcard-service-common.pc
 
 %files -n smartcard-service-server
 %manifest smartcard-service-server.manifest
 %defattr(-,root,root,-)
-/usr/bin/smartcard-daemon
+%{_bindir}/smartcard-daemon
 #/usr/bin/smartcard-test-client
 #IFNDEF USE_AUTOSTART
 #/etc/init.d/smartcard-service-server
