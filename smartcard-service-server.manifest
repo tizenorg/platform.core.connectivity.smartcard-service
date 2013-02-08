@@ -1,6 +1,9 @@
 <manifest>
 	<define>
 		<domain name="smartcard-service" />
+		<request>
+			<smack request="sys-assert::core" type="rwxat" />
+		</request>
 	</define>
 	<assign>
 		<filesystem path="/usr/bin/smartcard-daemon" exec_label="nfc-manager" />
