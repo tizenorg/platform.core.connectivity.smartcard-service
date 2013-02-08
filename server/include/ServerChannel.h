@@ -41,8 +41,10 @@ namespace smartcard_service_api
 		void unsetPrivilegeMode() { this->privilege = false; }
 
 	protected:
-		void closeSync();
-		int transmitSync(ByteArray command, ByteArray &result);
+		void closeSync()
+			throw(ErrorIO &, ErrorIllegalState &);
+		int transmitSync(ByteArray command, ByteArray &result)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
 	public:
 		~ServerChannel();

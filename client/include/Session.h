@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef SESSION_H_
 #define SESSION_H_
@@ -44,16 +43,17 @@ namespace smartcard_service_api
 		unsigned int channelCount;
 
 		Session(void *context, Reader *reader, void *handle);
+		~Session();
 
 		int openChannel(int id, ByteArray aid, openChannelCallback callback, void *userData);
 		static bool dispatcherCallback(void *message);
 
-		Channel *openChannelSync(int id, ByteArray aid);
+		Channel *openChannelSync(int id, ByteArray aid)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
 	public:
-		~Session();
-
-		void closeChannels();
+		void closeChannels()
+			throw(ErrorIO &, ErrorIllegalState &);
 
 		int getATR(getATRCallback callback, void *userData);
 		int close(closeSessionCallback callback, void *userData);
@@ -64,13 +64,24 @@ namespace smartcard_service_api
 		int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
 		int getChannelCount(getChannelCountCallback callback, void * userData);
 
-		ByteArray getATRSync();
-		void closeSync();
+		ByteArray getATRSync()
+			throw(ErrorIO &, ErrorIllegalState &);
 
-		Channel *openBasicChannelSync(ByteArray aid);
-		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length);
-		Channel *openLogicalChannelSync(ByteArray aid);
-		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length);
+		void closeSync()
+			throw(ErrorIO &, ErrorIllegalState &);
+
+		Channel *openBasicChannelSync(ByteArray aid)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+
+		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+
+		Channel *openLogicalChannelSync(ByteArray aid)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+
+		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+
 		unsigned int getChannelCountSync();
 
 		friend class ClientDispatcher;
@@ -88,14 +99,16 @@ extern "C"
 
 reader_h session_get_reader(session_h handle);
 bool session_is_closed(session_h handle);
-void session_destroy_instance(session_h handle);
+__attribute__((deprecated)) void session_destroy_instance(session_h handle);
 void session_close_channels(session_h handle);
 
 int session_get_atr(session_h handle, session_get_atr_cb callback, void *userData);
 int session_close(session_h handle, session_close_session_cb callback, void *userData);
 
-int session_open_basic_channel(session_h handle, unsigned char *aid, unsigned int length, session_open_channel_cb callback, void *userData);
-int session_open_logical_channel(session_h handle, unsigned char *aid, unsigned int length, session_open_channel_cb callback, void *userData);
+int session_open_basic_channel(session_h handle, unsigned char *aid,
+	unsigned int length, session_open_channel_cb callback, void *userData);
+int session_open_logical_channel(session_h handle, unsigned char *aid,
+	unsigned int length, session_open_channel_cb callback, void *userData);
 int session_get_channel_count(session_h handle, session_get_channel_count_cb callback, void * userData);
 
 int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length);

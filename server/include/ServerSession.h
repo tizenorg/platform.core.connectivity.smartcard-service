@@ -55,20 +55,31 @@ namespace smartcard_service_api
 	public:
 		~ServerSession();
 
-		ByteArray getATRSync();
-		void closeSync();
+		ByteArray getATRSync()
+			throw(ErrorIO &, ErrorIllegalState &);
+		void closeSync()
+			throw(ErrorIO &, ErrorIllegalState &);
 
-		void closeChannels();
+		void closeChannels()
+			throw(ErrorIO &, ErrorIllegalState &);
 
-		Channel *openBasicChannelSync(ByteArray aid);
-		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length);
-		Channel *openBasicChannelSync(ByteArray aid, void *caller);
-		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length, void *caller);
+		Channel *openBasicChannelSync(ByteArray aid)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openBasicChannelSync(ByteArray aid, void *caller)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length, void *caller)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
-		Channel *openLogicalChannelSync(ByteArray aid);
-		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length);
-		Channel *openLogicalChannelSync(ByteArray aid, void *caller);
-		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length, void *caller);
+		Channel *openLogicalChannelSync(ByteArray aid)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openLogicalChannelSync(ByteArray aid, void *caller)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length, void *caller)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
 		friend class ServerReader;
 		friend class ServerResource;

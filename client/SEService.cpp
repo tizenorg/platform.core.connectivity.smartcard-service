@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012 Samsung Electronics Co., Ltd All Rights Reserved
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <unistd.h>
@@ -36,39 +35,31 @@
 
 namespace smartcard_service_api
 {
-	SEService::SEService():SEServiceHelper()
+	SEService::SEService() :
+		SEServiceHelper()
 	{
-		pid = -1;
 		this->context = NULL;
 		this->handler = NULL;
 		this->listener = NULL;
 		connected = false;
-
-		pid = getpid();
 	}
 
-	SEService::SEService(void *user_data, serviceConnected handler):SEServiceHelper()
+	SEService::SEService(void *user_data, serviceConnected handler)
+		throw(ErrorIO &, ErrorIllegalParameter &) :
+		SEServiceHelper()
 	{
-		pid = -1;
-		this->context = NULL;
-		this->handler = NULL;
 		this->listener = NULL;
 		connected = false;
-
-		pid = getpid();
 
 		initialize(user_data, handler);
 	}
 
-	SEService::SEService(void *user_data, SEServiceListener *listener):SEServiceHelper()
+	SEService::SEService(void *user_data, SEServiceListener *listener)
+		throw(ErrorIO &, ErrorIllegalParameter &) :
+		SEServiceHelper()
 	{
-		pid = -1;
-		this->context = NULL;
 		this->handler = NULL;
-		this->listener = NULL;
 		connected = false;
-
-		pid = getpid();
 
 		initialize(user_data, listener);
 	}
@@ -77,13 +68,36 @@ namespace smartcard_service_api
 	{
 		uint32_t i;
 
-		shutdownSync();
+		try
+		{
+			shutdownSync();
+		}
+		catch(ExceptionBase &e)
+		{
+			SCARD_DEBUG_ERR("EXCEPTION : %s", e.what());
+		}
+		catch(...)
+		{
+			SCARD_DEBUG_ERR("EXCEPTION!!!");
+		}
 
 		for (i = 0; i < readers.size(); i++)
 		{
 			delete (Reader *)readers[i];
 		}
 		readers.clear();
+	}
+
+	SEService *SEService::createInstance(void *user_data, SEServiceListener *listener)
+		throw(ErrorIO &, ErrorIllegalParameter &)
+	{
+		return new SEService(user_data, listener);
+	}
+
+	SEService *SEService::createInstance(void *user_data, serviceConnected handler)
+		throw(ErrorIO &, ErrorIllegalParameter &)
+	{
+		return new SEService(user_data, handler);
 	}
 
 	void SEService::shutdown()
@@ -102,7 +116,7 @@ namespace smartcard_service_api
 			msg.message = Message::MSG_REQUEST_SHUTDOWN;
 			msg.error = (unsigned int)this; /* using error to context */
 			msg.caller = (void *)this;
-			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+			msg.callback = (void *)NULL;
 
 			if (ClientIPC::getInstance().sendMessage(&msg) == false)
 			{
@@ -124,7 +138,6 @@ namespace smartcard_service_api
 			}
 
 			/* send message to load se */
-			int rv;
 			Message msg;
 
 			msg.message = Message::MSG_REQUEST_SHUTDOWN;
@@ -135,6 +148,8 @@ namespace smartcard_service_api
 			syncLock();
 			if (ClientIPC::getInstance().sendMessage(&msg) == true)
 			{
+				int rv;
+
 				rv = waitTimedCondition(0);
 
 				if (rv == 0)
@@ -157,11 +172,11 @@ namespace smartcard_service_api
 #endif
 	}
 
-	bool SEService::_initialize()
+	bool SEService::_initialize() throw(ErrorIO &)
 	{
 		bool result = false;
-		ClientIPC *clientIPC = NULL;
-		ClientDispatcher *clientDispatcher = NULL;
+		ClientIPC *clientIPC;
+		ClientDispatcher *clientDispatcher;
 
 		SCARD_BEGIN();
 
@@ -199,7 +214,7 @@ namespace smartcard_service_api
 			Message msg;
 
 			msg.message = Message::MSG_REQUEST_READERS;
-			msg.error = pid; /* using error to pid */
+			msg.error = getpid(); /* using error to pid */
 			msg.caller = (void *)this;
 			msg.userParam = context;
 
@@ -212,11 +227,13 @@ namespace smartcard_service_api
 	}
 
 	bool SEService::initialize(void *context, serviceConnected handler)
+		throw(ErrorIO &, ErrorIllegalParameter &)
 	{
 		if (context == NULL)
 		{
-			SCARD_DEBUG_ERR("invalid param");
-			return false;
+			ErrorIllegalParameter e(0);
+
+			throw e;
 		}
 
 		this->context = context;
@@ -226,11 +243,13 @@ namespace smartcard_service_api
 	}
 
 	bool SEService::initialize(void *context, SEServiceListener *listener)
+		throw(ErrorIO &, ErrorIllegalParameter &)
 	{
 		if (context == NULL)
 		{
-			SCARD_DEBUG_ERR("invalid param");
-			return false;
+			ErrorIllegalParameter e(0);
+
+			throw e;
 		}
 
 		this->context = context;
@@ -324,16 +343,12 @@ namespace smartcard_service_api
 
 				/* copy result */
 //				service->error = msg->error;
-
 				service->signalCondition();
 				service->syncUnlock();
 			}
 			else
 			{
-//				openSessionCallback cb = (openSessionCallback)msg->callback;
-//
-//				/* async call */
-//				cb(session, msg->error, msg->userParam);
+				/* Do nothing... */
 			}
 			break;
 
@@ -344,7 +359,8 @@ namespace smartcard_service_api
 				SCARD_DEBUG("[MSG_NOTIFY_SE_INSERTED]");
 
 				/* add readers */
-				reader = new Reader(service->context, (char *)msg->data.getBuffer(), (void *)msg->param1);
+				reader = new Reader(service->context,
+					(char *)msg->data.getBuffer(), (void *)msg->param1);
 				if (reader != NULL)
 				{
 					service->readers.push_back(reader);
@@ -356,7 +372,8 @@ namespace smartcard_service_api
 
 				if (service->listener != NULL)
 				{
-					service->listener->eventHandler(service, (char *)msg->data.getBuffer(), 1, service->context);
+					service->listener->eventHandler(service,
+						(char *)msg->data.getBuffer(), 1, service->context);
 				}
 				else
 				{
@@ -382,7 +399,8 @@ namespace smartcard_service_api
 
 				if (service->listener != NULL)
 				{
-					service->listener->eventHandler(service, (char *)msg->data.getBuffer(), 2, service->context);
+					service->listener->eventHandler(service,
+						(char *)msg->data.getBuffer(), 2, service->context);
 				}
 				else
 				{
@@ -407,7 +425,7 @@ namespace smartcard_service_api
 			}
 			break;
 
-		default:
+		default :
 			SCARD_DEBUG("unknown message [%s]", msg->toString());
 			break;
 		}
@@ -436,14 +454,33 @@ using namespace smartcard_service_api;
 
 EXTERN_API se_service_h se_service_create_instance(void *user_data, se_service_connected_cb callback)
 {
-	SEService *service = new SEService(user_data, (serviceConnected)callback);
+	SEService *service;
+
+	try
+	{
+		service = new SEService(user_data, (serviceConnected)callback);
+	}
+	catch (...)
+	{
+		service = NULL;
+	}
 
 	return (se_service_h)service;
 }
 
-EXTERN_API se_service_h se_service_create_instance_with_event_callback(void *user_data, se_service_connected_cb connected, se_service_event_cb event, se_sesrvice_error_cb error)
+EXTERN_API se_service_h se_service_create_instance_with_event_callback(void *user_data,
+	se_service_connected_cb connected, se_service_event_cb event, se_sesrvice_error_cb error)
 {
-	SEService *service = new SEService(user_data, (serviceConnected)connected);
+	SEService *service;
+
+	try
+	{
+		service = new SEService(user_data, (serviceConnected)connected);
+	}
+	catch (...)
+	{
+		service = NULL;
+	}
 
 	return (se_service_h)service;
 }
@@ -453,10 +490,12 @@ EXTERN_API int se_service_get_readers_count(se_service_h handle)
 	int count = 0;
 
 	SE_SERVICE_EXTERN_BEGIN;
+
 	vector<ReaderHelper *> temp_readers;
 
 	temp_readers = service->getReaders();
 	count = temp_readers.size();
+
 	SE_SERVICE_EXTERN_END;
 
 	return count;
@@ -467,6 +506,7 @@ EXTERN_API bool se_service_get_readers(se_service_h handle, reader_h *readers, i
 	bool result = false;
 
 	SE_SERVICE_EXTERN_BEGIN;
+
 	vector<ReaderHelper *> temp_readers;
 	size_t i;
 	int temp = 0;
@@ -482,6 +522,7 @@ EXTERN_API bool se_service_get_readers(se_service_h handle, reader_h *readers, i
 		}
 	}
 	*count = temp;
+
 	SE_SERVICE_EXTERN_END;
 
 	return result;
@@ -492,7 +533,9 @@ EXTERN_API bool se_service_is_connected(se_service_h handle)
 	bool result = false;
 
 	SE_SERVICE_EXTERN_BEGIN;
+
 	result = service->isConnected();
+
 	SE_SERVICE_EXTERN_END;
 
 	return result;
@@ -501,13 +544,17 @@ EXTERN_API bool se_service_is_connected(se_service_h handle)
 EXTERN_API void se_service_shutdown(se_service_h handle)
 {
 	SE_SERVICE_EXTERN_BEGIN;
+
 	service->shutdown();
+
 	SE_SERVICE_EXTERN_END;
 }
 
 EXTERN_API void se_service_destroy_instance(se_service_h handle)
 {
 	SE_SERVICE_EXTERN_BEGIN;
+
 	delete service;
+
 	SE_SERVICE_EXTERN_END;
 }

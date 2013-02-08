@@ -54,12 +54,14 @@ namespace smartcard_service_api
 	}
 
 	ByteArray ServerSession::getATRSync()
+		throw(ErrorIO &, ErrorIllegalState &)
 	{
 		/* call get atr to terminal */
 		return atr;
 	}
 
 	void ServerSession::closeSync()
+		throw(ErrorIO &, ErrorIllegalState &)
 	{
 		if (isClosed() == false)
 		{
@@ -69,6 +71,7 @@ namespace smartcard_service_api
 	}
 
 	void ServerSession::closeChannels()
+		throw(ErrorIO &, ErrorIllegalState &)
 	{
 		size_t i;
 
@@ -82,11 +85,13 @@ namespace smartcard_service_api
 	}
 
 	Channel *ServerSession::openBasicChannelSync(ByteArray aid)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openBasicChannelSync(aid, NULL);
 	}
 
 	Channel *ServerSession::openBasicChannelSync(ByteArray aid, void *caller)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ServerChannel *channel = NULL;
 #if 0
@@ -147,21 +152,25 @@ namespace smartcard_service_api
 	}
 
 	Channel *ServerSession::openBasicChannelSync(unsigned char *aid, unsigned int length)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openBasicChannelSync(ByteArray(aid, length));
 	}
 
 	Channel *ServerSession::openBasicChannelSync(unsigned char *aid, unsigned int length, void *caller)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openBasicChannelSync(ByteArray(aid, length), caller);
 	}
 
 	Channel *ServerSession::openLogicalChannelSync(ByteArray aid)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openLogicalChannelSync(aid, NULL);
 	}
 
 	Channel *ServerSession::openLogicalChannelSync(ByteArray aid, void *caller)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ServerChannel *channel = NULL;
 #if 0
@@ -247,11 +256,13 @@ namespace smartcard_service_api
 	}
 
 	Channel *ServerSession::openLogicalChannelSync(unsigned char *aid, unsigned int length)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openLogicalChannelSync(ByteArray(aid, length), NULL);
 	}
 
 	Channel *ServerSession::openLogicalChannelSync(unsigned char *aid, unsigned int length, void *caller)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openLogicalChannelSync(ByteArray(aid, length), caller);
 	}

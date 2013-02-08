@@ -41,18 +41,22 @@ namespace smartcard_service_api
 		int error;
 		ByteArray response;
 
-		ClientChannel(void *context, Session *session, int channelNum, ByteArray selectResponse, void *handle);
+		ClientChannel(void *context, Session *session, int channelNum,
+			ByteArray selectResponse, void *handle);
+		~ClientChannel();
 
 		static bool dispatcherCallback(void *message);
 
 	public:
-		~ClientChannel();
-
 		int close(closeCallback callback, void *userParam);
-		int transmit(ByteArray command, transmitCallback callback, void *userParam);
+		int transmit(ByteArray command, transmitCallback callback,
+			void *userParam);
 
-		void closeSync();
-		int transmitSync(ByteArray command, ByteArray &result);
+		void closeSync()
+			throw(ErrorIO &, ErrorIllegalState &);
+		int transmitSync(ByteArray command, ByteArray &result)
+			throw(ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
 
 		friend class ClientDispatcher;
 		friend class Session;
@@ -71,14 +75,17 @@ bool channel_is_basic_channel(channel_h handle);
 bool channel_is_closed(channel_h handle);
 
 unsigned int channel_get_select_response_length(channel_h handle);
-bool channel_get_select_response(channel_h handle, unsigned char *buffer, unsigned int length);
+bool channel_get_select_response(channel_h handle, unsigned char *buffer,
+	unsigned int length);
 session_h channel_get_session(channel_h handle);
-void channel_destroy_instance(channel_h handle);
+void channel_destroy_instance(channel_h handle) __attribute__((deprecated)) ;
 
 int channel_close(channel_h handle, channel_close_cb callback, void *userParam);
-int channel_transmit(channel_h handle, unsigned char *command, unsigned int length, channel_transmit_cb callback, void *userParam);
+int channel_transmit(channel_h handle, unsigned char *command,
+	unsigned int length, channel_transmit_cb callback, void *userParam);
 void channel_close_sync(channel_h handle);
-int channel_transmit_sync(channel_h handle, unsigned char *command, unsigned int cmd_len, unsigned char **response, unsigned int *resp_len);
+int channel_transmit_sync(channel_h handle, unsigned char *command,
+	unsigned int cmd_len, unsigned char **response, unsigned int *resp_len);
 
 #ifdef __cplusplus
 }

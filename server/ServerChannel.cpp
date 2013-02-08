@@ -41,7 +41,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	void ServerChannel::closeSync()
+	void ServerChannel::closeSync() throw(ErrorIO &, ErrorIllegalState &)
 	{
 		ByteArray command, result;
 		APDUHelper apdu;
@@ -75,7 +75,7 @@ namespace smartcard_service_api
 		channelNum = -1;
 	}
 
-	int ServerChannel::transmitSync(ByteArray command, ByteArray &result)
+	int ServerChannel::transmitSync(ByteArray command, ByteArray &result) throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		APDUCommand helper;
 

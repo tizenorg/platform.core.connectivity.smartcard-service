@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-/* standard library header */
-#include <stdio.h>
-#include <string.h>
+#ifndef SMARTCARD_SERVICE_H_
+#define SMARTCARD_SERVICE_H_
 
-/* SLP library header */
+#include "smartcard-types.h"
+#include "Exception.h"
+#include "SEService.h"
+#include "Reader.h"
+#include "Session.h"
+#include "ClientChannel.h"
 
-/* local header */
-#include "Debug.h"
-#include "ReaderHelper.h"
-
-namespace smartcard_service_api
-{
-	ReaderHelper::ReaderHelper() : seService(NULL), present(false)
-	{
-		memset(name, 0, sizeof(name));
-	}
-} /* namespace smartcard_service_api */
+#endif /* SMARTCARD_SERVICE_H_ */

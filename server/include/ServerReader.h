@@ -44,19 +44,21 @@ namespace smartcard_service_api
 		AccessControlList *acList;
 
 		ServerReader(ServerSEService *seService, char *name, Terminal *terminal);
+		~ServerReader();
 
 		int openSession(openSessionCallback callback, void *userData) { return -1; }
 		int openSession(void *caller, openSessionCallback callback, void *userData) { return -1; }
 
 	public:
-		~ServerReader();
-
-		void closeSessions();
+		void closeSessions()
+			throw(ErrorIO &, ErrorIllegalState &);
 
 		AccessControlList *getAccessControlList();
 
-		ServerSession *openSessionSync();
-		ServerSession *openSessionSync(vector<ByteArray> &certHashes, void *caller);
+		ServerSession *openSessionSync()
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		ServerSession *openSessionSync(vector<ByteArray> &certHashes, void *caller)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
 		friend class ServerSEService;
 	};

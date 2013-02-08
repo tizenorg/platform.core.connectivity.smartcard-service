@@ -44,18 +44,19 @@ namespace smartcard_service_api
 		bool present;
 
 		ReaderHelper();
-
-	public:
 		virtual ~ReaderHelper() {}
 
+	public:
 		inline const char *getName() { return name; }
 		inline SEServiceHelper *getSEService() { return seService; }
 		inline bool isSecureElementPresent() { return present; }
 
-		virtual void closeSessions() = 0;
+		virtual void closeSessions()
+			throw(ErrorIO &, ErrorIllegalState &) = 0;
 
 		virtual int openSession(openSessionCallback callback, void *userData) = 0;
-		virtual SessionHelper *openSessionSync() = 0;
+		virtual SessionHelper *openSessionSync()
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)= 0;
 	};
 
 } /* namespace smartcard_service_api */

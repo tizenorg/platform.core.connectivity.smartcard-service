@@ -28,7 +28,6 @@
 #include "ClientIPC.h"
 #include "Reader.h"
 #include "Session.h"
-#include "SignatureHelper.h"
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -36,7 +35,7 @@
 
 namespace smartcard_service_api
 {
-	Reader::Reader(void *context, const char *name, void *handle):ReaderHelper()
+	Reader::Reader(void *context, const char *name, void *handle) : ReaderHelper()
 	{
 		unsigned int length = 0;
 
@@ -61,10 +60,6 @@ namespace smartcard_service_api
 
 		present = true;
 
-#if 0
-		getPackageCert();
-#endif
-
 		SCARD_END();
 	}
 
@@ -83,6 +78,7 @@ namespace smartcard_service_api
 	}
 
 	void Reader::closeSessions()
+		throw(ErrorIO &, ErrorIllegalState &)
 	{
 		size_t i;
 
@@ -92,12 +88,8 @@ namespace smartcard_service_api
 		}
 	}
 
-	void Reader::getPackageCert()
-	{
-		packageCert = SignatureHelper::getCertificationHash(getpid());
-	}
-
 	SessionHelper *Reader::openSessionSync()
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		openedSession = NULL;
 
@@ -110,7 +102,6 @@ namespace smartcard_service_api
 			/* request channel handle from server */
 			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
 			msg.param1 = (unsigned int)handle;
-			msg.data = packageCert;
 			msg.error = (unsigned int)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
@@ -152,9 +143,6 @@ namespace smartcard_service_api
 			/* request channel handle from server */
 			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
 			msg.param1 = (unsigned int)handle;
-#if 0
-			msg.data = packageCert;
-#endif
 			msg.error = (unsigned int)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)callback;
@@ -332,7 +320,4 @@ EXTERN_API void reader_close_sessions(reader_h handle)
 
 EXTERN_API void reader_destroy_instance(reader_h handle)
 {
-	READER_EXTERN_BEGIN;
-	delete reader;
-	READER_EXTERN_END;
 }

@@ -1,18 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 
 /* standard library header */
@@ -345,47 +345,45 @@ namespace smartcard_service_api
 		switch (event)
 		{
 		case Terminal::NOTIFY_SE_AVAILABLE :
-			{
-				/* add right se reader */
-//				if ((term = ServerResource::getInstance().getTerminal((char *)terminal)) != NULL)
-//				{
-//					SCARD_DEBUG("terminal : [%s]", (char *)terminal);
+			/* add right se reader */
+//			if ((term = ServerResource::getInstance().getTerminal((char *)terminal)) != NULL)
+//			{
+//				SCARD_DEBUG("terminal : [%s]", (char *)terminal);
 //
-//					term->initialize();
-//				}
-//				else
-//				{
-//					SCARD_DEBUG("unknown terminal : [%s]", (char *)terminal);
-//				}
+//				term->initialize();
+//			}
+//			else
+//			{
+//				SCARD_DEBUG("unknown terminal : [%s]", (char *)terminal);
+//			}
 
-				/* send all client to refresh reader */
-				msg.message = msg.MSG_NOTIFY_SE_INSERTED;
-				msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
+			/* send all client to refresh reader */
+			msg.message = msg.MSG_NOTIFY_SE_INSERTED;
+			msg.data.setBuffer((unsigned char *)terminal,
+				strlen((char *)terminal) + 1);
 
-				ServerResource::getInstance().sendMessageToAllClients(msg);
-			}
+			ServerResource::getInstance().sendMessageToAllClients(msg);
 			break;
 
 		case Terminal::NOTIFY_SE_NOT_AVAILABLE :
-			{
-				/* remove right se reader */
-//				if ((term = ServerResource::getInstance().getTerminal((char *)terminal)) != NULL)
-//				{
-//					SCARD_DEBUG("terminal : [%s]", (char *)terminal);
+			/* remove right se reader */
+//			if ((term = ServerResource::getInstance().getTerminal((char *)terminal)) != NULL)
+//			{
+//				SCARD_DEBUG("terminal : [%s]", (char *)terminal);
 //
-//					term->finalize();
-//				}
-//				else
-//				{
-//					SCARD_DEBUG("unknown terminal : [%s]", (char *)terminal);
-//				}
+//				term->finalize();
+//			}
+//			else
+//			{
+//				SCARD_DEBUG("unknown terminal : [%s]", (char *)terminal);
+//			}
 
-				/* send all client to refresh reader */
-				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
-				msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
+			/* send all client to refresh reader */
+			msg.message = msg.MSG_NOTIFY_SE_REMOVED;
+			msg.data.setBuffer((unsigned char *)terminal,
+				strlen((char *)terminal) + 1);
 
-				ServerResource::getInstance().sendMessageToAllClients(msg);
-			}
+			ServerResource::getInstance().sendMessageToAllClients(msg);
 			break;
 
 		default :

@@ -76,6 +76,7 @@ SET(EXPORT_HEADER
 	include/Reader.h
 	include/Session.h
 	include/ClientChannel.h
+	include/smartcard-service.h
 #	include/
 )
 
