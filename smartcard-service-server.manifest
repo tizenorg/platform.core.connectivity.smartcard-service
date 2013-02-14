@@ -1,0 +1,12 @@
+<manifest>
+	<define>
+		<domain name="smartcard-service" />
+	</define>
+	<assign>
+		<filesystem path="/usr/bin/smartcard-daemon" exec_label="nfc-manager" />
+	</assign>
+	<request>
+		<domain name="smartcard-service" />
+	</request>
+</manifest>
+

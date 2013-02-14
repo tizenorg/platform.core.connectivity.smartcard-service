@@ -1,0 +1,65 @@
+Source: smartcard-service
+Priority: extra
+Maintainer: Wonkyu Kwon <wonkyu.kwon@samsung.com>, Sangsoo Lee <constant.lee@samsung.com>, Sungjae Lim <sungjae.lim@samsung.com>, Junyong Sim <junyong.sim@samsung.com>, Sechang Sohn <sc.sohn@samsung.com>
+Build-Depends: debhelper (>= 8.0.0), libglib2.0-dev, libvconf-dev, libsecurity-server-client-dev, dlog-dev, wrt-commons-dev, libaul-1-dev, libssl-dev
+#Build-Depends: debhelper (>= 8.0.0), libglib2.0-dev, libvconf-dev, libsecurity-server-client-dev, dlog-dev, libpkcs11-helper1-dev, wrt-commons, libaul-dev, libssl-dev
+#Standards-Version: 3.9.2
+Section: mixed
+Homepage: <insert the upstream URL, if relevant>
+#Vcs-Git: git://git.debian.org/collab-maint/smartcard-service.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/smartcard-service.git;a=summary
+
+Package: smartcard-service-common
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Common library of Smart card service
+ Common library of Smart card service
+
+Package: smartcard-service-common-dev
+Section: libdevel
+Architecture: any
+Depends: smartcard-service-common (= ${binary:Version})
+Description: Common library of Smart card service
+ Common library of Smart card service
+
+Package: smartcard-service-common-dbg
+Section: debug
+Architecture: any
+Depends: smartcard-service-common (= ${binary:Version})
+Description: Common library of Smart card service (unstripped)
+ Common library of Smart card service (unstripped)
+
+Package: smartcard-service-server
+Architecture: any
+Depends: smartcard-service-common-dev (= ${binary:Version})
+Description: Main process of Smart card service
+ Main process of Smart card service
+
+Package: smartcard-service-server-dbg
+Section: debug
+Architecture: any
+Depends: smartcard-service-server (= ${binary:Version})
+Description: Main process of Smart card service (unstripped)
+ Main process of Smart card service (unstripped)
+
+Package: smartcard-service
+Section: libs
+Architecture: any
+Depends: smartcard-service-common-dev (= ${binary:Version})
+Description: User library of Smart card service 
+ User library of Smart card service
+
+Package: smartcard-service-dev
+Section: libdevel
+Architecture: any
+Depends: smartcard-service (= ${binary:Version})
+Description: User library of Smart card service
+ User library of Smart card service
+
+Package: smartcard-service-dbg
+Section: debug
+Architecture: any
+Depends: smartcard-service (= ${binary:Version})
+Description: User library of Smart card service (unstripped)
+ User library of Smart card service (unstripped)
