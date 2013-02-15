@@ -20,28 +20,47 @@
 
 /* local header */
 #include "Debug.h"
+#include "APDUHelper.h"
+#include "EFDIR.h"
 #include "PKCS15.h"
 
 namespace smartcard_service_api
 {
-	static unsigned char aid[] = { 0xA0, 0x00, 0x00, 0x00, 0x63, 0x50, 0x4B, 0x43, 0x53, 0x2D, 0x31, 0x35 };
+	static unsigned char aid[] = { 0xA0, 0x00, 0x00, 0x00, 0x63, 0x50,
+		0x4B, 0x43, 0x53, 0x2D, 0x31, 0x35 };
 	ByteArray PKCS15::PKCS15_AID(ARRAY_AND_SIZE(aid));
 
-	PKCS15::PKCS15(Channel *channel):PKCS15Object(channel), odf(NULL)
+	PKCS15::PKCS15(Channel *channel)
+		: PKCS15Object(channel), odf(NULL)
 	{
-		int ret = 0;
+		int ret;
 
-		if ((ret = select(PKCS15::PKCS15_AID)) == 0)
+		ret = select(PKCS15::PKCS15_AID);
+		if (ret == FileObject::SUCCESS)
 		{
 			SCARD_DEBUG("response : %s", selectResponse.toString());
 		}
+		else if (ret == ResponseHelper::ERROR_FILE_NOT_FOUND)
+		{
+			SCARD_DEBUG_ERR("PKCS15 AID not found, search in EF DIR");
+
+			if (selectFromEFDIR() == true)
+			{
+				SCARD_DEBUG("response : %s", selectResponse.toString());
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("PKCS15 select failed, [%d]", ret);
+			}
+		}
 		else
 		{
-			SCARD_DEBUG_ERR("select failed, [%d]", ret);
+			SCARD_DEBUG_ERR("PKCS15 select failed, [%d]", ret);
 		}
 	}
 
-	PKCS15::PKCS15(Channel *channel, ByteArray selectResponse):PKCS15Object(channel, selectResponse), odf(NULL)
+	PKCS15::PKCS15(Channel *channel, ByteArray selectResponse)
+		: PKCS15Object(channel, selectResponse), odf(NULL)
 	{
 	}
 
@@ -52,6 +71,35 @@ namespace smartcard_service_api
 			delete odf;
 			odf = NULL;
 		}
+	}
+
+	bool PKCS15::selectFromEFDIR()
+	{
+		bool result = false;
+		ByteArray path;
+		EFDIR dir(channel);
+
+		path = dir.getPathByAID(PKCS15_AID);
+		if (path.getLength() > 0)
+		{
+			int ret;
+
+			ret = select(path, false);
+			if (ret == FileObject::SUCCESS)
+			{
+				result = true;
+			}
+			else
+			{
+				SCARD_DEBUG_ERR("path select failed, [%d]", ret);
+			}
+		}
+		else
+		{
+			SCARD_DEBUG_ERR("PKCS15 not found");
+		}
+
+		return result;
 	}
 
 	PKCS15ODF *PKCS15::getODF()
@@ -73,5 +121,4 @@ namespace smartcard_service_api
 
 		return odf;
 	}
-
 } /* namespace smartcard_service_api */

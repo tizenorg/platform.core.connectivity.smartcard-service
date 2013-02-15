@@ -36,6 +36,8 @@ namespace smartcard_service_api
 		map<unsigned int, ByteArray> recordElement;
 		PKCS15ODF *odf;
 
+		bool selectFromEFDIR();
+
 	public:
 		static ByteArray PKCS15_AID;
 

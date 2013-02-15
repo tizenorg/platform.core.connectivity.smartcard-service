@@ -24,16 +24,17 @@ namespace smartcard_service_api
 	class Record
 	{
 	private:
-		ByteArray data;
 		unsigned int id;
+		ByteArray data;
 
 	public:
-		Record();
-		Record(unsigned int id, ByteArray buffer);
-		~Record();
+		Record() : id(0) {}
+		Record(unsigned int id, ByteArray buffer)
+			: id(id), data(buffer) {};
+		~Record() {}
 
-		unsigned int getID();
-		int getData(ByteArray &buffer);
+		inline unsigned int getID() { return id; }
+		inline ByteArray getData() { return data; }
 	};
 
 } /* namespace smartcard_service_api */

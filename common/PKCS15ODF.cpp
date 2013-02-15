@@ -26,12 +26,8 @@
 
 namespace smartcard_service_api
 {
-//	PKCS15ODF::PKCS15ODF():PKCS15Object()
-//	{
-//
-//	}
-
-	PKCS15ODF::PKCS15ODF(Channel *channel):PKCS15Object(channel), dodf(NULL)
+	PKCS15ODF::PKCS15ODF(Channel *channel)
+		: PKCS15Object(channel), dodf(NULL)
 	{
 		int ret = 0;
 
@@ -58,7 +54,8 @@ namespace smartcard_service_api
 		}
 	}
 
-	PKCS15ODF::PKCS15ODF(Channel *channel, ByteArray selectResponse):PKCS15Object(channel, selectResponse), dodf(NULL)
+	PKCS15ODF::PKCS15ODF(Channel *channel, ByteArray selectResponse)
+		: PKCS15Object(channel, selectResponse), dodf(NULL)
 	{
 		int ret = 0;
 		ByteArray odfData;
@@ -124,7 +121,8 @@ namespace smartcard_service_api
 				break;
 
 			default :
-				SCARD_DEBUG("Unknown tlv : t [%X], l [%d], v %s", tlv.getTag(), tlv.getLength(), tlv.getValue().toString());
+				SCARD_DEBUG("Unknown tlv : t [%X], l [%d], v %s",
+					tlv.getTag(), tlv.getLength(), tlv.getValue().toString());
 				break;
 			}
 

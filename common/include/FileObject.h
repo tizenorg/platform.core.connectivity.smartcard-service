@@ -55,6 +55,8 @@ namespace smartcard_service_api
 		static const int ERROR_IO = -6;
 		static const int ERROR_UNKNOWN = -99;
 
+		static const unsigned int MF_FID = 0x003F;
+
 		FileObject(Channel *channel);
 		FileObject(Channel *channel, ByteArray selectResponse);
 		~FileObject();

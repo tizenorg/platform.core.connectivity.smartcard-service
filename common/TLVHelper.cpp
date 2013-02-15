@@ -80,6 +80,7 @@ namespace smartcard_service_api
 	bool TLVHelper::_decodeTLV()
 	{
 		int result;
+		int temp = 0;
 
 		currentT = 0;
 		currentL = 0;
@@ -89,25 +90,30 @@ namespace smartcard_service_api
 			return false;
 
 		/* T */
-		if ((result = decodeTag(tlvBuffer.getBuffer(offset))) < 0)
+		if ((result = decodeTag(tlvBuffer.getBuffer(offset + temp))) < 0)
 			return false;
 
-		offset += result;
+		temp += result;
 
 		/* L */
-		if ((result = decodeLength(tlvBuffer.getBuffer(offset))) < 0)
+		if ((result = decodeLength(tlvBuffer.getBuffer(offset + temp))) < 0)
 			return false;
 
-		offset += result;
+		temp += result;
 
 		if (currentL > 0)
 		{
-			/* V */
-			if ((result = decodeValue(tlvBuffer.getBuffer(offset))) < 0)
+			if (currentL > (tlvBuffer.getLength() - (offset + temp)))
 				return false;
 
-			offset += result;
+			/* V */
+			if ((result = decodeValue(tlvBuffer.getBuffer(offset + temp))) < 0)
+				return false;
+
+			temp += result;
 		}
+
+		offset += temp;
 
 		return true;
 	}
