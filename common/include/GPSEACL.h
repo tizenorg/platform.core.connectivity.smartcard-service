@@ -1,0 +1,76 @@
+/*
+* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+
+#ifndef GPSEACL_H_
+#define GPSEACL_H_
+
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
+#include "smartcard-types.h"
+#ifdef __cplusplus
+#include "AccessControlList.h"
+#include "PKCS15.h"
+#endif /* __cplusplus */
+
+#ifdef __cplusplus
+namespace smartcard_service_api
+{
+	class GPSEACL: public AccessControlList
+	{
+	private:
+		ByteArray refreshTag;
+
+		static ByteArray OID_GLOBALPLATFORM;
+
+		int loadAccessControl(Channel *channel, PKCS15DODF *dodf);
+		int loadRules(Channel *channel, ByteArray path);
+		int loadAccessConditions(Channel *channel, ByteArray aid, ByteArray path);
+
+	public:
+		GPSEACL();
+		~GPSEACL();
+
+		int loadACL(Channel *channel);
+
+	};
+
+} /* namespace smartcard_service_api */
+#endif /* __cplusplus */
+
+/* export C API */
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+typedef void *gp_se_acl_h;
+
+gp_se_acl_h gp_se_acl_create_instance();
+int gp_se_acl_load_acl(gp_se_acl_h handle, channel_h channel);
+int gp_se_acl_update_acl(gp_se_acl_h handle, channel_h channel);
+void gp_se_acl_release_acl(gp_se_acl_h handle);
+bool gp_se_acl_is_authorized_access(gp_se_acl_h handle, unsigned char *aidBuffer, unsigned int aidLength, unsigned char *certHashBuffer, unsigned int certHashLength);
+void gp_se_acl_destroy_instance(gp_se_acl_h handle);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* GPSEACL_H_ */

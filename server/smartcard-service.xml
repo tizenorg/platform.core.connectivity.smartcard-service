@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node name="/org/tizen/smartcard_service">
+	<interface name="org.tizen.smartcard_service">
+		<annotation name="org.freedesktop.DBus.GLib.CSymbol" value="smartcard_service"/>
+		<method name="launch">
+			<arg type="i" name="result" direction="out"/>
+		</method>
+	</interface>
+</node>
+
