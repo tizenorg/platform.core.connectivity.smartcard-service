@@ -25,7 +25,9 @@
 
 namespace smartcard_service_api
 {
-	ServerChannel::ServerChannel(ServerSession *session, void *caller, int channelNum, Terminal *terminal):Channel(session)
+	ServerChannel::ServerChannel(ServerSession *session, void *caller,
+		int channelNum, Terminal *terminal)
+		: Channel(session)
 	{
 		this->terminal = terminal;
 		this->caller = caller;
@@ -41,7 +43,8 @@ namespace smartcard_service_api
 		}
 	}
 
-	void ServerChannel::closeSync() throw(ErrorIO &, ErrorIllegalState &)
+	void ServerChannel::closeSync()
+		throw(ErrorIO &, ErrorIllegalState &)
 	{
 		ByteArray command, result;
 		APDUHelper apdu;
@@ -75,13 +78,15 @@ namespace smartcard_service_api
 		channelNum = -1;
 	}
 
-	int ServerChannel::transmitSync(ByteArray command, ByteArray &result) throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
+	int ServerChannel::transmitSync(ByteArray command, ByteArray &result)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
+		int ret = -1;
 		APDUCommand helper;
 
 		if (isClosed() == true)
 		{
-			return -1;
+			return ret;
 		}
 
 		helper.setCommand(command);
@@ -89,7 +94,8 @@ namespace smartcard_service_api
 		/* filter command */
 		if (privilege == false)
 		{
-			if ((helper.getINS() == APDUCommand::INS_SELECT_FILE && helper.getP1() == APDUCommand::P1_SELECT_BY_DF_NAME) ||
+			if ((helper.getINS() == APDUCommand::INS_SELECT_FILE &&
+				helper.getP1() == APDUCommand::P1_SELECT_BY_DF_NAME) ||
 				(helper.getINS() == APDUCommand::INS_MANAGE_CHANNEL))
 			{
 				return -4; /* security reason */
@@ -103,7 +109,15 @@ namespace smartcard_service_api
 
 		SCARD_DEBUG("command [%d] : %s", command.getLength(), command.toString());
 
-		return terminal->transmitSync(command, result);
+		ret = terminal->transmitSync(command, result);
+		if (ret == 0 && ResponseHelper::getStatus(result) == 0)
+		{
+			/* store select response */
+			if (helper.getINS() == APDUCommand::INS_SELECT_FILE)
+				setSelectResponse(result);
+		}
+
+		return ret;
 	}
 
 } /* namespace smartcard_service_api */

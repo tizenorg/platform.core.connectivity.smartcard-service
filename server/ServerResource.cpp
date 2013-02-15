@@ -577,7 +577,7 @@ namespace smartcard_service_api
 			channelNum = _openLogicalChannel(terminal);
 			if (channelNum > 0)
 			{
-				SCARD_DEBUG("channelNum [%d]", result);
+				SCARD_DEBUG("channelNum [%d]", channelNum);
 			}
 			else
 			{
@@ -619,7 +619,6 @@ namespace smartcard_service_api
 
 				if (resp.getStatus() == 0)
 				{
-					channel->selectResponse = response;
 					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
 				}
@@ -640,7 +639,6 @@ namespace smartcard_service_api
 			service->closeChannel(result);
 			result = IntegerHandle::INVALID_HANDLE;
 		}
-
 
 		return result;
 	}

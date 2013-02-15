@@ -27,6 +27,7 @@
 #include "ClientIPC.h"
 #include "ClientChannel.h"
 #include "ReaderHelper.h"
+#include "APDUHelper.h"
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -36,7 +37,7 @@ namespace smartcard_service_api
 {
 	ClientChannel::ClientChannel(void *context, Session *session,
 		int channelNum, ByteArray selectResponse, void *handle)
-		:Channel(session)
+		: Channel(session)
 	{
 		this->channelNum = -1;
 		this->handle = NULL;
@@ -258,6 +259,14 @@ namespace smartcard_service_api
 			{
 				/* transmit result */
 				SCARD_DEBUG("MSG_REQUEST_TRANSMIT");
+
+				if (msg->error == 0 &&
+					ResponseHelper::getStatus(msg->data) == 0)
+				{
+					/* store select response */
+					if (msg->data.getAt(1) == APDUCommand::INS_SELECT_FILE)
+						channel->setSelectResponse(msg->data);
+				}
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{

@@ -30,7 +30,8 @@ namespace smartcard_service_api
 {
 	class SessionHelper;	/* explicit declaration */
 
-	typedef void (*transmitCallback)(unsigned char *buffer, unsigned int length, int error, void *userParam);
+	typedef void (*transmitCallback)(unsigned char *buffer, unsigned int length,
+		int error, void *userParam);
 	typedef void (*closeCallback)(int error, void *userParam);
 
 	class Channel : public Synchronous
@@ -42,6 +43,8 @@ namespace smartcard_service_api
 
 		Channel() : Synchronous() { channelNum = -1; }
 		Channel(SessionHelper *session) : Synchronous() { this->session = session; }
+
+		inline void setSelectResponse(ByteArray &response) { selectResponse = response; }
 
 	public :
 		virtual ~Channel() {};
