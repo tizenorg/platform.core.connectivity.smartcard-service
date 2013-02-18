@@ -59,6 +59,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_common_LDFLAGS})
 
 SET(EXPORT_HEADER 
 	include/Debug.h
+	include/Exception.h
 	include/ByteArray.h
 	include/Lock.h
 	include/Synchronous.h	
