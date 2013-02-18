@@ -197,7 +197,6 @@ namespace smartcard_service_api
 			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
 			return result;
 		}
-		pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
 
 		SCARD_DEBUG("package name : %s", pkgid);
 
@@ -237,6 +236,8 @@ namespace smartcard_service_api
 			{
 				SCARD_DEBUG_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
 			}
+
+			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
 
 			pkgmgr_pkginfo_destroy_certinfo(handle);
 		}
