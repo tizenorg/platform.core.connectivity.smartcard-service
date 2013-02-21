@@ -245,7 +245,7 @@ ERROR :
 
 			if (peerSocket >= 0)
 			{
-				Message *msg = NULL;
+				Message *msg;
 
 				/* read message */
 				if ((msg = retrieveMessage(peerSocket)) != NULL)

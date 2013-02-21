@@ -69,6 +69,7 @@ namespace smartcard_service_api
 		void *mainLoop;
 		ServerIPC *serverIPC;
 		ServerDispatcher *serverDispatcher;
+		bool seLoaded;
 
 		ServerResource();
 		~ServerResource();

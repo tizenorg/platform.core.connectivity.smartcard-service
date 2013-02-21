@@ -78,21 +78,20 @@ namespace smartcard_service_api
 
 #define OMAPI_SE_PATH "/usr/lib/se"
 
-	ServerResource::ServerResource() : mainLoop(NULL)
+	ServerResource::ServerResource()
+		: mainLoop(NULL), seLoaded(false)
 	{
 		SCARD_BEGIN();
 
 		serverIPC = ServerIPC::getInstance();
 		serverDispatcher = ServerDispatcher::getInstance();
 
-#if 1
-		loadSecureElements();
-#endif
 		SCARD_END();
 	}
 
 	ServerResource::~ServerResource()
 	{
+		unloadSecureElements();
 	}
 
 	ServerResource &ServerResource::getInstance()
@@ -840,39 +839,42 @@ namespace smartcard_service_api
 
 	int ServerResource::loadSecureElements()
 	{
-		int result;
-		void *libHandle;
-		DIR *dir = NULL;
-		struct dirent *entry = NULL;
+		int result = 0;
 
-		if ((dir = opendir(OMAPI_SE_PATH)) != NULL)
+		if (seLoaded == false)
 		{
-			while ((entry = readdir(dir)) != NULL)
+			DIR *dir;
+			struct dirent *entry;
+
+			if ((dir = opendir(OMAPI_SE_PATH)) != NULL)
 			{
-				if (strncmp(entry->d_name, ".", 1) != 0 && strncmp(entry->d_name, "..", 2) != 0)
+				while ((entry = readdir(dir)) != NULL)
 				{
-					char fullPath[1024] = { 0, };
+					if (strncmp(entry->d_name, ".", 1) != 0 &&
+						strncmp(entry->d_name, "..", 2) != 0)
+					{
+						char fullPath[1024];
 
-					/* TODO : need additional name rule :) */
+						/* TODO : need additional name rule :) */
 
-					/* open each files */
-					libHandle = NULL;
+						/* append each files */
+						snprintf(fullPath, sizeof(fullPath),
+							"%s/%s", OMAPI_SE_PATH, entry->d_name);
 
-					snprintf(fullPath, sizeof(fullPath), "%s/%s", OMAPI_SE_PATH, entry->d_name);
+						SCARD_DEBUG("se name [%s]", fullPath);
 
-					SCARD_DEBUG("se name [%s]", fullPath);
-
-					result = appendSELibrary(fullPath);
+						result = appendSELibrary(fullPath);
+					}
 				}
+
+				closedir(dir);
+
+				seLoaded = true;
 			}
-
-			closedir(dir);
-
-			result = 0;
-		}
-		else
-		{
-			result = -1;
+			else
+			{
+				result = -1;
+			}
 		}
 
 		return result;
@@ -899,6 +901,8 @@ namespace smartcard_service_api
 		}
 
 		libraries.clear();
+
+		seLoaded = false;
 	}
 
 	bool ServerResource::isValidReaderHandle(unsigned int reader)

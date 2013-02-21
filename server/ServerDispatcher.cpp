@@ -86,6 +86,8 @@ namespace smartcard_service_api
 				ByteArray info;
 				ClientInstance *instance = NULL;
 
+				resource->loadSecureElements();
+
 				if ((instance = resource->getClient(socket)) != NULL)
 				{
 					/* update client PID */
