@@ -606,29 +606,42 @@ namespace smartcard_service_api
 				aid, service->getParent()->getCertificationHashes()) == true)
 		{
 			int rv = 0;
-			ByteArray command;
-			ByteArray response;
 
 			/* select aid */
-			command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_DF_NAME, channelNum, aid);
-			rv = channel->transmitSync(command, response);
-			if (rv == 0 && response.getLength() >= 2)
+			if (aid == PKCS15::PKCS15_AID)
 			{
-				ResponseHelper resp(response);
+				PKCS15 pkcs15(channel);
 
-				if (resp.getStatus() == 0)
+				if (pkcs15.isClosed() == false)
 				{
 					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+					SCARD_DEBUG_ERR("select failed");
+
+					service->closeChannel(result);
+					result = IntegerHandle::INVALID_HANDLE;
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+				FileObject file(channel);
+
+				rv = file.select(aid);
+				if (rv == FileObject::SUCCESS)
+				{
+					/* remove privilege mode */
+					channel->unsetPrivilegeMode();
+				}
+				else
+				{
+					SCARD_DEBUG_ERR("select failed [%d]", rv);
+
+					service->closeChannel(result);
+					result = IntegerHandle::INVALID_HANDLE;
+				}
 			}
 		}
 		else

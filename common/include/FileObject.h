@@ -61,6 +61,7 @@ namespace smartcard_service_api
 		FileObject(Channel *channel, ByteArray selectResponse);
 		~FileObject();
 
+		void close();
 		inline bool isClosed() { return (opened == false); }
 		int select(ByteArray aid);
 		int select(ByteArray path, bool fromCurrentDF);

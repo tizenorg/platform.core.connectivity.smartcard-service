@@ -41,6 +41,13 @@ namespace smartcard_service_api
 
 	FileObject::~FileObject()
 	{
+		close();
+	}
+
+	void FileObject::close()
+	{
+		opened = false;
+		selectResponse.releaseBuffer();
 	}
 
 	bool FileObject::setSelectResponse(ByteArray &response)
@@ -89,7 +96,7 @@ namespace smartcard_service_api
 			return ret;
 		}
 
-		opened = false;
+		close();
 
 		ret = channel->transmitSync(command, result);
 		if (ret == 0)
@@ -100,6 +107,7 @@ namespace smartcard_service_api
 			{
 				if (setSelectResponse(result) == true)
 				{
+					opened = true;
 					ret = SUCCESS;
 				}
 				else
@@ -311,5 +319,4 @@ namespace smartcard_service_api
 
 		return ret;
 	}
-
 } /* namespace smartcard_service_api */
