@@ -233,5 +233,8 @@ int main()
 #ifdef USE_AUTOSTART
 	_finalize_dbus();
 #endif
+	/* release secure element.. (pure virtual function problem..) */
+	ServerResource::getInstance().unloadSecureElements();
+
 	return 0;
 }

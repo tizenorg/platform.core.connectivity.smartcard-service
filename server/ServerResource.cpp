@@ -895,27 +895,30 @@ namespace smartcard_service_api
 
 	void ServerResource::unloadSecureElements()
 	{
-		size_t i;
-		map<unsigned int, Terminal *>::iterator item;
-
-		for (item = mapTerminals.begin(); item != mapTerminals.end(); item++)
+		if (seLoaded == true)
 		{
-			item->second->finalize();
+			size_t i;
+			map<unsigned int, Terminal *>::iterator item;
 
-			IntegerHandle::releaseHandle(item->first);
+			for (item = mapTerminals.begin(); item != mapTerminals.end(); item++)
+			{
+				item->second->finalize();
+
+				IntegerHandle::releaseHandle(item->first);
+			}
+
+			mapTerminals.clear();
+
+			for (i = 0; i < libraries.size(); i++)
+			{
+				if (libraries[i] != NULL)
+					dlclose(libraries[i]);
+			}
+
+			libraries.clear();
+
+			seLoaded = false;
 		}
-
-		mapTerminals.clear();
-
-		for (i = 0; i < libraries.size(); i++)
-		{
-			if (libraries[i] != NULL)
-				dlclose(libraries[i]);
-		}
-
-		libraries.clear();
-
-		seLoaded = false;
 	}
 
 	bool ServerResource::isValidReaderHandle(unsigned int reader)

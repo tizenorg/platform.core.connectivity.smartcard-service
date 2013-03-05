@@ -197,6 +197,7 @@ ERROR :
 #ifdef USE_IPC_EPOLL
 		int events = 0;
 
+again :
 		if ((events = epoll_wait(fdPoll, pollEvents, EPOLL_SIZE, -1)) > 0)
 		{
 			int i;
@@ -216,6 +217,16 @@ ERROR :
 					result = 1;
 					break;
 				}
+			}
+		}
+		else
+		{
+			if (errno == EINTR)
+			{
+				char buffer[1024];
+
+				SCARD_DEBUG_ERR("epoll_wait failed [%d], errno [%d], %s", events, errno, strerror_r(errno, buffer, sizeof(buffer)));
+				goto again;
 			}
 		}
 #else
