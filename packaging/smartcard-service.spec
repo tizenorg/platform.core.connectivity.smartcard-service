@@ -11,12 +11,12 @@ Source0:    %{name}-%{version}.tar.gz
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(security-server)
 BuildRequires: pkgconfig(dlog)
+BuildRequires: pkgconfig(vconf)
+BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(libssl)
 BuildRequires: pkgconfig(dbus-glib-1)
 BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: pkgconfig(pkgmgr-info)
-BuildRequires: pkgconfig(vconf)
-BuildRequires: pkgconfig(aul)
 BuildRequires: cmake
 BuildRequires: gettext-tools
 

@@ -91,7 +91,6 @@ namespace smartcard_service_api
 
 	ServerResource::~ServerResource()
 	{
-		unloadSecureElements();
 	}
 
 	ServerResource &ServerResource::getInstance()
