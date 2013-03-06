@@ -197,7 +197,6 @@ ERROR :
 #ifdef USE_IPC_EPOLL
 		int events = 0;
 
-again :
 		if ((events = epoll_wait(fdPoll, pollEvents, EPOLL_SIZE, -1)) > 0)
 		{
 			int i;
@@ -219,15 +218,15 @@ again :
 				}
 			}
 		}
+		else if (errno == EINTR)
+		{
+			SCARD_DEBUG_ERR("epoll_wait interrupted");
+		}
 		else
 		{
-			if (errno == EINTR)
-			{
-				char buffer[1024];
+			char buffer[1024];
 
-				SCARD_DEBUG_ERR("epoll_wait failed [%d], errno [%d], %s", events, errno, strerror_r(errno, buffer, sizeof(buffer)));
-				goto again;
-			}
+			SCARD_DEBUG_ERR("epoll_wait failed, errno [%d], %s", errno, strerror_r(errno, buffer, sizeof(buffer)));
 		}
 #else
 		if (select(ipcSocket + 1, &fdSetRead, NULL, NULL, NULL) > 0)
@@ -309,8 +308,7 @@ again :
 			}
 			else
 			{
-				helper->handleInvalidSocketCondition(NULL, G_IO_NVAL);
-				condition = false;
+				/* skip other error case */
 			}
 		}
 
