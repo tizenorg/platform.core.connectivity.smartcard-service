@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <stdio.h>
@@ -27,12 +26,14 @@
 
 namespace smartcard_service_api
 {
-	FileObject::FileObject(Channel *channel):ProviderHelper(channel)
+	FileObject::FileObject(Channel *channel)
+		: ProviderHelper(channel)
 	{
 		opened = false;
 	}
 
-	FileObject::FileObject(Channel *channel, ByteArray selectResponse):ProviderHelper(channel)
+	FileObject::FileObject(Channel *channel, ByteArray selectResponse)
+		: ProviderHelper(channel)
 	{
 		opened = false;
 		setSelectResponse(selectResponse);
@@ -40,6 +41,13 @@ namespace smartcard_service_api
 
 	FileObject::~FileObject()
 	{
+		close();
+	}
+
+	void FileObject::close()
+	{
+		opened = false;
+		selectResponse.releaseBuffer();
 	}
 
 	bool FileObject::setSelectResponse(ByteArray &response)
@@ -64,7 +72,8 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]",
+					resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
@@ -87,23 +96,34 @@ namespace smartcard_service_api
 			return ret;
 		}
 
-		opened = false;
+		close();
 
 		ret = channel->transmitSync(command, result);
 		if (ret == 0)
 		{
-			if (setSelectResponse(result) == true)
+			ResponseHelper resp(result);
+
+			if (resp.getStatus() == 0)
 			{
-				ret = SUCCESS;
+				if (setSelectResponse(result) == true)
+				{
+					opened = true;
+					ret = SUCCESS;
+				}
+				else
+				{
+					ret = ERROR_ILLEGAL_STATE;
+				}
 			}
-			else
+			else if (resp.getStatus() == ResponseHelper::ERROR_FILE_NOT_FOUND)
 			{
-				ret = ERROR_ILLEGAL_STATE;
+				ret = ResponseHelper::ERROR_FILE_NOT_FOUND;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", ret, result.getLength());
+			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]",
+				ret, result.getLength());
 
 			ret = ERROR_ILLEGAL_STATE;
 		}
@@ -118,7 +138,6 @@ namespace smartcard_service_api
 
 		/* make apdu command */
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_DF_NAME, 0, aid);
-		SCARD_DEBUG("command : %s", command.toString());
 
 		ret = _select(command);
 
@@ -137,9 +156,16 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_PATH, 0, path);
+			ByteArray temp(path);
+
+			if (path.getLength() > 2 && path[0] == 0x3f && path[1] == 0x00) /* check MF */
+			{
+				/* remove MF from path */
+				temp.setBuffer(path.getBuffer(2), path.getLength() - 2);
+			}
+
+			command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_PATH, 0, temp);
 		}
-		SCARD_DEBUG("command : %s", command.toString());
 
 		ret = _select(command);
 
@@ -153,7 +179,6 @@ namespace smartcard_service_api
 
 		/* make apdu command */
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_ID, 0, fidData);
-		SCARD_DEBUG("command : %s", command.toString());
 
 		ret = _select(command);
 
@@ -167,7 +192,6 @@ namespace smartcard_service_api
 
 		/* make apdu command */
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_PARENT_DF, 0, ByteArray::EMPTY);
-		SCARD_DEBUG("command : %s", command.toString());
 
 		ret = _select(command);
 
@@ -190,22 +214,20 @@ namespace smartcard_service_api
 		APDUCommand apdu;
 		int ret;
 
-		apdu.setCommand(0, APDUCommand::INS_READ_RECORD, recordId, 4, ByteArray::EMPTY, 0);
+		apdu.setCommand(0, APDUCommand::INS_READ_RECORD, recordId, 4, ByteArray::EMPTY, APDUCommand::LE_MAX);
 		apdu.getBuffer(command);
-		SCARD_DEBUG("command : %s", command.toString());
 
 		ret = channel->transmitSync(command, response);
 		if (ret == 0 && response.getLength() >= 2)
 		{
 			ResponseHelper resp(response);
 
-			if (resp.getStatus() == 0)
+			ret = resp.getStatus();
+			if (ret == 0)
 			{
 				SCARD_DEBUG("response [%d] : %s", response.getLength(), response.toString());
 
-//				result = resp.getDataField();
-
-				ret = SUCCESS;
+				result = Record(recordId, resp.getDataField());
 			}
 			else
 			{
@@ -238,7 +260,6 @@ namespace smartcard_service_api
 
 		apdu.setCommand(0, APDUCommand::INS_READ_BINARY, offset, 0, ByteArray::EMPTY, length);
 		apdu.getBuffer(command);
-		SCARD_DEBUG("command : %s", command.toString());
 
 		ret = channel->transmitSync(command, response);
 		if (ret == 0 && response.getLength() >= 2)
@@ -274,7 +295,6 @@ namespace smartcard_service_api
 
 		apdu.setCommand(0, APDUCommand::INS_WRITE_BINARY, offset, 0, data, 0);
 		apdu.getBuffer(command);
-		SCARD_DEBUG("command : %s", command.toString());
 
 		ret = channel->transmitSync(command, response);
 		if (ret == 0 && response.getLength() >= 2)
@@ -299,5 +319,4 @@ namespace smartcard_service_api
 
 		return ret;
 	}
-
 } /* namespace smartcard_service_api */

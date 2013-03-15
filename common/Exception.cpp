@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2012 Samsung Electronics Co., Ltd All Rights Reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RECORD_H_
-#define RECORD_H_
-
-#include "ByteArray.h"
+#include "Exception.h"
 
 namespace smartcard_service_api
 {
-	class Record
-	{
-	private:
-		unsigned int id;
-		ByteArray data;
-
-	public:
-		Record() : id(0) {}
-		Record(unsigned int id, ByteArray buffer)
-			: id(id), data(buffer) {};
-		~Record() {}
-
-		inline unsigned int getID() { return id; }
-		inline ByteArray getData() { return data; }
-	};
-
 } /* namespace smartcard_service_api */
-#endif /* RECORD_H_ */

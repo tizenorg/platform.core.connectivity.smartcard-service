@@ -14,28 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef RECORD_H_
-#define RECORD_H_
+#ifndef EFDIR_H_
+#define EFDIR_H_
 
-#include "ByteArray.h"
+/* standard library header */
+#include <vector>
+
+/* SLP library header */
+
+/* local header */
+#include "FileObject.h"
+
+using namespace std;
 
 namespace smartcard_service_api
 {
-	class Record
+	class EFDIR : public FileObject
 	{
 	private:
-		unsigned int id;
-		ByteArray data;
+		ByteArray parseRecord(Record &record, ByteArray &aid);
 
 	public:
-		Record() : id(0) {}
-		Record(unsigned int id, ByteArray buffer)
-			: id(id), data(buffer) {};
-		~Record() {}
+		static const unsigned int EFDIR_FID = 0x002f;
 
-		inline unsigned int getID() { return id; }
-		inline ByteArray getData() { return data; }
+		EFDIR(Channel *channel);
+		EFDIR(Channel *channel, ByteArray selectResponse);
+		~EFDIR();
+
+		ByteArray getPathByAID(ByteArray &aid);
 	};
-
 } /* namespace smartcard_service_api */
-#endif /* RECORD_H_ */
+#endif /* EFDIR_H_ */

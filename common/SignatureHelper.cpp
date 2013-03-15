@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <stdio.h>
@@ -26,6 +25,7 @@
 
 /* SLP library header */
 #include "package-manager.h"
+#include "pkgmgr-info.h"
 #include "aul.h"
 
 /* local header */
@@ -83,13 +83,28 @@ namespace smartcard_service_api
 		ByteArray result;
 		int ret = 0;
 		pkgmgr_certinfo_h handle = NULL;
+		pkgmgrinfo_appinfo_h handle_appinfo;
+		char *pkgid = NULL;
 
+		if(pkgmgrinfo_appinfo_get_appinfo(packageName, &handle_appinfo) != PMINFO_R_OK)
+		{
+			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
+			return result;
+		}
 
-		SCARD_DEBUG("package name : %s", packageName);
+		if(pkgmgrinfo_appinfo_get_pkgid(handle_appinfo, &pkgid) != PMINFO_R_OK)
+		{
+			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
+			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
+			return result;
+		}
+		pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
+
+		SCARD_DEBUG("package name : %s", pkgid);
 
 		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			if ((ret = pkgmgr_pkginfo_load_certinfo(packageName, handle)) == 0)
+			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle)) == 0)
 			{
 				int type;
 
@@ -167,12 +182,27 @@ namespace smartcard_service_api
 		bool result = false;
 		int ret = 0;
 		pkgmgr_certinfo_h handle = NULL;
+		pkgmgrinfo_appinfo_h handle_appinfo;
+		char *pkgid = NULL;
 
-		SCARD_DEBUG("package name : %s", packageName);
+		if(pkgmgrinfo_appinfo_get_appinfo(packageName, &handle_appinfo) != PMINFO_R_OK)
+		{
+			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
+			return result;
+		}
+
+		if(pkgmgrinfo_appinfo_get_pkgid(handle_appinfo, &pkgid) != PMINFO_R_OK)
+		{
+			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
+			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
+			return result;
+		}
+
+		SCARD_DEBUG("package name : %s", pkgid);
 
 		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			if ((ret = pkgmgr_pkginfo_load_certinfo(packageName, handle)) == 0)
+			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle)) == 0)
 			{
 				int type;
 
@@ -206,6 +236,8 @@ namespace smartcard_service_api
 			{
 				SCARD_DEBUG_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
 			}
+
+			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
 
 			pkgmgr_pkginfo_destroy_certinfo(handle);
 		}

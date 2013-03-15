@@ -1,18 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <stdlib.h>
@@ -27,6 +27,7 @@
 #include "ClientIPC.h"
 #include "ClientChannel.h"
 #include "ReaderHelper.h"
+#include "APDUHelper.h"
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -34,7 +35,9 @@
 
 namespace smartcard_service_api
 {
-	ClientChannel::ClientChannel(void *context, Session *session, int channelNum, ByteArray selectResponse, void *handle):Channel(session)
+	ClientChannel::ClientChannel(void *context, Session *session,
+		int channelNum, ByteArray selectResponse, void *handle)
+		: Channel(session)
 	{
 		this->channelNum = -1;
 		this->handle = NULL;
@@ -58,7 +61,7 @@ namespace smartcard_service_api
 		closeSync();
 	}
 
-	void ClientChannel::closeSync()
+	void ClientChannel::closeSync() throw(ErrorIO &, ErrorIllegalState &)
 	{
 #ifdef CLIENT_IPC_THREAD
 		if (isClosed() == false)
@@ -75,20 +78,30 @@ namespace smartcard_service_api
 				msg.caller = (void *)this;
 				msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-				syncLock();
-				if (ClientIPC::getInstance().sendMessage(&msg) == true)
+				try
 				{
-					rv = waitTimedCondition(0);
-					if (rv < 0)
+					syncLock();
+					if (ClientIPC::getInstance().sendMessage(&msg) == true)
 					{
-						SCARD_DEBUG_ERR("closeSync failed [%d]", rv);
+						rv = waitTimedCondition(0);
+						if (rv < 0)
+						{
+							SCARD_DEBUG_ERR("closeSync failed [%d]", rv);
+						}
 					}
+					else
+					{
+						SCARD_DEBUG_ERR("sendMessage failed");
+						throw ErrorIO(SCARD_ERROR_IPC_FAILED);
+					}
+					syncUnlock();
 				}
-				else
+				catch (ExceptionBase &e)
 				{
-					SCARD_DEBUG_ERR("sendMessage failed");
+					syncUnlock();
+
+					throw e;
 				}
-				syncUnlock();
 
 				channelNum = -1;
 			}
@@ -140,6 +153,7 @@ namespace smartcard_service_api
 	}
 
 	int ClientChannel::transmitSync(ByteArray command, ByteArray &result)
+		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		int rv = -1;
 
@@ -169,7 +183,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("clientIPC is null");
+					SCARD_DEBUG_ERR("timeout");
 
 					rv = -1;
 				}
@@ -184,6 +198,7 @@ namespace smartcard_service_api
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable channel");
+			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
 		return rv;
@@ -244,6 +259,14 @@ namespace smartcard_service_api
 			{
 				/* transmit result */
 				SCARD_DEBUG("MSG_REQUEST_TRANSMIT");
+
+				if (msg->error == 0 &&
+					ResponseHelper::getStatus(msg->data) == 0)
+				{
+					/* store select response */
+					if (msg->data.getAt(1) == APDUCommand::INS_SELECT_FILE)
+						channel->setSelectResponse(msg->data);
+				}
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
@@ -326,7 +349,8 @@ EXTERN_API int channel_close(channel_h handle, channel_close_cb callback, void *
 	return result;
 }
 
-EXTERN_API int channel_transmit(channel_h handle, unsigned char *command, unsigned int length, channel_transmit_cb callback, void *userParam)
+EXTERN_API int channel_transmit(channel_h handle, unsigned char *command,
+	unsigned int length, channel_transmit_cb callback, void *userParam)
 {
 	int result = -1;
 
@@ -344,12 +368,19 @@ EXTERN_API void channel_close_sync(channel_h handle)
 {
 #ifdef CLIENT_IPC_THREAD
 	CHANNEL_EXTERN_BEGIN;
-	channel->closeSync();
+	try
+	{
+		channel->closeSync();
+	}
+	catch (...)
+	{
+	}
 	CHANNEL_EXTERN_END;
 #endif
 }
 
-EXTERN_API int channel_transmit_sync(channel_h handle, unsigned char *command, unsigned int cmd_len, unsigned char **response, unsigned int *resp_len)
+EXTERN_API int channel_transmit_sync(channel_h handle, unsigned char *command,
+	unsigned int cmd_len, unsigned char **response, unsigned int *resp_len)
 {
 	int result = -1;
 
@@ -361,12 +392,20 @@ EXTERN_API int channel_transmit_sync(channel_h handle, unsigned char *command, u
 	ByteArray temp, resp;
 
 	temp.setBuffer(command, cmd_len);
-	result = channel->transmitSync(temp, resp);
-	if (resp.getLength() > 0)
+
+	try
 	{
-		*resp_len = resp.getLength();
-		*response = (unsigned char *)calloc(1, *resp_len);
-		memcpy(*response, resp.getBuffer(), *resp_len);
+		result = channel->transmitSync(temp, resp);
+		if (resp.getLength() > 0)
+		{
+			*resp_len = resp.getLength();
+			*response = (unsigned char *)calloc(1, *resp_len);
+			memcpy(*response, resp.getBuffer(), *resp_len);
+		}
+	}
+	catch (...)
+	{
+		result = -1;
 	}
 	CHANNEL_EXTERN_END;
 #endif
@@ -407,7 +446,8 @@ EXTERN_API unsigned int channel_get_select_response_length(channel_h handle)
 	return result;
 }
 
-EXTERN_API bool channel_get_select_response(channel_h handle, unsigned char *buffer, unsigned int length)
+EXTERN_API bool channel_get_select_response(channel_h handle,
+	unsigned char *buffer, unsigned int length)
 {
 	bool result = false;
 
@@ -443,7 +483,5 @@ EXTERN_API session_h channel_get_session(channel_h handle)
 
 EXTERN_API void channel_destroy_instance(channel_h handle)
 {
-	CHANNEL_EXTERN_BEGIN;
-	delete channel;
-	CHANNEL_EXTERN_END;
+	/* do nothing */
 }

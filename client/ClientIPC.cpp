@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <sys/socket.h>
@@ -37,7 +36,7 @@ namespace smartcard_service_api
 		_launch_daemon();
 #endif
 #ifdef SECURITY_SERVER
-		int length = 0;
+		int length;
 
 		if ((length = security_server_get_cookie_size()) > 0)
 		{
@@ -46,9 +45,10 @@ namespace smartcard_service_api
 			buffer = new uint8_t[length];
 			if (buffer != NULL)
 			{
-				int error = 0;
+				int error;
 
-				if ((error = security_server_request_cookie(buffer, length)) == SECURITY_SERVER_API_SUCCESS)
+				if ((error = security_server_request_cookie(buffer, length))
+					== SECURITY_SERVER_API_SUCCESS)
 				{
 					cookie.setBuffer(buffer, length);
 
@@ -83,10 +83,8 @@ namespace smartcard_service_api
 #ifdef USE_AUTOSTART
 	void ClientIPC::_launch_daemon()
 	{
-		DBusGConnection *connection = NULL;
-		DBusGProxy *proxy = NULL;
+		DBusGConnection *connection;
 		GError *error = NULL;
-		gint result = 0;
 
 		SCARD_BEGIN();
 
@@ -97,10 +95,16 @@ namespace smartcard_service_api
 		connection = dbus_g_bus_get(DBUS_BUS_SYSTEM, &error);
 		if (error == NULL)
 		{
-			proxy = dbus_g_proxy_new_for_name(connection, "org.tizen.smartcard_service", "/org/tizen/smartcard_service", "org.tizen.smartcard_service");
+			DBusGProxy *proxy;
+
+			proxy = dbus_g_proxy_new_for_name(connection, "org.tizen.smartcard_service",
+				"/org/tizen/smartcard_service", "org.tizen.smartcard_service");
 			if (proxy != NULL)
 			{
-				if (dbus_g_proxy_call(proxy, "launch", &error, G_TYPE_INVALID, G_TYPE_INT, &result, G_TYPE_INVALID) == false)
+				gint result = 0;
+
+				if (dbus_g_proxy_call(proxy, "launch", &error, G_TYPE_INVALID,
+					G_TYPE_INT, &result, G_TYPE_INVALID) == false)
 				{
 					SCARD_DEBUG_ERR("org_tizen_smartcard_service_launch failed");
 					if (error != NULL)
@@ -130,7 +134,7 @@ namespace smartcard_service_api
 	bool ClientIPC::sendMessage(Message *msg)
 	{
 		ByteArray stream;
-		unsigned int length = 0;
+		unsigned int length;
 
 		if (ipcSocket == -1)
 			return false;
@@ -142,23 +146,24 @@ namespace smartcard_service_api
 #endif
 		length = stream.getLength();
 
-		SCARD_DEBUG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]", ipcSocket, msg->message, stream.getLength());
+		SCARD_DEBUG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
+			ipcSocket, msg->message, stream.getLength());
 
 		return IPCHelper::sendMessage(ipcSocket, stream);
 	}
 
 	int ClientIPC::handleIOErrorCondition(void *channel, GIOCondition condition)
 	{
-		DispatcherMsg dispMsg;
-
 		SCARD_BEGIN();
-
-		/* push or process disconnect message */
-		dispMsg.message = Message::MSG_OPERATION_RELEASE_CLIENT;
-		dispMsg.error = -1;
 
 		if (dispatcher != NULL)
 		{
+			DispatcherMsg dispMsg;
+
+			/* push or process disconnect message */
+			dispMsg.message = Message::MSG_OPERATION_RELEASE_CLIENT;
+			dispMsg.error = -1;
+
 #ifdef CLIENT_IPC_THREAD
 			dispatcher->processMessage(&dispMsg);
 #else

@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <stdio.h>
@@ -160,7 +159,10 @@ namespace smartcard_service_api
 		}
 
 #ifdef SECURITY_SERVER
-		gid = security_server_get_gid(NET_NFC_MANAGER_OBJECT);
+		int gid, cookies_size;
+		char *cookies;
+
+		gid = security_server_get_gid("smartcard-service");
 		if(gid == 0)
 		{
 			SCARD_DEBUG("get gid from security server is failed. this object is not allowed by security server");
@@ -215,6 +217,16 @@ ERROR :
 					break;
 				}
 			}
+		}
+		else if (errno == EINTR)
+		{
+			SCARD_DEBUG_ERR("epoll_wait interrupted");
+		}
+		else
+		{
+			char buffer[1024];
+
+			SCARD_DEBUG_ERR("epoll_wait failed, errno [%d], %s", errno, strerror_r(errno, buffer, sizeof(buffer)));
 		}
 #else
 		if (select(ipcSocket + 1, &fdSetRead, NULL, NULL, NULL) > 0)
@@ -296,8 +308,7 @@ ERROR :
 			}
 			else
 			{
-				helper->handleInvalidSocketCondition(NULL, G_IO_NVAL);
-				condition = false;
+				/* skip other error case */
 			}
 		}
 
@@ -313,6 +324,7 @@ ERROR :
 		GIOCondition condition = (GIOCondition)(G_IO_ERR | G_IO_HUP | G_IO_IN);
 #endif
 		int result = 0;
+		char err[200] = { 0, };
 
 		SCARD_BEGIN();
 
@@ -329,7 +341,8 @@ ERROR :
 		ipcSocket = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (ipcSocket == -1)
 		{
-			SCARD_DEBUG_ERR("get socket is failed");
+			SCARD_DEBUG_ERR("get socket is failed [%d, %s]",
+				errno, strerror_r(errno, err, sizeof(err)));
 			goto ERROR;
 		}
 
@@ -344,7 +357,8 @@ ERROR :
 
 		if ((result = connect(ipcSocket, (struct sockaddr *)&saddrun_rv, len_saddr)) < 0)
 		{
-			SCARD_DEBUG_ERR("connect failed [%d]", result);
+			SCARD_DEBUG_ERR("connect failed [%d, %s]",
+				errno, strerror_r(errno, err, sizeof(err)));
 			goto ERROR;
 		}
 
@@ -352,7 +366,8 @@ ERROR :
 #ifdef USE_IPC_EPOLL
 		if((fdPoll = epoll_create1(EPOLL_CLOEXEC)) == -1)
 		{
-			SCARD_DEBUG_ERR("epoll_create1 failed");
+			SCARD_DEBUG_ERR("epoll_create1 failed [%d, %s]",
+				errno, strerror_r(errno, err, sizeof(err)));
 			goto ERROR;
 		}
 
@@ -509,7 +524,8 @@ ERROR :
 		stream = msg->serialize();
 		length = stream.getLength();
 
-		SCARD_DEBUG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]", socket, msg->message, stream.getLength());
+		SCARD_DEBUG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
+			socket, msg->message, stream.getLength());
 
 		return sendMessage(socket, stream);
 	}

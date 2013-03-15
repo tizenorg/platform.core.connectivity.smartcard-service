@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef APDUHELPER_H_
 #define APDUHELPER_H_
@@ -36,7 +35,29 @@ namespace smartcard_service_api
 		ByteArray dataField;
 
 		static int parseStatusWord(unsigned char *sw);
+
 	public:
+		static const int SUCCESS = 0;
+
+		static const int ERROR_UNKNOWN = -1;
+
+		static const int ERROR_NO_INFORMATION = -(0x6900);
+		static const int ERROR_COMMAND_INCOMPATIBLE = -(0x6981);
+		static const int ERROR_SECURITY_NOT_SATISFIED = -(0x6982);
+		static const int ERROR_AUTH_PIN_BLOCKED = -(0x6983);
+		static const int ERROR_REF_DATA_INVALID = -(0x6984);
+		static const int ERROR_CONDITION_NOT_SATIFIED = -(0x6985);
+		static const int ERROR_COMMAND_NOT_ALLOW = -(0x6986);
+
+		static const int ERROR_INCORRECT_PARAMETER = -(0x6a80);
+		static const int ERROR_FUNCTION_NOT_SUPPORT = -(0x6a81);
+		static const int ERROR_FILE_NOT_FOUND = -(0x6a82);
+		static const int ERROR_RECORD_NOT_FOUND = -(0x6a83);
+		static const int ERROR_NOT_ENOUGH_MEMORY = -(0x6a84);
+		static const int ERROR_INCORRECT_P1_P2 = -(0x6a86);
+		static const int ERROR_LC_INCONSISTENT = -(0x6a87);
+		static const int ERROR_REF_DATA_NOT_FOUND = -(0x6a88);
+
 		ResponseHelper();
 		ResponseHelper(const ByteArray &response);
 		~ResponseHelper();
@@ -118,10 +139,13 @@ namespace smartcard_service_api
 		static const unsigned char CLA_CHANNEL_STANDARD = (unsigned char)0x00;
 		static const unsigned char CLA_CHANNEL_EXTENDED = (unsigned char)0x01;
 
+		static const unsigned int LE_MAX = -1;
+
 		APDUCommand();
 		~APDUCommand();
 
-		bool setCommand(unsigned char cla, unsigned char ins, unsigned char p1, unsigned char p2, ByteArray commandData, unsigned int maxResponseSize);
+		bool setCommand(unsigned char cla, unsigned char ins, unsigned char p1,
+			unsigned char p2, ByteArray commandData, unsigned int maxResponseSize);
 		bool setCommand(const ByteArray &command);
 
 		bool setChannel(int type, int channelNum);
@@ -142,7 +166,7 @@ namespace smartcard_service_api
 		ByteArray getCommandData();
 
 		void setMaxResponseSize(unsigned int maxResponseSize);
-		unsigned int setMaxResponseSize();
+		unsigned int getMaxResponseSize();
 
 		bool getBuffer(ByteArray &array);
 	};

@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012 Samsung Electronics Co., Ltd All Rights Reserved
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <stdio.h>
@@ -36,7 +35,8 @@
 
 namespace smartcard_service_api
 {
-	Session::Session(void *context, Reader *reader, void *handle):SessionHelper(reader)
+	Session::Session(void *context, Reader *reader, void *handle) :
+		SessionHelper(reader)
 	{
 		this->context = NULL;
 
@@ -66,7 +66,7 @@ namespace smartcard_service_api
 		channels.clear();
 	}
 
-	void Session::closeChannels()
+	void Session::closeChannels() throw (ErrorIO &, ErrorIllegalState &)
 	{
 		size_t i;
 
@@ -76,45 +76,50 @@ namespace smartcard_service_api
 		}
 	}
 
-	ByteArray Session::getATRSync()
+	ByteArray Session::getATRSync() throw (ErrorIO &, ErrorIllegalState &)
 	{
-		atr.releaseBuffer();
+		ByteArray result;
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
-			Message msg;
-			int rv;
+			if (atr.isEmpty() == true)
+			{
+				Message msg;
+				int rv;
 
 #ifdef CLIENT_IPC_THREAD
-			/* request channel handle from server */
-			msg.message = Message::MSG_REQUEST_GET_ATR;
-			msg.param1 = (unsigned int)handle;
-			msg.error = (unsigned int)context; /* using error to context */
-			msg.caller = (void *)this;
-			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
+				/* request channel handle from server */
+				msg.message = Message::MSG_REQUEST_GET_ATR;
+				msg.param1 = (unsigned int)handle;
+				msg.error = (unsigned int)context; /* using error to context */
+				msg.caller = (void *)this;
+				msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-			syncLock();
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
-			{
-				rv = waitTimedCondition(0);
-				if (rv != 0)
+				syncLock();
+				if (ClientIPC::getInstance().sendMessage(&msg) == true)
 				{
-					SCARD_DEBUG_ERR("time over");
+					rv = waitTimedCondition(0);
+					if (rv != 0)
+					{
+						SCARD_DEBUG_ERR("time over");
+					}
 				}
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("sendMessage failed");
-			}
-			syncUnlock();
+				else
+				{
+					SCARD_DEBUG_ERR("sendMessage failed");
+				}
+				syncUnlock();
 #endif
+			}
+
+			result = atr;
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable session");
 		}
 
-		return atr;
+		return result;
 	}
 
 	int Session::getATR(getATRCallback callback, void *userData)
@@ -123,19 +128,27 @@ namespace smartcard_service_api
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
-			Message msg;
-
-			/* request channel handle from server */
-			msg.message = Message::MSG_REQUEST_GET_ATR;
-			msg.param1 = (unsigned int)handle;
-			msg.error = (unsigned int)context; /* using error to context */
-			msg.caller = (void *)this;
-			msg.callback = (void *)callback;
-			msg.userParam = userData;
-
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (atr.isEmpty() == true)
 			{
-				result = 0;
+				Message msg;
+
+				/* request channel handle from server */
+				msg.message = Message::MSG_REQUEST_GET_ATR;
+				msg.param1 = (unsigned int)handle;
+				msg.error = (unsigned int)context; /* using error to context */
+				msg.caller = (void *)this;
+				msg.callback = (void *)callback;
+				msg.userParam = userData;
+
+				if (ClientIPC::getInstance().sendMessage(&msg) == true)
+				{
+					result = 0;
+				}
+			}
+			else
+			{
+				/* TODO : invoke callback directly */
+				callback(atr.getBuffer(), atr.getLength(), 0, userData);
 			}
 		}
 		else
@@ -146,7 +159,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void Session::closeSync()
+	void Session::closeSync() throw (ErrorIO &, ErrorIllegalState &)
 	{
 		Message msg;
 		int rv;
@@ -282,6 +295,7 @@ namespace smartcard_service_api
 	}
 
 	Channel *Session::openChannelSync(int id, ByteArray aid)
+		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		openedChannel = NULL;
 
@@ -356,11 +370,13 @@ namespace smartcard_service_api
 	}
 
 	Channel *Session::openBasicChannelSync(ByteArray aid)
+		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openChannelSync(0, aid);
 	}
 
 	Channel *Session::openBasicChannelSync(unsigned char *aid, unsigned int length)
+		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openBasicChannelSync(ByteArray(aid, length));
 	}
@@ -370,17 +386,20 @@ namespace smartcard_service_api
 		return openChannel(0, aid, callback, userData);
 	}
 
-	int Session::openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData)
+	int Session::openBasicChannel(unsigned char *aid, unsigned int length,
+		openChannelCallback callback, void *userData)
 	{
 		return openBasicChannel(ByteArray(aid, length), callback, userData);
 	}
 
 	Channel *Session::openLogicalChannelSync(ByteArray aid)
+		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openChannelSync(1, aid);
 	}
 
 	Channel *Session::openLogicalChannelSync(unsigned char *aid, unsigned int length)
+		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openLogicalChannelSync(ByteArray(aid, length));
 	}
@@ -390,7 +409,8 @@ namespace smartcard_service_api
 		return openChannel(1, aid, callback, userData);
 	}
 
-	int Session::openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData)
+	int Session::openLogicalChannel(unsigned char *aid, unsigned int length,
+		openChannelCallback callback, void *userData)
 	{
 		return openLogicalChannel(ByteArray(aid, length), callback, userData);
 	}
@@ -420,7 +440,8 @@ namespace smartcard_service_api
 				if (msg->param1 != 0)
 				{
 					/* create new instance of channel */
-					channel = new ClientChannel(session->context, session, msg->param2, msg->data, (void *)msg->param1);
+					channel = new ClientChannel(session->context,
+						session, msg->param2, msg->data, (void *)msg->param1);
 					if (channel != NULL)
 					{
 						session->channels.push_back(channel);
@@ -529,7 +550,7 @@ namespace smartcard_service_api
 			}
 			break;
 
-		default:
+		default :
 			SCARD_DEBUG("unknown message : %s", msg->toString());
 			break;
 		}
@@ -558,7 +579,7 @@ EXTERN_API reader_h session_get_reader(session_h handle)
 	reader_h reader = NULL;
 
 	SESSION_EXTERN_BEGIN;
-	reader = session->getReader();
+		reader = session->getReader();
 	SESSION_EXTERN_END;
 
 	return reader;
@@ -569,7 +590,7 @@ EXTERN_API int session_get_atr(session_h handle, session_get_atr_cb callback, vo
 	int result = -1;
 
 	SESSION_EXTERN_BEGIN;
-	result = session->getATR((getATRCallback)callback, userData);
+		result = session->getATR((getATRCallback)callback, userData);
 	SESSION_EXTERN_END;
 
 	return result;
@@ -580,7 +601,7 @@ EXTERN_API int session_close(session_h handle, session_close_session_cb callback
 	int result = -1;
 
 	SESSION_EXTERN_BEGIN;
-	result = session->close((closeSessionCallback)callback, userData);
+		result = session->close((closeSessionCallback)callback, userData);
 	SESSION_EXTERN_END;
 
 	return result;
@@ -591,7 +612,7 @@ EXTERN_API bool session_is_closed(session_h handle)
 	bool result = false;
 
 	SESSION_EXTERN_BEGIN;
-	result = session->isClosed();
+		result = session->isClosed();
 	SESSION_EXTERN_END;
 
 	return result;
@@ -600,27 +621,29 @@ EXTERN_API bool session_is_closed(session_h handle)
 EXTERN_API void session_close_channels(session_h handle)
 {
 	SESSION_EXTERN_BEGIN;
-	session->closeChannels();
+		session->closeChannels();
 	SESSION_EXTERN_END;
 }
 
-EXTERN_API int session_open_basic_channel(session_h handle, unsigned char *aid, unsigned int length, session_open_channel_cb callback, void *userData)
+EXTERN_API int session_open_basic_channel(session_h handle, unsigned char *aid,
+	unsigned int length, session_open_channel_cb callback, void *userData)
 {
 	int result = -1;
 
 	SESSION_EXTERN_BEGIN;
-	result = session->openBasicChannel(aid, length, (openChannelCallback)callback, userData);
+		result = session->openBasicChannel(aid, length, (openChannelCallback)callback, userData);
 	SESSION_EXTERN_END;
 
 	return result;
 }
 
-EXTERN_API int session_open_logical_channel(session_h handle, unsigned char *aid, unsigned int length, session_open_channel_cb callback, void *userData)
+EXTERN_API int session_open_logical_channel(session_h handle, unsigned char *aid,
+	unsigned int length, session_open_channel_cb callback, void *userData)
 {
 	int result = -1;
 
 	SESSION_EXTERN_BEGIN;
-	result = session->openLogicalChannel(aid, length, (openChannelCallback)callback, userData);
+		result = session->openLogicalChannel(aid, length, (openChannelCallback)callback, userData);
 	SESSION_EXTERN_END;
 
 	return result;
@@ -631,7 +654,7 @@ EXTERN_API int session_get_channel_count(session_h handle, session_get_channel_c
 	int result = -1;
 
 	SESSION_EXTERN_BEGIN;
-	result = session->getChannelCount((getChannelCountCallback)callback, userData);
+		result = session->getChannelCount((getChannelCountCallback)callback, userData);
 	SESSION_EXTERN_END;
 
 	return result;
@@ -639,9 +662,6 @@ EXTERN_API int session_get_channel_count(session_h handle, session_get_channel_c
 
 EXTERN_API void session_destroy_instance(session_h handle)
 {
-	SESSION_EXTERN_BEGIN;
-	delete session;
-	SESSION_EXTERN_END;
 }
 
 EXTERN_API int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length)
@@ -654,16 +674,16 @@ EXTERN_API int session_get_atr_sync(session_h handle, unsigned char **buffer, un
 		return result;
 
 	SESSION_EXTERN_BEGIN;
-	temp = session->getATRSync();
-	if (temp.getLength() > 0)
-	{
-		*length = temp.getLength();
-		*buffer = (unsigned char *)calloc(1, *length);
-		memcpy(*buffer, temp.getBuffer(), *length);
+		temp = session->getATRSync();
+		if (temp.getLength() > 0)
+		{
+			*length = temp.getLength();
+			*buffer = (unsigned char *)calloc(1, *length);
+			memcpy(*buffer, temp.getBuffer(), *length);
 
-		result = 0;
-	}
-	SESSION_EXTERN_END;
+			result = 0;
+		}
+		SESSION_EXTERN_END;
 #endif
 
 	return result;
@@ -673,7 +693,7 @@ EXTERN_API void session_close_sync(session_h handle)
 {
 #ifdef CLIENT_IPC_THREAD
 	SESSION_EXTERN_BEGIN;
-	session->closeSync();
+		session->closeSync();
 	SESSION_EXTERN_END;
 #endif
 }
@@ -684,7 +704,7 @@ EXTERN_API channel_h session_open_basic_channel_sync(session_h handle, unsigned 
 
 #ifdef CLIENT_IPC_THREAD
 	SESSION_EXTERN_BEGIN;
-	result = session->openBasicChannelSync(aid, length);
+		result = session->openBasicChannelSync(aid, length);
 	SESSION_EXTERN_END;
 #endif
 
@@ -697,7 +717,7 @@ EXTERN_API channel_h session_open_logical_channel_sync(session_h handle, unsigne
 
 #ifdef CLIENT_IPC_THREAD
 	SESSION_EXTERN_BEGIN;
-	result = session->openLogicalChannelSync(aid, length);
+		result = session->openLogicalChannelSync(aid, length);
 	SESSION_EXTERN_END;
 #endif
 
@@ -710,7 +730,7 @@ EXTERN_API unsigned int session_get_channel_count_sync(session_h handle)
 
 #ifdef CLIENT_IPC_THREAD
 	SESSION_EXTERN_BEGIN;
-	result = session->getChannelCountSync();
+		result = session->getChannelCountSync();
 	SESSION_EXTERN_END;
 #endif
 

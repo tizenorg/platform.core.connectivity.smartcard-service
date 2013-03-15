@@ -62,6 +62,7 @@ SET(EXPORT_HEADER
 	../common/include/smartcard-types.h
 	../common/include/ByteArray.h
 	../common/include/Debug.h
+	../common/include/Exception.h
 	../common/include/Synchronous.h
 	../common/include/APDUHelper.h
 	../common/include/Channel.h
@@ -76,6 +77,7 @@ SET(EXPORT_HEADER
 	include/Reader.h
 	include/Session.h
 	include/ClientChannel.h
+	include/smartcard-service.h
 #	include/
 )
 

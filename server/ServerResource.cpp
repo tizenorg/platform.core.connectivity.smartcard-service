@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /* standard library header */
 #include <stdio.h>
@@ -79,16 +78,14 @@ namespace smartcard_service_api
 
 #define OMAPI_SE_PATH "/usr/lib/se"
 
-	ServerResource::ServerResource() : mainLoop(NULL)
+	ServerResource::ServerResource()
+		: mainLoop(NULL), seLoaded(false)
 	{
 		SCARD_BEGIN();
 
 		serverIPC = ServerIPC::getInstance();
 		serverDispatcher = ServerDispatcher::getInstance();
 
-#if 1
-		loadSecureElements();
-#endif
 		SCARD_END();
 	}
 
@@ -578,7 +575,7 @@ namespace smartcard_service_api
 			channelNum = _openLogicalChannel(terminal);
 			if (channelNum > 0)
 			{
-				SCARD_DEBUG("channelNum [%d]", result);
+				SCARD_DEBUG("channelNum [%d]", channelNum);
 			}
 			else
 			{
@@ -608,30 +605,42 @@ namespace smartcard_service_api
 				aid, service->getParent()->getCertificationHashes()) == true)
 		{
 			int rv = 0;
-			ByteArray command;
-			ByteArray response;
 
 			/* select aid */
-			command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_DF_NAME, channelNum, aid);
-			rv = channel->transmitSync(command, response);
-			if (rv == 0 && response.getLength() >= 2)
+			if (aid == PKCS15::PKCS15_AID)
 			{
-				ResponseHelper resp(response);
+				PKCS15 pkcs15(channel);
 
-				if (resp.getStatus() == 0)
+				if (pkcs15.isClosed() == false)
 				{
-					channel->selectResponse = response;
 					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+					SCARD_DEBUG_ERR("select failed");
+
+					service->closeChannel(result);
+					result = IntegerHandle::INVALID_HANDLE;
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+				FileObject file(channel);
+
+				rv = file.select(aid);
+				if (rv == FileObject::SUCCESS)
+				{
+					/* remove privilege mode */
+					channel->unsetPrivilegeMode();
+				}
+				else
+				{
+					SCARD_DEBUG_ERR("select failed [%d]", rv);
+
+					service->closeChannel(result);
+					result = IntegerHandle::INVALID_HANDLE;
+				}
 			}
 		}
 		else
@@ -641,7 +650,6 @@ namespace smartcard_service_api
 			service->closeChannel(result);
 			result = IntegerHandle::INVALID_HANDLE;
 		}
-
 
 		return result;
 	}
@@ -843,39 +851,42 @@ namespace smartcard_service_api
 
 	int ServerResource::loadSecureElements()
 	{
-		int result;
-		void *libHandle;
-		DIR *dir = NULL;
-		struct dirent *entry = NULL;
+		int result = 0;
 
-		if ((dir = opendir(OMAPI_SE_PATH)) != NULL)
+		if (seLoaded == false)
 		{
-			while ((entry = readdir(dir)) != NULL)
+			DIR *dir;
+			struct dirent *entry;
+
+			if ((dir = opendir(OMAPI_SE_PATH)) != NULL)
 			{
-				if (strncmp(entry->d_name, ".", 1) != 0 && strncmp(entry->d_name, "..", 2) != 0)
+				while ((entry = readdir(dir)) != NULL)
 				{
-					char fullPath[1024] = { 0, };
+					if (strncmp(entry->d_name, ".", 1) != 0 &&
+						strncmp(entry->d_name, "..", 2) != 0)
+					{
+						char fullPath[1024];
 
-					/* TODO : need additional name rule :) */
+						/* TODO : need additional name rule :) */
 
-					/* open each files */
-					libHandle = NULL;
+						/* append each files */
+						snprintf(fullPath, sizeof(fullPath),
+							"%s/%s", OMAPI_SE_PATH, entry->d_name);
 
-					snprintf(fullPath, sizeof(fullPath), "%s/%s", OMAPI_SE_PATH, entry->d_name);
+						SCARD_DEBUG("se name [%s]", fullPath);
 
-					SCARD_DEBUG("se name [%s]", fullPath);
-
-					result = appendSELibrary(fullPath);
+						result = appendSELibrary(fullPath);
+					}
 				}
+
+				closedir(dir);
+
+				seLoaded = true;
 			}
-
-			closedir(dir);
-
-			result = 0;
-		}
-		else
-		{
-			result = -1;
+			else
+			{
+				result = -1;
+			}
 		}
 
 		return result;
@@ -883,25 +894,30 @@ namespace smartcard_service_api
 
 	void ServerResource::unloadSecureElements()
 	{
-		size_t i;
-		map<unsigned int, Terminal *>::iterator item;
-
-		for (item = mapTerminals.begin(); item != mapTerminals.end(); item++)
+		if (seLoaded == true)
 		{
-			item->second->finalize();
+			size_t i;
+			map<unsigned int, Terminal *>::iterator item;
 
-			IntegerHandle::releaseHandle(item->first);
+			for (item = mapTerminals.begin(); item != mapTerminals.end(); item++)
+			{
+				item->second->finalize();
+
+				IntegerHandle::releaseHandle(item->first);
+			}
+
+			mapTerminals.clear();
+
+			for (i = 0; i < libraries.size(); i++)
+			{
+				if (libraries[i] != NULL)
+					dlclose(libraries[i]);
+			}
+
+			libraries.clear();
+
+			seLoaded = false;
 		}
-
-		mapTerminals.clear();
-
-		for (i = 0; i < libraries.size(); i++)
-		{
-			if (libraries[i] != NULL)
-				dlclose(libraries[i]);
-		}
-
-		libraries.clear();
 	}
 
 	bool ServerResource::isValidReaderHandle(unsigned int reader)
