@@ -231,9 +231,7 @@ namespace smartcard_service_api
 	{
 		if (context == NULL)
 		{
-			ErrorIllegalParameter e(0);
-
-			throw e;
+			throw ErrorIllegalParameter(SCARD_ERROR_ILLEGAL_PARAM);
 		}
 
 		this->context = context;
@@ -247,9 +245,7 @@ namespace smartcard_service_api
 	{
 		if (context == NULL)
 		{
-			ErrorIllegalParameter e(0);
-
-			throw e;
+			throw ErrorIllegalParameter(SCARD_ERROR_ILLEGAL_PARAM);
 		}
 
 		this->context = context;

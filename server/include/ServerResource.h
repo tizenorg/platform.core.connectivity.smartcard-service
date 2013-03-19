@@ -28,6 +28,7 @@
 
 /* local header */
 #ifdef __cplusplus
+#include "Exception.h"
 #include "Terminal.h"
 #include "Lock.h"
 #include "ServerIPC.h"
@@ -83,7 +84,8 @@ namespace smartcard_service_api
 		int _openLogicalChannel(Terminal *terminal);
 		int _closeLogicalChannel(Terminal *terminal, int channelNum);
 		bool _isAuthorizedAccess(ServerChannel *channel, int pid, ByteArray aid, vector<ByteArray> &hashes);
-		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid);
+		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid)
+			throw(ExceptionBase &);
 	public:
 		/* static member */
 		static ServerResource &getInstance();
@@ -119,7 +121,7 @@ namespace smartcard_service_api
 		void removeClient(int socket);
 		void removeClients();
 
-		bool createService(int socket, unsigned int context);
+		ServiceInstance *createService(int socket, unsigned int context);
 		ServiceInstance *getService(int socket, unsigned int context);
 		void removeService(int socket, unsigned int context);
 		void removeServices(int socket);
@@ -130,7 +132,9 @@ namespace smartcard_service_api
 		void removeSession(int socket, unsigned int context, unsigned int session);
 		bool isValidSessionHandle(int socket, unsigned int context, unsigned int sessionID);
 
-		unsigned int createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid);
+		unsigned int createChannel(int socket, unsigned int context,
+			unsigned int sessionID, int channelType, ByteArray aid)
+			throw(ExceptionBase &);
 		Channel *getChannel(int socket, unsigned int context, unsigned int channelID);
 		void removeChannel(int socket, unsigned int context, unsigned int channelID);
 

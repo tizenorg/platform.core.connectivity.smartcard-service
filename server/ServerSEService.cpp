@@ -290,44 +290,34 @@ namespace smartcard_service_api
 #else
 	bool ServerSEService::dispatcherCallback(void *message, int socket)
 	{
-		int count = 0;
+		int count;
 		ByteArray info;
 		Message *msg = (Message *)message;
 		Message response(*msg);
 		ServerResource &resource = ServerResource::getInstance();
 
-		if (resource.getService(socket, msg->error) == NULL)
+		if (resource.createService(socket, msg->error) != NULL)
 		{
-			if (resource.createService(socket, msg->error) == true)
+			SCARD_DEBUG_ERR("client added : pid [%d]", msg->error);
+
+			response.error = SCARD_ERROR_OK;
+
+			if ((count = resource.getReadersInformation(info)) > 0)
 			{
-				SCARD_DEBUG_ERR("client added : pid [%d]", msg->error);
+				response.param1 = count;
+				response.data = info;
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("createClient failed");
-
+				SCARD_DEBUG("no secure elements");
 				response.param1 = 0;
-				response.error = -1;
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
-
-				return false;
 			}
-		}
-
-		if ((count = resource.getReadersInformation(info)) > 0)
-		{
-			response.param1 = count;
-			response.param2 = 0;
-			response.error = 0;
-			response.data = info;
 		}
 		else
 		{
-			SCARD_DEBUG("no secure elements");
+			SCARD_DEBUG_ERR("createClient failed");
 
-			response.error = -1;
+			response.error = SCARD_ERROR_OUT_OF_MEMORY;
 		}
 
 		/* response to client */

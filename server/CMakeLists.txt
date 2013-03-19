@@ -26,7 +26,7 @@ IF("${USE_AUTOSTART}" STREQUAL "1")
 	EXEC_PROGRAM("${DBUS_BINDING_TOOL}" ARGS "--prefix=smartcard_service ${CMAKE_CURRENT_SOURCE_DIR}/smartcard-service.xml --mode=glib-client --output=${CMAKE_CURRENT_SOURCE_DIR}/include/smartcard-service-glue.h")
 ENDIF()
 
-SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} -pipe -fomit-frame-pointer -Wall -Wno-trigraphs  -fno-strict-aliasing -Wl,-zdefs -fvisibility=hidden")
+SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} -pipe -fomit-frame-pointer -Wall -Wno-trigraphs  -fno-strict-aliasing -Wl,-zdefs -fvisibility=hidden -std=c++0x")
 SET(ARM_CXXFLAGS "${ARM_CXXLAGS} -mapcs -mno-sched-prolog -mabi=aapcs-linux -Uarm -fno-common -fpic")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXXFLAGS}")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")

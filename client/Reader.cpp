@@ -34,7 +34,8 @@
 
 namespace smartcard_service_api
 {
-	Reader::Reader(void *context, const char *name, void *handle) : ReaderHelper()
+	Reader::Reader(void *context, const char *name, void *handle)
+		: ReaderHelper()
 	{
 		unsigned int length = 0;
 
@@ -112,18 +113,26 @@ namespace smartcard_service_api
 				if (rv != 0)
 				{
 					SCARD_DEBUG_ERR("time over");
+					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
 				SCARD_DEBUG_ERR("sendMessage failed");
+				this->error = SCARD_ERROR_IPC_FAILED;
 			}
 			syncUnlock();
+
+			if (this->error != SCARD_ERROR_OK)
+			{
+				ThrowError::throwError(this->error);
+			}
 #endif
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable reader");
+			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
 		return (Session *)openedSession;
@@ -131,7 +140,7 @@ namespace smartcard_service_api
 
 	int Reader::openSession(openSessionCallback callback, void *userData)
 	{
-		int result = -1;
+		int result;
 
 		SCARD_BEGIN();
 
@@ -149,16 +158,18 @@ namespace smartcard_service_api
 
 			if (ClientIPC::getInstance().sendMessage(&msg) == true)
 			{
-				result = 0;
+				result = SCARD_ERROR_OK;
 			}
 			else
 			{
 				SCARD_DEBUG_ERR("sendMessage failed");
+				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable reader");
+			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
 		SCARD_END();
@@ -169,7 +180,7 @@ namespace smartcard_service_api
 	bool Reader::dispatcherCallback(void *message)
 	{
 		Message *msg = (Message *)message;
-		Reader *reader = NULL;
+		Reader *reader;
 		bool result = false;
 
 		SCARD_BEGIN();

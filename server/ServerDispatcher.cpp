@@ -22,6 +22,7 @@
 
 /* local header */
 #include "Debug.h"
+#include "Exception.h"
 #include "ServerDispatcher.h"
 #include "ServerResource.h"
 #include "ServerSEService.h"
@@ -86,6 +87,10 @@ namespace smartcard_service_api
 				ByteArray info;
 				ClientInstance *instance = NULL;
 
+				response.param1 = 0;
+				response.param2 = 0;
+
+				/* load secure elements */
 				resource->loadSecureElements();
 
 				if ((instance = resource->getClient(socket)) != NULL)
@@ -101,45 +106,32 @@ namespace smartcard_service_api
 					}
 
 					/* create service */
-					if (resource->getService(socket, (unsigned long)msg->userParam) == NULL)
+					if (resource->createService(socket, (unsigned int)msg->userParam) != NULL)
 					{
-						if (resource->createService(socket, (unsigned long)msg->userParam) == true)
+						response.error = SCARD_ERROR_OK;
+
+						if ((count = resource->getReadersInformation(info)) > 0)
 						{
-							SCARD_DEBUG_ERR("client added : context [%d]", (unsigned long)msg->userParam);
+							response.param1 = count;
+							response.data = info;
 						}
 						else
 						{
-							SCARD_DEBUG_ERR("createClient failed");
-
-							response.param1 = 0;
-							response.error = -1;
-
-							/* response to client */
-							ServerIPC::getInstance()->sendMessage(socket, &response);
-
-							return NULL;
+							SCARD_DEBUG("no secure elements");
 						}
-					}
-
-					if ((count = resource->getReadersInformation(info)) > 0)
-					{
-						response.param1 = count;
-						response.param2 = 0;
-						response.error = 0;
-						response.data = info;
 					}
 					else
 					{
-						SCARD_DEBUG("no secure elements");
+						SCARD_DEBUG_ERR("createClient failed");
 
-						response.error = -1;
+						response.error = SCARD_ERROR_UNAVAILABLE;
 					}
 				}
 				else
 				{
 					SCARD_DEBUG("client doesn't exist, socket [%d]", socket);
 
-					response.error = -1;
+					response.error = SCARD_ERROR_UNAVAILABLE;
 				}
 
 				/* response to client */
@@ -173,7 +165,7 @@ namespace smartcard_service_api
 
 				SCARD_DEBUG("[MSG_REQUEST_SHUTDOWN]");
 
-				response.error = 0;
+				response.error = SCARD_ERROR_OK;
 
 				resource->removeService(socket, msg->error/* service context */);
 
@@ -208,35 +200,32 @@ namespace smartcard_service_api
 #else
 			{
 				Message response(*msg);
-				unsigned int handle = -1;
+				unsigned int handle = IntegerHandle::INVALID_HANDLE;
 
 				SCARD_DEBUG("[MSG_REQUEST_OPEN_SESSION]");
 
-				response.param1 = -1;
-				response.error = -1;
-
 				if (resource->isValidReaderHandle(msg->param1))
 				{
-#if 1
 					vector<ByteArray> temp;
+
 					handle = resource->createSession(socket, msg->error/* service context */, msg->param1, temp, msg->caller);
-#else
-					handle = resource->createSession(socket, msg->error/* service context */, msg->param1, msg->data, msg->caller);
-#endif
 					if (handle != IntegerHandle::INVALID_HANDLE)
 					{
-						response.param1 = handle;
-						response.error = 0;
+						response.error = SCARD_ERROR_OK;
 					}
 					else
 					{
 						SCARD_DEBUG_ERR("createSession failed [%d]", handle);
+						response.error = SCARD_ERROR_OUT_OF_MEMORY;
 					}
 				}
 				else
 				{
 					SCARD_DEBUG_ERR("request invalid reader handle [%d]", msg->param1);
+					response.error = SCARD_ERROR_ILLEGAL_PARAM;
 				}
+
+				response.param1 = handle;
 
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
@@ -268,8 +257,8 @@ namespace smartcard_service_api
 
 				SCARD_DEBUG("[MSG_REQUEST_CLOSE_SESSION]");
 
-				response.param1 = -1;
-				response.error = -1;
+				response.param1 = 0;
+				response.error = SCARD_ERROR_OK;
 
 				if (resource->isValidSessionHandle(socket, msg->error/* service context */, msg->param1))
 				{
@@ -335,38 +324,47 @@ namespace smartcard_service_api
 #else
 			{
 				Message response(*msg);
-				unsigned int channelID = -1;
 
 				SCARD_DEBUG("[MSG_REQUEST_OPEN_CHANNEL]");
 
-				response.param1 = 0;
+				response.param1 = IntegerHandle::INVALID_HANDLE;
 				response.param2 = 0;
-				response.error = -1;
 				response.data.releaseBuffer();
 
-				channelID = resource->createChannel(socket, msg->error/* service context */, msg->param2, msg->param1, msg->data);
-				if (channelID != IntegerHandle::INVALID_HANDLE)
+				try
 				{
-					ServerChannel *temp = (ServerChannel *)resource->getChannel(socket, msg->error/* service context */, channelID);
+					unsigned int channelID = IntegerHandle::INVALID_HANDLE;
 
-					if (temp != NULL)
+					channelID = resource->createChannel(socket, msg->error/* service context */, msg->param2, msg->param1, msg->data);
+					if (channelID != IntegerHandle::INVALID_HANDLE)
 					{
-						response.param1 = channelID;
-						response.param2 = temp->getChannelNumber();
-						response.error = 0;
-						response.data = temp->getSelectResponse();
+						ServerChannel *temp;
+
+						temp = (ServerChannel *)resource->getChannel(socket, msg->error/* service context */, channelID);
+						if (temp != NULL)
+						{
+							response.param1 = channelID;
+							response.param2 = temp->getChannelNumber();
+							response.error = SCARD_ERROR_OK;
+							response.data = temp->getSelectResponse();
+						}
+						else
+						{
+							SCARD_DEBUG_ERR("IS IT POSSIBLE??????????????????");
+							response.error = SCARD_ERROR_UNKNOWN;
+						}
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("IS IT POSSIBLE??????????????????");
+						SCARD_DEBUG_ERR("channel is null.");
+
+						/* set error value */
+						response.error = SCARD_ERROR_UNAVAILABLE;
 					}
 				}
-				else
+				catch (ExceptionBase &e)
 				{
-					SCARD_DEBUG_ERR("channel is null.");
-
-					/* set error value */
-					response.error = -4;
+					response.error = e.getErrorCode();
 				}
 
 				/* response to client */
@@ -381,8 +379,7 @@ namespace smartcard_service_api
 
 				SCARD_DEBUG("[MSG_REQUEST_GET_CHANNEL_COUNT]");
 
-				response.error = 0;
-
+				response.error = SCARD_ERROR_OK;
 				response.param1 = resource->getChannelCount(socket, msg->error/* service context */, msg->param1);
 
 				/* response to client */
@@ -415,7 +412,7 @@ namespace smartcard_service_api
 
 				SCARD_DEBUG("[MSG_REQUEST_CLOSE_CHANNEL]");
 
-				response.error = 0;
+				response.error = SCARD_ERROR_OK;
 
 				if (resource->getChannel(socket, msg->error/* service context */, msg->param1) != NULL)
 				{
@@ -456,10 +453,6 @@ namespace smartcard_service_api
 
 				SCARD_DEBUG("[MSG_REQUEST_GET_ATR]");
 
-				response.param1 = 0;
-				response.param2 = 0;
-				response.error = -1;
-
 				if ((client = resource->getService(socket, msg->error/* service context */)) != NULL)
 				{
 					Terminal *terminal = NULL;
@@ -469,7 +462,7 @@ namespace smartcard_service_api
 						if ((rv = terminal->getATRSync(result)) == 0)
 						{
 							response.data = result;
-							response.error = 0;
+							response.error = SCARD_ERROR_OK;
 						}
 						else
 						{
@@ -481,11 +474,13 @@ namespace smartcard_service_api
 					else
 					{
 						SCARD_DEBUG_ERR("getTerminal failed : socket [%d], context [%d], session [%d]", socket, msg->error/* service context */, msg->param1);
+						response.error = SCARD_ERROR_UNAVAILABLE;
 					}
 				}
 				else
 				{
 					SCARD_DEBUG_ERR("getClient failed : socket [%d], context [%d], session [%d]", socket, msg->error/* service context */, msg->param1);
+					response.error = SCARD_ERROR_UNAVAILABLE;
 				}
 
 				/* response to client */
@@ -535,16 +530,12 @@ namespace smartcard_service_api
 
 				SCARD_DEBUG("[MSG_REQUEST_TRANSMIT]");
 
-				response.param1 = 0;
-				response.param2 = 0;
-				response.error = -1;
-
 				if ((channel = resource->getChannel(socket, msg->error/* service context */, msg->param1)) != NULL)
 				{
 					if ((rv = channel->transmitSync(msg->data, result)) == 0)
 					{
 						response.data = result;
-						response.error = 0;
+						response.error = SCARD_ERROR_OK;
 					}
 					else
 					{
@@ -556,6 +547,7 @@ namespace smartcard_service_api
 				else
 				{
 					SCARD_DEBUG_ERR("invalid handle : socket [%d], context [%d], channel [%d]", socket, msg->error/* service context */, msg->param1);
+					response.error = SCARD_ERROR_UNAVAILABLE;
 				}
 
 				/* response to client */
