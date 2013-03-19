@@ -51,17 +51,16 @@ namespace smartcard_service_api
 #endif
 	}
 
-	bool ClientInstance::createService(unsigned int context)
+	ServiceInstance *ClientInstance::createService(unsigned int context)
 	{
-		bool result = false;
+		ServiceInstance *result = NULL;
 
-		if (getService(context) == NULL)
+		if ((result = getService(context)) == NULL)
 		{
-			ServiceInstance *instance = new ServiceInstance(this, context);
-			if (instance != NULL)
+			result = new ServiceInstance(this, context);
+			if (result != NULL)
 			{
-				mapServices.insert(make_pair(context, instance));
-				result = true;
+				mapServices.insert(make_pair(context, result));
 			}
 			else
 			{

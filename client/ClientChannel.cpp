@@ -78,36 +78,34 @@ namespace smartcard_service_api
 				msg.caller = (void *)this;
 				msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
-				try
+				syncLock();
+				if (ClientIPC::getInstance().sendMessage(&msg) == true)
 				{
-					syncLock();
-					if (ClientIPC::getInstance().sendMessage(&msg) == true)
+					rv = waitTimedCondition(0);
+					if (rv < 0)
 					{
-						rv = waitTimedCondition(0);
-						if (rv < 0)
-						{
-							SCARD_DEBUG_ERR("closeSync failed [%d]", rv);
-						}
+						SCARD_DEBUG_ERR("closeSync failed [%d]", rv);
+						this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 					}
-					else
-					{
-						SCARD_DEBUG_ERR("sendMessage failed");
-						throw ErrorIO(SCARD_ERROR_IPC_FAILED);
-					}
-					syncUnlock();
 				}
-				catch (ExceptionBase &e)
+				else
 				{
-					syncUnlock();
-
-					throw e;
+					SCARD_DEBUG_ERR("sendMessage failed");
+					this->error = SCARD_ERROR_IPC_FAILED;
 				}
+				syncUnlock();
 
 				channelNum = -1;
+
+				if (this->error != SCARD_ERROR_OK)
+				{
+					ThrowError::throwError(this->error);
+				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("unavailable channel");
+				/* FIXME */
+				SCARD_DEBUG("unavailable channel");
 			}
 		}
 #endif
@@ -115,7 +113,7 @@ namespace smartcard_service_api
 
 	int ClientChannel::close(closeCallback callback, void *userParam)
 	{
-		int result = 0;
+		int result = SCARD_ERROR_OK;
 
 		if (isClosed() == false)
 		{
@@ -132,19 +130,15 @@ namespace smartcard_service_api
 				msg.callback = (void *)callback;
 				msg.userParam = userParam;
 
-				if (ClientIPC::getInstance().sendMessage(&msg) == true)
+				if (ClientIPC::getInstance().sendMessage(&msg) == false)
 				{
-					result = 0;
-				}
-				else
-				{
-					result = -1;
+					result = SCARD_ERROR_IPC_FAILED;
 				}
 			}
 			else
 			{
 				SCARD_DEBUG_ERR("unavailable channel");
-				result = -1;
+				result = SCARD_ERROR_ILLEGAL_STATE;
 			}
 		}
 
@@ -154,7 +148,7 @@ namespace smartcard_service_api
 	int ClientChannel::transmitSync(ByteArray command, ByteArray &result)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		int rv = -1;
+		int rv = SCARD_ERROR_OK;
 		if (getSession()->getReader()->isSecureElementPresent() == true)
 		{
 			Message msg;
@@ -177,13 +171,13 @@ namespace smartcard_service_api
 				{
 					result = response;
 
-					rv = 0;
+					rv = SCARD_ERROR_OK;
 				}
 				else
 				{
 					SCARD_DEBUG_ERR("timeout");
 
-					rv = -1;
+					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
@@ -191,6 +185,11 @@ namespace smartcard_service_api
 				SCARD_DEBUG_ERR("sendMessage failed");
 			}
 			syncUnlock();
+
+			if (this->error != SCARD_ERROR_OK)
+			{
+				ThrowError::throwError(this->error);
+			}
 #endif
 		}
 		else
@@ -204,7 +203,7 @@ namespace smartcard_service_api
 
 	int ClientChannel::transmit(ByteArray command, transmitCallback callback, void *userParam)
 	{
-		int result = -1;
+		int result;
 
 		if (getSession()->getReader()->isSecureElementPresent() == true)
 		{
@@ -222,16 +221,17 @@ namespace smartcard_service_api
 
 			if (ClientIPC::getInstance().sendMessage(&msg) == true)
 			{
-				result = 0;
+				result = SCARD_ERROR_OK;
 			}
 			else
 			{
-				result = -1;
+				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable channel");
+			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
 		return result;

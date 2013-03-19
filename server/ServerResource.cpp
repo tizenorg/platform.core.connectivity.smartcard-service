@@ -185,16 +185,19 @@ namespace smartcard_service_api
 		mapClients.clear();
 	}
 
-	bool ServerResource::createService(int socket, unsigned int context)
+	ServiceInstance *ServerResource::createService(int socket, unsigned int context)
 	{
-		bool result = false;
+		ServiceInstance *result = NULL;
 		ClientInstance *instance = NULL;
 
 		if ((instance = getClient(socket)) != NULL)
 		{
-			if ((result = instance->createService(context)) == false)
+			if ((result = instance->getService(context)) == NULL)
 			{
-				SCARD_DEBUG_ERR("ClientInstance::createService failed [%d] [%d]", socket, context);
+				if ((result = instance->createService(context)) == NULL)
+				{
+					SCARD_DEBUG_ERR("ClientInstance::createService failed [%d] [%d]", socket, context);
+				}
 			}
 		}
 		else
@@ -564,6 +567,7 @@ namespace smartcard_service_api
 	}
 
 	unsigned int ServerResource::_createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid)
+		throw(ExceptionBase &)
 	{
 		unsigned int result = IntegerHandle::INVALID_HANDLE;
 		int channelNum = 0;
@@ -580,7 +584,7 @@ namespace smartcard_service_api
 			else
 			{
 				SCARD_DEBUG_ERR("_openLogicalChannel failed [%d]", channelNum);
-				return result;
+				throw ExceptionBase(SCARD_ERROR_NOT_ENOUGH_RESOURCE);
 			}
 		}
 
@@ -595,7 +599,7 @@ namespace smartcard_service_api
 			{
 				_closeLogicalChannel(terminal, channelNum);
 			}
-			return result;
+			throw ExceptionBase(SCARD_ERROR_OUT_OF_MEMORY);
 		}
 
 		channel = service->getChannel(result);
@@ -621,7 +625,7 @@ namespace smartcard_service_api
 					SCARD_DEBUG_ERR("select failed");
 
 					service->closeChannel(result);
-					result = IntegerHandle::INVALID_HANDLE;
+					throw ExceptionBase(SCARD_ERROR_IO_FAILED);
 				}
 			}
 			else
@@ -639,7 +643,7 @@ namespace smartcard_service_api
 					SCARD_DEBUG_ERR("select failed [%d]", rv);
 
 					service->closeChannel(result);
-					result = IntegerHandle::INVALID_HANDLE;
+					throw ExceptionBase(SCARD_ERROR_IO_FAILED);
 				}
 			}
 		}
@@ -648,7 +652,7 @@ namespace smartcard_service_api
 			SCARD_DEBUG_ERR("unauthorized access");
 
 			service->closeChannel(result);
-			result = IntegerHandle::INVALID_HANDLE;
+			throw ExceptionBase(SCARD_ERROR_SECURITY_NOT_ALLOWED);
 		}
 
 		return result;
@@ -656,6 +660,7 @@ namespace smartcard_service_api
 #endif
 
 	unsigned int ServerResource::createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid)
+		throw(ExceptionBase &)
 	{
 		unsigned int result = -1;
 		ServiceInstance *service = NULL;
@@ -680,16 +685,19 @@ namespace smartcard_service_api
 				else
 				{
 					SCARD_DEBUG_ERR("session is invalid [%d]", sessionID);
+					throw ExceptionBase(SCARD_ERROR_UNAVAILABLE);
 				}
 			}
 			else
 			{
 				SCARD_DEBUG_ERR("session is invalid [%d]", sessionID);
+				throw ExceptionBase(SCARD_ERROR_ILLEGAL_PARAM);
 			}
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("getService is failed [%d] [%d]", socket, context);
+			throw ExceptionBase(SCARD_ERROR_UNAVAILABLE);
 		}
 
 		return result;

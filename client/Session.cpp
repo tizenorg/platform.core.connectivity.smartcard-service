@@ -101,13 +101,20 @@ namespace smartcard_service_api
 					if (rv != 0)
 					{
 						SCARD_DEBUG_ERR("time over");
+						this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 					}
 				}
 				else
 				{
 					SCARD_DEBUG_ERR("sendMessage failed");
+					this->error = SCARD_ERROR_IPC_FAILED;
 				}
 				syncUnlock();
+
+				if (this->error != SCARD_ERROR_OK)
+				{
+					ThrowError::throwError(this->error);
+				}
 #endif
 			}
 
@@ -116,6 +123,7 @@ namespace smartcard_service_api
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable session");
+			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
 		return result;
@@ -123,7 +131,7 @@ namespace smartcard_service_api
 
 	int Session::getATR(getATRCallback callback, void *userData)
 	{
-		int result = -1;
+		int result;
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
@@ -142,11 +150,17 @@ namespace smartcard_service_api
 
 				if (ClientIPC::getInstance().sendMessage(&msg) == true)
 				{
-					result = 0;
+					result = SCARD_ERROR_OK;
+				}
+				else
+				{
+					result = SCARD_ERROR_IPC_FAILED;
 				}
 			}
 			else
 			{
+				result = SCARD_ERROR_OK;
+
 				/* TODO : invoke callback directly */
 				callback(atr.getBuffer(), atr.getLength(), 0, userData);
 			}
@@ -154,6 +168,7 @@ namespace smartcard_service_api
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable session");
+			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
 		return result;
@@ -185,20 +200,27 @@ namespace smartcard_service_api
 				if (rv != 0)
 				{
 					SCARD_DEBUG_ERR("time over");
+					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
 				SCARD_DEBUG_ERR("sendMessage failed");
+				this->error = SCARD_ERROR_IPC_FAILED;
 			}
 			syncUnlock();
+
+			if (this->error != SCARD_ERROR_OK)
+			{
+				ThrowError::throwError(this->error);
+			}
 		}
 #endif
 	}
 
 	int Session::close(closeSessionCallback callback, void *userData)
 	{
-		int result = -1;
+		int result = SCARD_ERROR_OK;
 		Message msg;
 
 		if (isClosed() == false)
@@ -214,9 +236,9 @@ namespace smartcard_service_api
 			msg.callback = (void *)callback;
 			msg.userParam = userData;
 
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(&msg) == false)
 			{
-				result = 0;
+				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
 
@@ -250,18 +272,26 @@ namespace smartcard_service_api
 				if (rv != 0)
 				{
 					SCARD_DEBUG_ERR("time over");
+					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
 				SCARD_DEBUG_ERR("sendMessage failed");
+				this->error = SCARD_ERROR_IPC_FAILED;
 			}
 			syncUnlock();
+
+			if (this->error != SCARD_ERROR_OK)
+			{
+				ThrowError::throwError(this->error);
+			}
 #endif
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable session");
+			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
 		return channelCount;
@@ -269,7 +299,7 @@ namespace smartcard_service_api
 
 	int Session::getChannelCount(getChannelCountCallback callback, void *userData)
 	{
-		int result = -1;
+		int result;
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
@@ -285,12 +315,17 @@ namespace smartcard_service_api
 
 			if (ClientIPC::getInstance().sendMessage(&msg) == true)
 			{
-				result = 0;
+				result = SCARD_ERROR_OK;
+			}
+			else
+			{
+				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable session");
+			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
 		return result;
@@ -323,18 +358,25 @@ namespace smartcard_service_api
 				if (rv != 0)
 				{
 					SCARD_DEBUG_ERR("time over");
+					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
 				SCARD_DEBUG_ERR("sendMessage failed");
+				this->error = SCARD_ERROR_IPC_FAILED;
 			}
 			syncUnlock();
 #endif
+			if (this->error != SCARD_ERROR_OK)
+			{
+				ThrowError::throwError(this->error);
+			}
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable session");
+			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
 		return (Channel *)openedChannel;
@@ -342,7 +384,7 @@ namespace smartcard_service_api
 
 	int Session::openChannel(int id, ByteArray aid, openChannelCallback callback, void *userData)
 	{
-		int result = -1;
+		int result;
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
@@ -360,12 +402,17 @@ namespace smartcard_service_api
 
 			if (ClientIPC::getInstance().sendMessage(&msg) == true)
 			{
-				result = 0;
+				result = SCARD_ERROR_OK;
+			}
+			else
+			{
+				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
 		else
 		{
 			SCARD_DEBUG_ERR("unavailable session");
+			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
 		return result;
@@ -452,7 +499,7 @@ namespace smartcard_service_api
 					{
 						SCARD_DEBUG_ERR("alloc failed");
 
-						msg->error = -1;
+						msg->error = SCARD_ERROR_OUT_OF_MEMORY;
 					}
 				}
 

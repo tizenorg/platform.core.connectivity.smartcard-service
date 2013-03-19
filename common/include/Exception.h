@@ -173,6 +173,55 @@ namespace smartcard_service_api
 			return result;
 		}
 	};
+
+	class ThrowError
+	{
+	public :
+		static void throwError(int errorCode)
+			throw(ErrorIO &, ErrorSecurity &, ErrorIllegalState &,
+				ErrorIllegalParameter &)
+		{
+			switch (errorCode)
+			{
+			case SCARD_ERROR_OK :
+				/* do nothing */
+				break;
+
+			case SCARD_ERROR_IPC_FAILED :
+			case SCARD_ERROR_IO_FAILED :
+			case SCARD_ERROR_OPERATION_TIMEOUT :
+				throw ErrorIO(errorCode);
+				break;
+
+			case SCARD_ERROR_SECURITY_NOT_ALLOWED :
+				throw ErrorSecurity(errorCode);
+				break;
+
+			case SCARD_ERROR_UNAVAILABLE :
+			case SCARD_ERROR_NOT_SUPPORTED :
+			case SCARD_ERROR_NOT_INITIALIZED :
+			case SCARD_ERROR_SE_NOT_INITIALIZED :
+			case SCARD_ERROR_ILLEGAL_STATE :
+			case SCARD_ERROR_OPERATION_NOT_SUPPORTED :
+				throw ErrorIllegalState(errorCode);
+				break;
+
+			case SCARD_ERROR_ILLEGAL_PARAM :
+			case SCARD_ERROR_ILLEGAL_REFERENCE :
+				throw ErrorIllegalParameter(errorCode);
+				break;
+
+			default :
+			case SCARD_ERROR_UNKNOWN :
+			case SCARD_ERROR_OUT_OF_MEMORY :
+			case SCARD_ERROR_NOT_ENOUGH_RESOURCE :
+			case SCARD_ERROR_NEED_MORE_BUFFER :
+				throw ExceptionBase(errorCode);
+				break;
+			}
+		}
+	};
 } /* namespace smartcard_service_api */
 
 #endif /* EXCEPTIONBASE_H_ */
+
