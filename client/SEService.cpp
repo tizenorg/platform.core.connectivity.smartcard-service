@@ -114,7 +114,7 @@ namespace smartcard_service_api
 			Message msg;
 
 			msg.message = Message::MSG_REQUEST_SHUTDOWN;
-			msg.error = (unsigned int)this; /* using error to context */
+			msg.error = (unsigned long)this; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)NULL;
 
@@ -141,7 +141,7 @@ namespace smartcard_service_api
 			Message msg;
 
 			msg.message = Message::MSG_REQUEST_SHUTDOWN;
-			msg.error = (unsigned int)this; /* using error to context */
+			msg.error = (unsigned long)this; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 

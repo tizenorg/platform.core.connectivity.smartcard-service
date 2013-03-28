@@ -73,8 +73,8 @@ namespace smartcard_service_api
 
 				/* send message to server */
 				msg.message = Message::MSG_REQUEST_CLOSE_CHANNEL;
-				msg.param1 = (int)handle;
-				msg.error = (unsigned int)context; /* using error to context */
+				msg.param1 = (unsigned long)handle;
+				msg.error = (unsigned long)context; /* using error to context */
 				msg.caller = (void *)this;
 				msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
@@ -122,13 +122,12 @@ namespace smartcard_service_api
 			if (getSession()->getReader()->isSecureElementPresent() == true)
 			{
 				Message msg;
-
 				channelNum = -1;
 
 				/* send message to server */
 				msg.message = Message::MSG_REQUEST_CLOSE_CHANNEL;
-				msg.param1 = (int)handle;
-				msg.error = (unsigned int)context; /* using error to context */
+				msg.param1 = (unsigned long)handle;
+				msg.error = (unsigned long)context; /* using error to context */
 				msg.caller = (void *)this;
 				msg.callback = (void *)callback;
 				msg.userParam = userParam;
@@ -156,7 +155,6 @@ namespace smartcard_service_api
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		int rv = -1;
-
 		if (getSession()->getReader()->isSecureElementPresent() == true)
 		{
 			Message msg;
@@ -164,10 +162,10 @@ namespace smartcard_service_api
 #ifdef CLIENT_IPC_THREAD
 			/* send message to server */
 			msg.message = Message::MSG_REQUEST_TRANSMIT;
-			msg.param1 = (int)handle;
+			msg.param1 = (unsigned long)handle;
 			msg.param2 = 0;
 			msg.data = command;
-			msg.error = (unsigned int)context; /* using error to context */
+			msg.error = (unsigned long)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
@@ -214,10 +212,10 @@ namespace smartcard_service_api
 
 			/* send message to server */
 			msg.message = Message::MSG_REQUEST_TRANSMIT;
-			msg.param1 = (int)handle;
+			msg.param1 = (unsigned long)handle;
 			msg.param2 = 0;
 			msg.data = command;
-			msg.error = (unsigned int)context; /* using error to context */
+			msg.error = (unsigned long)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)callback;
 			msg.userParam = userParam;

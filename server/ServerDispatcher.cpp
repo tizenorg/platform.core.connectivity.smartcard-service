@@ -101,11 +101,11 @@ namespace smartcard_service_api
 					}
 
 					/* create service */
-					if (resource->getService(socket, (unsigned int)msg->userParam) == NULL)
+					if (resource->getService(socket, (unsigned long)msg->userParam) == NULL)
 					{
-						if (resource->createService(socket, (unsigned int)msg->userParam) == true)
+						if (resource->createService(socket, (unsigned long)msg->userParam) == true)
 						{
-							SCARD_DEBUG_ERR("client added : context [%d]", (unsigned int)msg->userParam);
+							SCARD_DEBUG_ERR("client added : context [%d]", (unsigned long)msg->userParam);
 						}
 						else
 						{
