@@ -48,10 +48,10 @@ namespace smartcard_service_api
 		static const int MSG_OPERATION_RELEASE_CLIENT = 0xC0;
 
 		unsigned int message;
-		unsigned int param1;
-		unsigned int param2;
+		unsigned long param1;
+		unsigned long param2;
 		ByteArray data;
-		int error;
+		long error;
 		void *caller;
 		void *callback;
 		void *userParam;

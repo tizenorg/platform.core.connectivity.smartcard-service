@@ -100,8 +100,8 @@ namespace smartcard_service_api
 #ifdef CLIENT_IPC_THREAD
 			/* request channel handle from server */
 			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
-			msg.param1 = (unsigned int)handle;
-			msg.error = (unsigned int)context; /* using error to context */
+			msg.param1 = (unsigned long)handle;
+			msg.error = (unsigned long)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
@@ -141,8 +141,8 @@ namespace smartcard_service_api
 
 			/* request channel handle from server */
 			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
-			msg.param1 = (unsigned int)handle;
-			msg.error = (unsigned int)context; /* using error to context */
+			msg.param1 = (unsigned long)handle;
+			msg.error = (unsigned long)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)callback;
 			msg.userParam = userData;
