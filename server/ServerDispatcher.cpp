@@ -103,7 +103,7 @@ namespace smartcard_service_api
 					}
 
 					/* create service */
-					if (resource->createService(socket, (unsigned int)msg->userParam) != NULL)
+					if (resource->createService(socket, (unsigned long)msg->userParam) != NULL)
 					{
 						response.error = SCARD_ERROR_OK;
 

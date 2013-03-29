@@ -44,5 +44,5 @@ ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DLOG_TAG=\"SMARTCARD_SERVICE_TEST\"")
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_test_client_LDFLAGS} "-L../common" "-lsmartcard-service-common" "-L../client" "-lsmartcard-service" "-pie -ldl")
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_test_client_LDFLAGS} "-L../common" "-lsmartcard-service-common" "-L../client" "-lsmartcard-service" "-ldl")
 #INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)

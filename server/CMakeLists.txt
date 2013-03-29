@@ -52,7 +52,7 @@ SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed")
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_server_LDFLAGS} "-L../common" "-lsmartcard-service-common" "-pie -ldl")
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_server_LDFLAGS} "-L../common" "-lsmartcard-service-common" "-ldl")
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 IF("${USE_AUTOSTART}" STREQUAL "1")

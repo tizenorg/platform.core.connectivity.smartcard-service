@@ -3,7 +3,7 @@
 prefix=/usr
 exec_prefix=${prefix}/bin
 includedir=${prefix}/include
-libdir=${prefix}/lib
+libdir=@LIB_INSTALL_DIR@
 
 Name: smartcard-service-common
 Description: Make flags of Common library of Smartcard service

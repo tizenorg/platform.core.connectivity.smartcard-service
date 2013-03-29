@@ -5,9 +5,8 @@ Release:    1
 Group:      libs
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
-#IFNDEF USE_AUTOSTART
 #Source1:    smartcard-service-server.init
-#ENDIF
+
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(security-server)
 BuildRequires: pkgconfig(dlog)
@@ -63,6 +62,7 @@ Requires:   %{name} = %{version}-%{release}
 %description -n smartcard-service-server
 smartcard service.
 
+
 %build
 mkdir obj-arm-limux-qnueabi
 cd obj-arm-limux-qnueabi
@@ -76,31 +76,22 @@ cd obj-arm-limux-qnueabi
 %install
 cd obj-arm-limux-qnueabi
 %make_install
-#IFNDEF USE_AUTOSTART
-#%__mkdir -p  %{buildroot}/etc/init.d/
-#%__mkdir -p  %{buildroot}/etc/rc.d/rc3.d/
-#%__mkdir -p  %{buildroot}/etc/rc.d/rc5.d/
-#%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
-#chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
-#ENDIF
-mkdir -p %{buildroot}/usr/share/license
-cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service %{buildroot}/usr/share/license/
-cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-common %{buildroot}/usr/share/license/
-cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buildroot}/usr/share/license/
+%__mkdir -p  %{buildroot}/etc/init.d/
+%__mkdir -p  %{buildroot}/etc/rc.d/rc3.d/
+%__mkdir -p  %{buildroot}/etc/rc.d/rc5.d/
+%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
+chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
+
 
 %post
 /sbin/ldconfig
-#IFNDEF USE_AUTOSTART
-#ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc3.d/S79smartcard-service-server
-#ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc5.d/S79smartcard-service-server
-#ENDIF
+ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc3.d/S79smartcard-service-server
+ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc5.d/S79smartcard-service-server
 
 %postun
 /sbin/ldconfig
-#IFNDEF USE_AUTOSTART
-#rm -f /etc/rc.d/rc3.d/S79smartcard-service-server
-#rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
-#ENDIF
+rm -f /etc/rc.d/rc3.d/S79smartcard-service-server
+rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 
 %files
 %manifest smartcard-service.manifest
@@ -139,3 +130,4 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 /usr/share/dbus-1/services/org.tizen.smartcard_service.service
 #ENDIF
 /usr/share/license/smartcard-service-server
+

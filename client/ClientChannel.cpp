@@ -152,7 +152,6 @@ namespace smartcard_service_api
 			ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		int rv = SCARD_ERROR_OK;
-
 		if (getSession()->getReader()->isSecureElementPresent() == true)
 		{
 			Message msg;
