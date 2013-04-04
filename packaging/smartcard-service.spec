@@ -30,7 +30,7 @@ Smartcard Service FW.
 %setup -q
 
 %package    devel
-Summary:    smartcard service
+Summary:    Smartcard service
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 
@@ -38,7 +38,7 @@ Requires:   %{name} = %{version}-%{release}
 smartcard service.
 
 %package -n smartcard-service-common
-Summary:    common smartcard service
+Summary:    Common smartcard service
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 
@@ -46,7 +46,7 @@ Requires:   %{name} = %{version}-%{release}
 common smartcard service.
 
 %package -n smartcard-service-common-devel
-Summary:    common smartcard service
+Summary:    Common smartcard service
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 Requires:   smartcard-service-common = %{version}-%{release}
@@ -55,7 +55,7 @@ Requires:   smartcard-service-common = %{version}-%{release}
 common smartcard service.
 
 %package -n smartcard-service-server
-Summary:    server smartcard service
+Summary:    Server smartcard service
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 
@@ -93,6 +93,14 @@ ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc5.d/S79smartcard-service
 /sbin/ldconfig
 rm -f /etc/rc.d/rc3.d/S79smartcard-service-server
 rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
+
+
+%post -n smartcard-service-common
+/sbin/ldconfig
+
+%postun -n smartcard-service-common
+/sbin/ldconfig
+
 
 %files
 %manifest smartcard-service.manifest
