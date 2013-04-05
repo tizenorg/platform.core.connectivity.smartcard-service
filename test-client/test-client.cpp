@@ -216,13 +216,25 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 
 int main(int argv, char *args[])
 {
-	SEService *service = new SEService((void *)&user_context, &testEventHandler);
+	SEService *service = NULL;
 
-	loop = g_main_new(TRUE);
-	g_main_loop_run(loop);
+	try
+	{
+		service = new SEService((void *)&user_context, &testEventHandler);
+	}
+	catch (...)
+	{
+		SCARD_DEBUG_ERR("exception raised!!!");
+	}
 
 	if (service != NULL)
-		delete service;
+	{
+		loop = g_main_new(TRUE);
+		g_main_loop_run(loop);
+
+		if (service != NULL)
+			delete service;
+	}
 
 	return 0;
 }

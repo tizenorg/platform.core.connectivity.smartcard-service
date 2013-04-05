@@ -206,7 +206,7 @@ namespace smartcard_service_api
 			break;
 		}
 
-		snprintf(text, sizeof(text), "Message [%s, %d], param1 [%d], param2 [%d], error [%d], caller [%p], callback [%p], userParam [%p], data length [%d]", msg, message, param1, param2, error, caller, callback, userParam, data.getLength());
+		snprintf(text, sizeof(text), "Message [%s, %d], param1 [%ld], param2 [%ld], error [%ld], caller [%p], callback [%p], userParam [%p], data length [%d]", msg, message, param1, param2, error, caller, callback, userParam, data.getLength());
 
 		return (const char *)text;
 	}
