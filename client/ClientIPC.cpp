@@ -113,8 +113,6 @@ namespace smartcard_service_api
 						g_error_free(error);
 					}
 				}
-
-				g_object_unref(proxy);
 			}
 			else
 			{
