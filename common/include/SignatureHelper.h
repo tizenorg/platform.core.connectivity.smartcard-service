@@ -38,7 +38,6 @@ namespace smartcard_service_api
 	class SignatureHelper
 	{
 	public:
-		static int getProcessName(int pid, char *processName, uint32_t length);
 		static ByteArray getCertificationHash(const char *packageName);
 		static ByteArray getCertificationHash(int pid);
 		static bool getCertificationHashes(int pid, vector<ByteArray> &certHashes);
@@ -63,7 +62,6 @@ typedef struct _certiHash
 
 typedef void (*signature_helper_get_certificate_hashes_cb)(void *user_param, uint8_t *hash, uint32_t length);
 
-int signature_helper_get_process_name(int pid, char *processName, uint32_t length);
 int signature_helper_get_certificate_hashes(const char *packageName, certiHash **hash);
 int signature_helper_get_certificate_hashes_by_pid(int pid, certiHash **hash);
 

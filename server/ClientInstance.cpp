@@ -27,7 +27,6 @@
 
 namespace smartcard_service_api
 {
-#if 1
 	gboolean ClientInstance::_getCertificationHashes(gpointer user_data)
 	{
 		gboolean result = false;
@@ -37,18 +36,11 @@ namespace smartcard_service_api
 
 		return result;
 	}
-#endif
 
 	void ClientInstance::setPID(int pid)
 	{
 		this->pid = pid;
 
-#if 0
-		if (pid > 0)
-		{
-			certHash = SignatureHelper::getCertificationHash(pid);
-		}
-#endif
 	}
 
 	ServiceInstance *ClientInstance::createService(unsigned int context)
@@ -127,10 +119,6 @@ namespace smartcard_service_api
 
 	void ClientInstance::generateCertificationHashes()
 	{
-#if 1
 		g_idle_add(_getCertificationHashes, (gpointer)this);
-#else
-		SignatureHelper::getCertificationHashes(getPID(), certHashes);
-#endif
 	}
 } /* namespace smartcard_service_api */

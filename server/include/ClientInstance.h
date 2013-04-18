@@ -20,9 +20,7 @@
 /* standard library header */
 #include <map>
 #include <vector>
-#if 1
 #include <glib.h>
-#endif
 
 /* SLP library header */
 

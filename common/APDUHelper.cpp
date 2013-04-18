@@ -81,67 +81,6 @@ namespace smartcard_service_api
 			result = 0;
 			break;
 
-#if 0
-		case (unsigned char)0x61 : /* SW2 encodes the number of data bytes still available */
-			break;
-
-		/* Warning processing */
-		case (unsigned char)0x62 : /* State of non-volatile memory is unchanged (further qualification in SW2) */
-			break;
-
-		case (unsigned char)0x63 : /* State of non-volatile memory has changed (further qualification in SW2) */
-			break;
-
-		/* Execution error */
-		case (unsigned char)0x64 : /* State of non-volatile memory is unchanged (further qualification in SW2) */
-			result = -1;
-			break;
-
-		case (unsigned char)0x65 : /* State of non-volatile memory has changed (further qualification in SW2) */
-			result = -1;
-			break;
-
-		case (unsigned char)0x66 : /* Security-related issues */
-			result = -1;
-			break;
-
-		/* Checking error */
-		case (unsigned char)0x67 : /* SW2:00, Wrong length; no further indication */
-			result = -1;
-			break;
-
-		case (unsigned char)0x68 : /* Functions in CLA not supported (further qualification in SW2) */
-			result = -1;
-			break;
-
-		case (unsigned char)0x69 : /* Command not allowed (further qualification in SW2) */
-			result = -1;
-			break;
-
-		case (unsigned char)0x6A : /* Wrong parameters P1-P2 (further qualification in SW2) */
-			result = -1;
-			break;
-
-		case (unsigned char)0x6B : /* SW2:00, Wrong parameters P1-P2 */
-			result = -1;
-			break;
-
-		case (unsigned char)0x6C : /* Wrong Le field; SW2 encodes the exact number of available data bytes */
-			result = -1;
-			break;
-
-		case (unsigned char)0x6D : /* SW2:00, Instruction code not supported or invalid */
-			result = -1;
-			break;
-
-		case (unsigned char)0x6E : /* SW2:00, Class not supported */
-			result = -1;
-			break;
-
-		case (unsigned char)0x6F : /* SW2:00, No precise diagnosis */
-			result = -1;
-			break;
-#endif
 		default :
 			result *= -1;
 			break;
