@@ -37,16 +37,10 @@ namespace smartcard_service_api
 
 	ServerSEService::ServerSEService():SEServiceHelper()
 	{
-#if 0
-		openSELibraries();
-#endif
 	}
 
 	ServerSEService::~ServerSEService()
 	{
-#if 0
-		closeSELibraries();
-#endif
 	}
 
 	ServerSEService &ServerSEService::getInstance()
@@ -193,101 +187,6 @@ namespace smartcard_service_api
 		}
 	}
 
-#if 0
-	bool ServerSEService::isValidReaderHandle(void *handle)
-	{
-		bool result = false;
-		size_t i;
-
-		for (i = 0; i < readers.size(); i++)
-		{
-			if ((void *)readers[i] == handle)
-			{
-				result =  true;
-				break;
-			}
-		}
-
-		return false;
-	}
-#endif
-
-#if 0
-	bool ServerSEService::dispatcherCallback(void *message, int socket)
-	{
-		unsigned char *buffer = NULL;
-		unsigned int length = 0;
-		unsigned int offset = 0;
-		unsigned int nameLen = 0;
-
-		ByteArray result;
-		vector<ReaderHelper *> readers;
-		Message response(*(Message *)message);
-
-//		response.param1 = resource->getSECount();
-//		response.data = resource->getReadersInformation();
-
-		readers = ServerSEService::getInstance().getReaders();
-		if (readers.size() > 0)
-		{
-			size_t i;
-			ServerReader *reader;
-
-			for (i = 0; i < readers.size(); i++)
-			{
-				reader = (ServerReader *)readers[i];
-
-				/* check se existance */
-				if (reader->isSecureElementPresent() == true)
-				{
-					length += sizeof(nameLen) + strlen(reader->getName()) + sizeof(reader);
-				}
-			}
-
-			if (length > 0)
-			{
-				buffer = new unsigned char[length];
-				if (buffer == NULL)
-				{
-					SCARD_DEBUG_ERR("alloc failed");
-
-					return false;
-				}
-				memset(buffer, 0, length);
-
-				for (i = 0; i < readers.size(); i++)
-				{
-					reader = (ServerReader *)readers[i];
-
-					/* check se existance */
-					if (reader->isSecureElementPresent() == true)
-					{
-						nameLen = strlen(reader->getName());
-
-						memcpy(buffer + offset, &nameLen, sizeof(nameLen));
-						offset += sizeof(nameLen);
-
-						memcpy(buffer + offset, reader->getName(), nameLen);
-						offset += nameLen;
-
-						memcpy(buffer + offset, &reader, sizeof(reader));
-						offset += sizeof(reader);
-					}
-				}
-
-				result.setBuffer(buffer, length);
-			}
-		}
-
-		response.param1 = readers.size();
-		response.data = result;
-
-		/* response to client */
-		ServerIPC::getInstance()->sendMessage(socket, &response);
-
-		return true;
-	}
-#else
 	bool ServerSEService::dispatcherCallback(void *message, int socket)
 	{
 		int count;
@@ -325,7 +224,6 @@ namespace smartcard_service_api
 
 		return false;
 	}
-#endif
 
 	void ServerSEService::terminalCallback(void *terminal, int event, int error, void *user_param)
 	{
@@ -335,18 +233,6 @@ namespace smartcard_service_api
 		switch (event)
 		{
 		case Terminal::NOTIFY_SE_AVAILABLE :
-			/* add right se reader */
-//			if ((term = ServerResource::getInstance().getTerminal((char *)terminal)) != NULL)
-//			{
-//				SCARD_DEBUG("terminal : [%s]", (char *)terminal);
-//
-//				term->initialize();
-//			}
-//			else
-//			{
-//				SCARD_DEBUG("unknown terminal : [%s]", (char *)terminal);
-//			}
-
 			/* send all client to refresh reader */
 			msg.message = msg.MSG_NOTIFY_SE_INSERTED;
 			msg.data.setBuffer((unsigned char *)terminal,
@@ -356,18 +242,6 @@ namespace smartcard_service_api
 			break;
 
 		case Terminal::NOTIFY_SE_NOT_AVAILABLE :
-			/* remove right se reader */
-//			if ((term = ServerResource::getInstance().getTerminal((char *)terminal)) != NULL)
-//			{
-//				SCARD_DEBUG("terminal : [%s]", (char *)terminal);
-//
-//				term->finalize();
-//			}
-//			else
-//			{
-//				SCARD_DEBUG("unknown terminal : [%s]", (char *)terminal);
-//			}
-
 			/* send all client to refresh reader */
 			msg.message = msg.MSG_NOTIFY_SE_REMOVED;
 			msg.data.setBuffer((unsigned char *)terminal,

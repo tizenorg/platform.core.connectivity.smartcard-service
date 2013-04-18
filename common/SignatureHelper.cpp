@@ -39,45 +39,6 @@
 
 namespace smartcard_service_api
 {
-	int SignatureHelper::getProcessName(int pid, char *processName, uint32_t length)
-	{
-		int ret = -1;
-		char buffer[1024] = { 0, };
-		char filename[2048] = { 0, };
-		int len = 0;
-
-		if (pid < 0 || processName == NULL || length == 0)
-			return ret;
-
-		snprintf(buffer, sizeof(buffer), "/proc/%d/exe", pid);
-		SCARD_DEBUG("pid : %d, exe : %s", pid, buffer);
-
-		if ((len = readlink(buffer, filename, sizeof(filename) - 1)) < sizeof(filename) - 1)
-		{
-			char *name = NULL;
-			ByteArray hash, result;
-
-			name = basename(filename);
-			SCARD_DEBUG("file name : %s", name);
-
-			OpensslHelper::digestBuffer("sha256", (uint8_t *)name, strlen(name), hash);
-			SCARD_DEBUG("digest [%d] : %s", hash.getLength(), hash.toString());
-
-			OpensslHelper::encodeBase64String(hash, result, false);
-
-			memset(processName, 0, length);
-			memcpy(processName, result.getBuffer(), (result.getLength() < length - 1) ? result.getLength() : length - 1);
-
-			ret = 0;
-		}
-		else
-		{
-			SCARD_DEBUG_ERR("readlink failed");
-		}
-
-		return ret;
-	}
-
 	ByteArray SignatureHelper::getCertificationHash(const char *packageName)
 	{
 		ByteArray result;
@@ -301,18 +262,6 @@ ERROR :
 	}
 
 	return NULL;
-}
-
-EXTERN_API int signature_helper_get_process_name(int pid, char *processName, uint32_t length)
-{
-	int ret = -1;
-
-	if (pid < 0 || processName == NULL || length == 0)
-		return ret;
-
-	ret = SignatureHelper::getProcessName(pid, processName, length);
-
-	return ret;
 }
 
 EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, certiHash **hash)

@@ -79,9 +79,6 @@ namespace smartcard_service_api
 			{
 				SCARD_DEBUG("[MSG_REQUEST_READERS]");
 
-#if 0
-				seService->dispatcherCallback(msg, msg->getPeerSocket());
-#else
 				int count = 0;
 				Message response(*msg);
 				ByteArray info;
@@ -136,30 +133,10 @@ namespace smartcard_service_api
 
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
-#endif
 			}
 			break;
 
 		case Message::MSG_REQUEST_SHUTDOWN :
-#if 0
-			{
-				Message response(*msg);
-
-				SCARD_DEBUG("[MSG_REQUEST_SHUTDOWN]");
-
-				if (msg->param1 != 0)
-				{
-					ServerChannel *channel = NULL;
-
-					channel = (ServerChannel *)msg->param1;
-
-					channel->closeSync();
-				}
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(msg->getPeerSocket(), &response);
-			}
-#else
 			{
 				Message response(*msg);
 
@@ -172,32 +149,9 @@ namespace smartcard_service_api
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
 			}
-#endif
 			break;
 
 		case Message::MSG_REQUEST_OPEN_SESSION :
-#if 0
-			{
-				Message response(*msg);
-				ServerReader *reader = NULL;
-				ServerSession *session = NULL;
-
-				SCARD_DEBUG("[MSG_REQUEST_OPEN_SESSION]");
-
-				if (msg->param1 != 0)
-				{
-					reader = (ServerReader *)msg->param1;
-
-					session = reader->openSessionSync(msg->data, msg->caller);
-				}
-
-				/* TODO : attach atr??? */
-				response.param1 = (unsigned int)session;
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(msg->getPeerSocket(), &response);
-			}
-#else
 			{
 				Message response(*msg);
 				unsigned int handle = IntegerHandle::INVALID_HANDLE;
@@ -230,28 +184,9 @@ namespace smartcard_service_api
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
 			}
-#endif
 			break;
 
 		case Message::MSG_REQUEST_CLOSE_SESSION :
-#if 0
-			{
-				Message response(*msg);
-				ServerSession *session = NULL;
-
-				SCARD_DEBUG("[MSG_REQUEST_CLOSE_SESSION]");
-
-				if (msg->param1 != 0)
-				{
-					session = (ServerSession *)msg->param1;
-
-					session->closeSync();
-				}
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(msg->getPeerSocket(), &response);
-			}
-#else
 			{
 				Message response(*msg);
 
@@ -268,60 +203,9 @@ namespace smartcard_service_api
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
 			}
-#endif
 			break;
 
 		case Message::MSG_REQUEST_OPEN_CHANNEL :
-#if 0
-			{
-				Message response(*msg);
-				ServerSession *session = NULL;
-
-				SCARD_DEBUG("[MSG_REQUEST_OPEN_CHANNEL]");
-
-				if (/* check valid session handle */msg->param2 != 0)
-				{
-					ServerChannel *channel = NULL;
-
-					session = (ServerSession *)msg->param2;
-
-					if (msg->param1 == 0)
-						channel = (ServerChannel *)session->openBasicChannelSync(msg->data, msg->caller);
-					else
-						channel = (ServerChannel *)session->openLogicalChannelSync(msg->data, msg->caller);
-
-					if (channel != NULL)
-					{
-						response.param1 = (unsigned int)channel;
-						response.param2 = channel->getChannelID();
-						response.error = 0;
-						response.data = channel->getSelectResponse();
-					}
-					else
-					{
-						SCARD_DEBUG_ERR("channel is null.");
-
-						/* set error value */
-						response.param1 = 0;
-						response.param2 = 0;
-						response.error = -4;
-						response.data.releaseBuffer();
-					}
-				}
-				else
-				{
-					SCARD_DEBUG_ERR("session is invalid");
-
-					response.param1 = 0;
-					response.param2 = 0;
-					response.error = -1;
-					response.data.releaseBuffer();
-				}
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(msg->getPeerSocket(), &response);
-			}
-#else
 			{
 				Message response(*msg);
 
@@ -370,7 +254,6 @@ namespace smartcard_service_api
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
 			}
-#endif
 			break;
 
 		case Message::MSG_REQUEST_GET_CHANNEL_COUNT :
@@ -388,25 +271,6 @@ namespace smartcard_service_api
 			break;
 
 		case Message::MSG_REQUEST_CLOSE_CHANNEL :
-#if 0
-			{
-				Message response(*msg);
-
-				SCARD_DEBUG("[MSG_REQUEST_CLOSE_CHANNEL]");
-
-				if (msg->param1 != 0)
-				{
-					ServerChannel *channel = NULL;
-
-					channel = (ServerChannel *)msg->param1;
-
-					channel->closeSync();
-				}
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(msg->getPeerSocket(), &response);
-			}
-#else
 			{
 				Message response(*msg);
 
@@ -422,29 +286,9 @@ namespace smartcard_service_api
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
 			}
-#endif
 			break;
 
 		case Message::MSG_REQUEST_GET_ATR :
-#if 0
-			{
-				Message response(*msg);
-
-				SCARD_DEBUG("[MSG_REQUEST_GET_ATR]");
-
-				if (msg->param1 != 0)
-				{
-					ServerChannel *channel = NULL;
-
-					channel = (ServerChannel *)msg->param1;
-
-					channel->closeSync();
-				}
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(msg->getPeerSocket(), &response);
-			}
-#else
 			{
 				int rv;
 				Message response(*msg);
@@ -486,42 +330,9 @@ namespace smartcard_service_api
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
 			}
-#endif
 			break;
 
 		case Message::MSG_REQUEST_TRANSMIT :
-#if 0
-			{
-				Message response(*msg);
-				ByteArray result;
-				int rv;
-
-				SCARD_DEBUG("[MSG_REQUEST_TRANSMIT]");
-
-				if (msg->param1 != 0)
-				{
-					ServerChannel *channel = NULL;
-
-					channel = (ServerChannel *)msg->param1;
-
-					if ((rv = channel->transmitSync(msg->data, result)) == 0)
-					{
-						response.data = result;
-					}
-					else
-					{
-						SCARD_DEBUG_ERR("transmit failed [%d]", rv);
-					}
-				}
-
-//				if (resource->isValidChannelHandle((void *)msg->param1))
-//				{
-//				}
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(msg->getPeerSocket(), &response);
-			}
-#else
 			{
 				int rv;
 				Message response(*msg);
@@ -553,36 +364,15 @@ namespace smartcard_service_api
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);
 			}
-#endif
 			break;
 
 		case Message::MSG_OPERATION_RELEASE_CLIENT :
-#if 0
-			{
-				Message response(*msg);
-
-				SCARD_DEBUG("[MSG_REQUEST_CLOSE_CHANNEL]");
-
-				if (msg->param1 != 0)
-				{
-					ServerChannel *channel = NULL;
-
-					channel = (ServerChannel *)msg->param1;
-
-					channel->closeSync();
-				}
-
-				/* response to client */
-				ServerIPC::getInstance()->sendMessage(msg->getPeerSocket(), &response);
-			}
-#else
 			{
 				SCARD_DEBUG("[MSG_OPERATION_RELEASE_CLIENT]");
 
 				resource->removeClient(msg->param1);
 				SCARD_DEBUG("remain client [%d]", resource->getClientCount());
 			}
-#endif
 #ifdef USE_AUTOSTART
 			if (resource->getClientCount() == 0)
 			{
