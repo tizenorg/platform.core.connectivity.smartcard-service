@@ -55,7 +55,8 @@ namespace smartcard_service_api
 
 		virtual int openSession(openSessionCallback callback, void *userData) = 0;
 		virtual SessionHelper *openSessionSync()
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)= 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &)= 0;
 	};
 
 } /* namespace smartcard_service_api */

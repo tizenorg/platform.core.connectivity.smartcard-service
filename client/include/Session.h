@@ -49,7 +49,8 @@ namespace smartcard_service_api
 		static bool dispatcherCallback(void *message);
 
 		Channel *openChannelSync(int id, ByteArray aid)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
 
 	public:
 		void closeChannels()
@@ -65,22 +66,28 @@ namespace smartcard_service_api
 		int getChannelCount(getChannelCountCallback callback, void * userData);
 
 		ByteArray getATRSync()
-			throw(ErrorIO &, ErrorIllegalState &);
+			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
+				ErrorIllegalState &, ErrorIllegalParameter &);
 
 		void closeSync()
-			throw(ErrorIO &, ErrorIllegalState &);
+			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
+				ErrorIllegalState &, ErrorIllegalParameter &);
 
 		Channel *openBasicChannelSync(ByteArray aid)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+			throw(ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
 
 		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+			throw(ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
 
 		Channel *openLogicalChannelSync(ByteArray aid)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+			throw(ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
 
 		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+			throw(ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
 
 		unsigned int getChannelCountSync();
 

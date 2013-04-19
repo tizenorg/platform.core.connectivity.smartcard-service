@@ -59,10 +59,12 @@ namespace smartcard_service_api
 		virtual int transmit(ByteArray command, transmitCallback callback, void *userData) = 0;
 
 		virtual void closeSync()
-			throw(ErrorIO &, ErrorIllegalState &) = 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
+			ErrorIllegalState &, ErrorIllegalParameter &) = 0;
 
 		virtual int transmitSync(ByteArray command, ByteArray &result)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
 	};
 
 } /* namespace smartcard_service_api */

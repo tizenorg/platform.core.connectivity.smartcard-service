@@ -61,7 +61,9 @@ namespace smartcard_service_api
 		closeSync();
 	}
 
-	void ClientChannel::closeSync() throw(ErrorIO &, ErrorIllegalState &)
+	void ClientChannel::closeSync()
+		throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
+			ErrorIllegalState &, ErrorIllegalParameter &)
 	{
 #ifdef CLIENT_IPC_THREAD
 		if (isClosed() == false)
@@ -146,7 +148,8 @@ namespace smartcard_service_api
 	}
 
 	int ClientChannel::transmitSync(ByteArray command, ByteArray &result)
-		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
+		throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		int rv = SCARD_ERROR_OK;
 		if (getSession()->getReader()->isSecureElementPresent() == true)

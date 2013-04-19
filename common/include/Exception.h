@@ -178,8 +178,8 @@ namespace smartcard_service_api
 	{
 	public :
 		static void throwError(int errorCode)
-			throw(ErrorIO &, ErrorSecurity &, ErrorIllegalState &,
-				ErrorIllegalParameter &)
+			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
+				ErrorIllegalState &, ErrorIllegalParameter &)
 		{
 			switch (errorCode)
 			{

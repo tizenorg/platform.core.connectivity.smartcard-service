@@ -76,7 +76,9 @@ namespace smartcard_service_api
 		}
 	}
 
-	ByteArray Session::getATRSync() throw (ErrorIO &, ErrorIllegalState &)
+	ByteArray Session::getATRSync()
+		throw (ExceptionBase &, ErrorIO &, ErrorSecurity &,
+			ErrorIllegalState &, ErrorIllegalParameter &)
 	{
 		ByteArray result;
 		if (getReader()->isSecureElementPresent() == true)
@@ -174,7 +176,9 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void Session::closeSync() throw (ErrorIO &, ErrorIllegalState &)
+	void Session::closeSync()
+		throw (ExceptionBase &, ErrorIO &, ErrorSecurity &,
+			ErrorIllegalState &, ErrorIllegalParameter &)
 	{
 		Message msg;
 		int rv;
@@ -332,7 +336,8 @@ namespace smartcard_service_api
 	}
 
 	Channel *Session::openChannelSync(int id, ByteArray aid)
-		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		openedChannel = NULL;
 

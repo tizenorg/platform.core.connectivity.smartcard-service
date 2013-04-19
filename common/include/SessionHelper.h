@@ -65,10 +65,12 @@ namespace smartcard_service_api
 		virtual int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
 
 		virtual ByteArray getATRSync()
-			throw(ErrorIO &, ErrorIllegalState &) = 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
+			ErrorIllegalState &, ErrorIllegalParameter &) = 0;
 
 		virtual void closeSync()
-			throw(ErrorIO &, ErrorIllegalState &) = 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
+			ErrorIllegalState &, ErrorIllegalParameter &) = 0;
 
 		virtual Channel *openBasicChannelSync(ByteArray aid)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;

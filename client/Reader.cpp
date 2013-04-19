@@ -89,7 +89,8 @@ namespace smartcard_service_api
 	}
 
 	SessionHelper *Reader::openSessionSync()
-		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
+		throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		openedSession = NULL;
 
