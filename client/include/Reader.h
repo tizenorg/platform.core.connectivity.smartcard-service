@@ -53,7 +53,7 @@ namespace smartcard_service_api
 
 		int openSession(openSessionCallback callback, void *userData);
 		SessionHelper *openSessionSync()
-			throw(ErrorIO &, ErrorIllegalState &,
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
 		friend class SEService;

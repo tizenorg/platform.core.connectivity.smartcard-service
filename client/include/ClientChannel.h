@@ -52,9 +52,10 @@ namespace smartcard_service_api
 			void *userParam);
 
 		void closeSync()
-			throw(ErrorIO &, ErrorIllegalState &);
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorSecurity &, ErrorIllegalParameter &);
 		int transmitSync(ByteArray command, ByteArray &result)
-			throw(ErrorIO &, ErrorIllegalState &,
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
 		friend class ClientDispatcher;
