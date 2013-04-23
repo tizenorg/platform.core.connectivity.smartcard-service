@@ -1,7 +1,7 @@
 Name:       smartcard-service
 Summary:    Smartcard Service FW
-Version:    0.1.16
-Release:    1
+Version:    0.1.18
+Release:    0
 Group:      libs
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
@@ -136,6 +136,6 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 #IFNDEF USE_AUTOSTART
 #/etc/init.d/smartcard-service-server
 #ELSE
-/usr/share/dbus-1/services/smartcard-service.service
+/usr/share/dbus-1/services/org.tizen.smartcard_service.service
 #ENDIF
 /usr/share/license/smartcard-service-server
