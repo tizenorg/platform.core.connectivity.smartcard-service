@@ -79,9 +79,10 @@ cd obj-arm-limux-qnueabi
 %__mkdir -p  %{buildroot}/etc/init.d/
 %__mkdir -p  %{buildroot}/etc/rc.d/rc3.d/
 %__mkdir -p  %{buildroot}/etc/rc.d/rc5.d/
-%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
-chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
-
+#IFNDEF USE_AUTOSTART
+#%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
+#chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
+#ENDIF
 
 %post
 /sbin/ldconfig
