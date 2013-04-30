@@ -98,7 +98,6 @@ rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 %manifest smartcard-service.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsmartcard-service.so.*
-/usr/share/license/smartcard-service
 
 %files  devel
 %manifest smartcard-service-devel.manifest
@@ -111,7 +110,6 @@ rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 %manifest smartcard-service-common.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsmartcard-service-common.so.*
-/usr/share/license/smartcard-service-common
 
 %files -n smartcard-service-common-devel
 %manifest smartcard-service-common-devel.manifest
@@ -130,5 +128,4 @@ rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 #ELSE
 /usr/share/dbus-1/services/org.tizen.smartcard_service.service
 #ENDIF
-/usr/share/license/smartcard-service-server
 
