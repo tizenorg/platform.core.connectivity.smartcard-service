@@ -48,13 +48,13 @@
 #define SCARD_BEGIN() \
 	do\
     {\
-		LOGD(COLOR_BLUE"BEGIN >>>>"COLOR_END);\
+		LOGD(COLOR_BLUE "BEGIN >>>>" COLOR_END);\
     } while( 0 )
 
 #define SCARD_END() \
 	do\
     {\
-		LOGD(COLOR_BLUE"END <<<<"COLOR_END);\
+		LOGD(COLOR_BLUE "END <<<<" COLOR_END);\
     } \
     while( 0 )
 
