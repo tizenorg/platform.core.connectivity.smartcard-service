@@ -66,12 +66,7 @@ smartcard service.
 %build
 mkdir obj-arm-limux-qnueabi
 cd obj-arm-limux-qnueabi
-#IFNDEF USE_AUTOSTART
-#cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix}
-#ELSE
 %cmake .. -DUSE_AUTOSTART=1 # daemon will be started when client makes instance by DBUS
-#ENDIF
-#make %{?jobs:-j%jobs}
 
 %install
 cd obj-arm-limux-qnueabi
@@ -79,10 +74,6 @@ cd obj-arm-limux-qnueabi
 %__mkdir -p  %{buildroot}/etc/init.d/
 %__mkdir -p  %{buildroot}/etc/rc.d/rc3.d/
 %__mkdir -p  %{buildroot}/etc/rc.d/rc5.d/
-#IFNDEF USE_AUTOSTART
-#%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
-#chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
-#ENDIF
 
 %post
 /sbin/ldconfig
@@ -130,10 +121,5 @@ rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 %manifest smartcard-service-server.manifest
 %defattr(-,root,root,-)
 %{_bindir}/smartcard-daemon
-#/usr/bin/smartcard-test-client
-#IFNDEF USE_AUTOSTART
-#/etc/init.d/smartcard-service-server
-#ELSE
 /usr/share/dbus-1/services/org.tizen.smartcard_service.service
-#ENDIF
 
