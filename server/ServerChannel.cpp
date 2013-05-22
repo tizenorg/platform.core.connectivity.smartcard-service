@@ -109,12 +109,6 @@ namespace smartcard_service_api
 		_DBG("command [%d] : %s", command.getLength(), command.toString());
 
 		ret = terminal->transmitSync(command, result);
-		if (ret == 0 && ResponseHelper::getStatus(result) == 0)
-		{
-			/* store select response */
-			if (helper.getINS() == APDUCommand::INS_SELECT_FILE)
-				setSelectResponse(result);
-		}
 
 		return ret;
 	}

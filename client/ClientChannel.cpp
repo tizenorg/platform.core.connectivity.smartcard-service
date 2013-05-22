@@ -260,14 +260,6 @@ namespace smartcard_service_api
 				/* transmit result */
 				_INFO("MSG_REQUEST_TRANSMIT");
 
-				if (msg->error == 0 &&
-					ResponseHelper::getStatus(msg->data) == 0)
-				{
-					/* store select response */
-					if (msg->data.getAt(1) == APDUCommand::INS_SELECT_FILE)
-						channel->setSelectResponse(msg->data);
-				}
-
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
 					/* sync call */
