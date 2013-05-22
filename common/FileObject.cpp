@@ -59,7 +59,7 @@ namespace smartcard_service_api
 			ResponseHelper resp(response);
 			selectResponse = response;
 
-			if (resp.getStatus() == 0)
+			if (resp.getStatus() >= 0)
 			{
 				fcp.releaseFCP();
 
@@ -72,8 +72,8 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				_ERR("status word [%d][ %02X %02X ]",
-					resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [ %02X %02X ]",
+					resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
@@ -103,21 +103,11 @@ namespace smartcard_service_api
 		{
 			ResponseHelper resp(result);
 
-			if (resp.getStatus() == 0)
+			ret = resp.getStatus();
+
+			if (setSelectResponse(result) == true)
 			{
-				if (setSelectResponse(result) == true)
-				{
-					opened = true;
-					ret = SUCCESS;
-				}
-				else
-				{
-					ret = ERROR_ILLEGAL_STATE;
-				}
-			}
-			else if (resp.getStatus() == ResponseHelper::ERROR_FILE_NOT_FOUND)
-			{
-				ret = ResponseHelper::ERROR_FILE_NOT_FOUND;
+				opened = true;
 			}
 		}
 		else
@@ -223,7 +213,7 @@ namespace smartcard_service_api
 			ResponseHelper resp(response);
 
 			ret = resp.getStatus();
-			if (ret == 0)
+			if (ret >= 0)
 			{
 				_DBG("response [%d] : %s", response.getLength(), response.toString());
 
@@ -231,7 +221,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [ %02X %02X ]", resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
@@ -266,7 +256,7 @@ namespace smartcard_service_api
 		{
 			ResponseHelper resp(response);
 
-			if (resp.getStatus() == 0)
+			if (resp.getStatus() >= 0)
 			{
 				_DBG("response [%d] : %s", response.getLength(), response.toString());
 
@@ -276,7 +266,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [ %02X %02X ]", resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
@@ -301,7 +291,7 @@ namespace smartcard_service_api
 		{
 			ResponseHelper resp(response);
 
-			if (resp.getStatus() == 0)
+			if (resp.getStatus() >= 0)
 			{
 				_DBG("response [%d] : %s", response.getLength(), response.toString());
 
@@ -309,7 +299,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [ %02X %02X ]", resp.getSW1(), resp.getSW2());
 			}
 		}
 		else

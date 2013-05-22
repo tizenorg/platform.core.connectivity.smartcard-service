@@ -426,19 +426,13 @@ namespace smartcard_service_api
 		{
 			ResponseHelper resp(response);
 
-			if (resp.getStatus() == 0)
+			if (resp.getStatus() >= 0)
 			{
 				result = resp.getDataField()[0];
 			}
 			else
 			{
-				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
-				if (0)
-				{
-					/* TODO : if there is no more channel, return error code */
-					_ERR("no more logical channel");
-					result = -2;
-				}
+				result = resp.getStatus();
 			}
 		}
 		else
@@ -451,7 +445,7 @@ namespace smartcard_service_api
 
 	int ServerResource::_closeLogicalChannel(Terminal *terminal, int channelNum)
 	{
-		int result = -1;
+		int result = SCARD_ERROR_UNKNOWN;
 		int rv = 0;
 		ByteArray command;
 		ByteArray response;
@@ -463,14 +457,14 @@ namespace smartcard_service_api
 		{
 			ResponseHelper resp(response);
 
-			if (resp.getStatus() == 0)
+			if (resp.getStatus() >= 0)
 			{
 				_DBG("channel closed [%d]", channelNum);
-				result = 0;
+				result = SCARD_ERROR_OK;
 			}
 			else
 			{
-				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [ %02X %02X ]", resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
@@ -548,7 +542,7 @@ namespace smartcard_service_api
 				FileObject file(channel);
 
 				rv = file.select(aid);
-				if (rv == FileObject::SUCCESS)
+				if (rv >= 0)
 				{
 					/* remove privilege mode */
 					channel->unsetPrivilegeMode();

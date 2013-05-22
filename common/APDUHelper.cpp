@@ -78,7 +78,6 @@ namespace smartcard_service_api
 		case (unsigned char)0x90 : /* SW2:00, No further qualification */
 		case (unsigned char)0x91 : /* extra information */
 		case (unsigned char)0x92 : /* extra information */
-			result = 0;
 			break;
 
 		default :

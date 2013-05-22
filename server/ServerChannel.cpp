@@ -60,13 +60,13 @@ namespace smartcard_service_api
 			{
 				ResponseHelper resp(result);
 
-				if (resp.getStatus() == 0)
+				if (resp.getStatus() >= 0)
 				{
 					_DBG("close success");
 				}
 				else
 				{
-					_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+					_ERR("status word [ %02X %02X ]", resp.getSW1(), resp.getSW2());
 				}
 			}
 			else
