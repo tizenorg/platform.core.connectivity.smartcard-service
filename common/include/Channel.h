@@ -41,10 +41,10 @@ namespace smartcard_service_api
 		SessionHelper *session;
 		int channelNum;
 
-		Channel() : Synchronous() { channelNum = -1; }
-		Channel(SessionHelper *session) : Synchronous() { this->session = session; }
+		Channel() : session(NULL), channelNum(-1) {}
+		Channel(SessionHelper *session) : session(session), channelNum(-1) {}
 
-		inline void setSelectResponse(ByteArray &response) { selectResponse = response; }
+		inline void setSelectResponse(ByteArray response) { selectResponse = response; }
 
 	public :
 		virtual ~Channel() {};

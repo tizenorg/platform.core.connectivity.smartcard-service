@@ -528,6 +528,7 @@ namespace smartcard_service_api
 				{
 					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
+					channel->setSelectResponse(pkcs15.getSelectResponse());
 				}
 				else
 				{
@@ -546,6 +547,7 @@ namespace smartcard_service_api
 				{
 					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
+					channel->setSelectResponse(file.getSelectResponse());
 				}
 				else
 				{

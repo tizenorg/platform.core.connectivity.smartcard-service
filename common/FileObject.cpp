@@ -50,7 +50,7 @@ namespace smartcard_service_api
 		selectResponse.releaseBuffer();
 	}
 
-	bool FileObject::setSelectResponse(ByteArray &response)
+	bool FileObject::setSelectResponse(ByteArray response)
 	{
 		bool result = false;
 

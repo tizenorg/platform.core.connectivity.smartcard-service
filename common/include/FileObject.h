@@ -43,7 +43,7 @@ namespace smartcard_service_api
 
 	protected:
 		ByteArray selectResponse;
-		bool setSelectResponse(ByteArray &response);
+		bool setSelectResponse(ByteArray response);
 
 	public:
 		static const int SUCCESS = 0;
@@ -67,6 +67,8 @@ namespace smartcard_service_api
 		int select(ByteArray path, bool fromCurrentDF);
 		int select(unsigned int fid);
 		int selectParent();
+
+		inline ByteArray getSelectResponse() { return selectResponse; }
 
 		FCI *getFCI();
 		FCP *getFCP();
