@@ -319,6 +319,8 @@ namespace smartcard_service_api
 			break;
 		}
 
+		delete msg;
+
 		return result;
 	}
 } /* namespace smartcard_service_api */

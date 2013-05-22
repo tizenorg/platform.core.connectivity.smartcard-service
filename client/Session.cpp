@@ -476,7 +476,7 @@ namespace smartcard_service_api
 	bool Session::dispatcherCallback(void *message)
 	{
 		Message *msg = (Message *)message;
-		Session *session = NULL;
+		Session *session;
 		bool result = false;
 
 		if (msg == NULL)
@@ -612,6 +612,8 @@ namespace smartcard_service_api
 			_DBG("unknown message : %s", msg->toString());
 			break;
 		}
+
+		delete msg;
 
 		return result;
 	}

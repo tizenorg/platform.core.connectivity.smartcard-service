@@ -243,6 +243,8 @@ namespace smartcard_service_api
 			break;
 		}
 
+		delete msg;
+
 		_END();
 
 		return result;

@@ -292,7 +292,7 @@ namespace smartcard_service_api
 	bool SEService::dispatcherCallback(void *message)
 	{
 		Message *msg = (Message *)message;
-		SEService *service = NULL;
+		SEService *service;
 		bool result = false;
 
 		_BEGIN();
@@ -422,6 +422,8 @@ namespace smartcard_service_api
 			_DBG("unknown message [%s]", msg->toString());
 			break;
 		}
+
+		delete msg;
 
 		_END();
 

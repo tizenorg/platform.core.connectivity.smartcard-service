@@ -98,10 +98,10 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_READERS :
 		case Message::MSG_REQUEST_SHUTDOWN :
 			{
+				DispatcherMsg *tempMsg = new DispatcherMsg(msg);
+
 				if (msg->isSynchronousCall() == false)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
-
 					/* Asynchronous call */
 					g_idle_add((GSourceFunc)&SEService::dispatcherCallback, (gpointer)tempMsg);
 				}
@@ -116,10 +116,10 @@ namespace smartcard_service_api
 		/* Reader requests */
 		case Message::MSG_REQUEST_OPEN_SESSION :
 			{
+				DispatcherMsg *tempMsg = new DispatcherMsg(msg);
+
 				if (msg->isSynchronousCall() == false)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
-
 					/* Asynchronous call */
 					g_idle_add((GSourceFunc)&Reader::dispatcherCallback, (gpointer)tempMsg);
 				}
@@ -137,10 +137,10 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_CLOSE_SESSION :
 		case Message::MSG_REQUEST_GET_CHANNEL_COUNT :
 			{
+				DispatcherMsg *tempMsg = new DispatcherMsg(msg);
+
 				if (msg->isSynchronousCall() == false)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
-
 					/* Asynchronous call */
 					g_idle_add((GSourceFunc)&Session::dispatcherCallback, (gpointer)tempMsg);
 				}
@@ -156,10 +156,10 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_TRANSMIT :
 		case Message::MSG_REQUEST_CLOSE_CHANNEL :
 			{
+				DispatcherMsg *tempMsg = new DispatcherMsg(msg);
+
 				if (msg->isSynchronousCall() == false)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
-
 					/* Asynchronous call */
 					g_idle_add((GSourceFunc)&ClientChannel::dispatcherCallback, (gpointer)tempMsg);
 				}
