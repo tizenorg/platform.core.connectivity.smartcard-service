@@ -108,7 +108,7 @@ namespace smartcard_service_api
 				else
 				{
 					/* Synchronous call */
-					SEService::dispatcherCallback(msg);
+					SEService::dispatcherCallback(tempMsg);
 				}
 			}
 			break;
@@ -126,7 +126,7 @@ namespace smartcard_service_api
 				else
 				{
 					/* Synchronous call */
-					Reader::dispatcherCallback(msg);
+					Reader::dispatcherCallback(tempMsg);
 				}
 			}
 			break;
@@ -147,7 +147,7 @@ namespace smartcard_service_api
 				else
 				{
 					/* Synchronous call */
-					Session::dispatcherCallback(msg);
+					Session::dispatcherCallback(tempMsg);
 				}
 			}
 			break;
@@ -166,7 +166,7 @@ namespace smartcard_service_api
 				else
 				{
 					/* Synchronous call */
-					ClientChannel::dispatcherCallback(msg);
+					ClientChannel::dispatcherCallback(tempMsg);
 				}
 			}
 			break;
