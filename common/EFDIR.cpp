@@ -34,7 +34,7 @@ namespace smartcard_service_api
 		int ret;
 
 		ret = select(dirPath, false);
-		if (ret == FileObject::SUCCESS)
+		if (ret >= SCARD_ERROR_OK)
 		{
 			_DBG("response : %s", selectResponse.toString());
 		}

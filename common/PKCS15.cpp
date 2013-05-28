@@ -36,7 +36,7 @@ namespace smartcard_service_api
 		int ret;
 
 		ret = select(PKCS15::PKCS15_AID);
-		if (ret == FileObject::SUCCESS)
+		if (ret >= SCARD_ERROR_OK)
 		{
 			_DBG("response : %s", selectResponse.toString());
 		}
@@ -85,7 +85,7 @@ namespace smartcard_service_api
 			int ret;
 
 			ret = select(path, false);
-			if (ret == FileObject::SUCCESS)
+			if (ret >= SCARD_ERROR_OK)
 			{
 				result = true;
 			}

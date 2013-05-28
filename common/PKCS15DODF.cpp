@@ -34,7 +34,7 @@ namespace smartcard_service_api
 	{
 		int ret = 0;
 
-		if ((ret = select(fid)) == 0)
+		if ((ret = select(fid)) >= SCARD_ERROR_OK)
 		{
 			ByteArray dodfData, extra;
 
@@ -61,7 +61,7 @@ namespace smartcard_service_api
 	{
 		int ret = 0;
 
-		if ((ret = select(path)) == 0)
+		if ((ret = select(path)) >= SCARD_ERROR_OK)
 		{
 			ByteArray dodfData, extra;
 

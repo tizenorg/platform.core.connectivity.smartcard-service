@@ -31,7 +31,7 @@ namespace smartcard_service_api
 	{
 		int ret = 0;
 
-		if ((ret = select(PKCS15ODF::ODF_FID)) == 0)
+		if ((ret = select(PKCS15ODF::ODF_FID)) >= SCARD_ERROR_OK)
 		{
 			ByteArray odfData, extra;
 

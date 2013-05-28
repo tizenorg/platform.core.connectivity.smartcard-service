@@ -400,6 +400,8 @@ namespace smartcard_service_api
 		{
 			PKCS15 pkcs15(channel);
 
+			channel->setSelectResponse(pkcs15.getSelectResponse());
+
 			acList->loadACL(channel);
 			result = acList->isAuthorizedAccess(aid, hashes);
 		}
@@ -543,7 +545,7 @@ namespace smartcard_service_api
 				FileObject file(channel);
 
 				rv = file.select(aid);
-				if (rv >= 0)
+				if (rv >= SCARD_ERROR_OK)
 				{
 					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
