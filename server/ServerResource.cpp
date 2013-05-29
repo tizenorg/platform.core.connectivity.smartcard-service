@@ -76,7 +76,7 @@ namespace smartcard_service_api
 		}
 	}
 
-#define OMAPI_SE_PATH "/usr/lib/se"
+#define OMAPI_SE_PATH LIBPATH"/se"
 
 	ServerResource::ServerResource()
 		: mainLoop(NULL), seLoaded(false)
