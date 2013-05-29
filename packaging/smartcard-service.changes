@@ -1,3 +1,6 @@
+* Wed May 29 2013 Baptiste DURAND <baptiste.durand@eurogiciel.fr> accepted/tizen/20130523.160330@6952ac6
+- Fix compatibility for x64 arch
+
 * Wed May 22 2013 Rusty Lynch <rusty.lynch@intel.com> accepted/tizen/20130520.101306@173a4a8
 - Cleanup the package spec
 - Fix build for Tizen 3.0
