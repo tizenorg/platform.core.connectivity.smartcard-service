@@ -6,7 +6,8 @@
 		</request>
 	</define>
 	<assign>
-		<filesystem path="/usr/bin/smartcard-daemon" exec_label="nfc-manager" />
+		<filesystem path="/usr/bin/smartcard-daemon" exec_label="smartcard-service" />
+		<!-- <filesystem path="/usr/bin/smartcard-test-client" exec_label="smartcard-service" /> -->
 		<filesystem path="/usr/share/dbus-1/services/smartcard-service.service" label="_" />
 	</assign>
 	<request>
