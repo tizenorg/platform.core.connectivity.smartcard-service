@@ -603,7 +603,7 @@ namespace smartcard_service_api
 			else
 			{
 				_ERR("session is invalid [%d]", sessionID);
-				throw ExceptionBase(SCARD_ERROR_ILLEGAL_PARAM);
+				throw ExceptionBase(SCARD_ERROR_ILLEGAL_STATE);
 			}
 		}
 		else
