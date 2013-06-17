@@ -186,19 +186,16 @@ namespace smartcard_service_api
 		mapClients.clear();
 	}
 
-	ServiceInstance *ServerResource::createService(int socket, unsigned int context)
+	ServiceInstance *ServerResource::createService(int socket)
 	{
 		ServiceInstance *result = NULL;
 		ClientInstance *instance = NULL;
 
 		if ((instance = getClient(socket)) != NULL)
 		{
-			if ((result = instance->getService(context)) == NULL)
+			if ((result = instance->createService()) == NULL)
 			{
-				if ((result = instance->createService(context)) == NULL)
-				{
-					_ERR("ClientInstance::createService failed [%d] [%d]", socket, context);
-				}
+				_ERR("ClientInstance::createService failed [%d]", socket);
 			}
 		}
 		else
@@ -209,14 +206,14 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	ServiceInstance *ServerResource::getService(int socket, unsigned int context)
+	ServiceInstance *ServerResource::getService(int socket, unsigned int handle)
 	{
 		ServiceInstance *result = NULL;
 		ClientInstance *instance = NULL;
 
 		if ((instance = getClient(socket)) != NULL)
 		{
-			result = instance->getService(context);
+			result = instance->getService(handle);
 		}
 		else
 		{
@@ -226,13 +223,13 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void ServerResource::removeService(int socket, unsigned int context)
+	void ServerResource::removeService(int socket, unsigned int handle)
 	{
 		ClientInstance *instance = NULL;
 
 		if ((instance = getClient(socket)) != NULL)
 		{
-			instance->removeService(context);
+			instance->removeService(handle);
 		}
 		else
 		{
@@ -322,13 +319,13 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	unsigned int ServerResource::createSession(int socket, unsigned int context, unsigned int readerID, vector<ByteArray> &certHashes, void *caller)
+	unsigned int ServerResource::createSession(int socket, unsigned int handle, unsigned int readerID, vector<ByteArray> &certHashes, void *caller)
 	{
 		unsigned int result = -1;
 		Terminal *temp = NULL;
 		ServiceInstance *instance = NULL;
 
-		if ((instance = getService(socket, context)) != NULL)
+		if ((instance = getService(socket, handle)) != NULL)
 		{
 			if ((temp = getTerminalByReaderID(readerID)) != NULL)
 			{
@@ -337,57 +334,57 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
+			_ERR("getService doesn't exist : socket [%d], handle [%d]", socket, handle);
 		}
 
 		return result;
 	}
 
-	ServerSession *ServerResource::getSession(int socket, unsigned int context, unsigned int sessionID)
+	ServerSession *ServerResource::getSession(int socket, unsigned int handle, unsigned int sessionID)
 	{
 		ServerSession *result = NULL;
 		ServiceInstance *instance = NULL;
 
-		if ((instance = getService(socket, context)) != NULL)
+		if ((instance = getService(socket, handle)) != NULL)
 		{
 			result = instance->getSession(sessionID);
 		}
 		else
 		{
-			_ERR("Session doesn't exist : socket [%d], context [%d], handle [%d]", socket, context, sessionID);
+			_ERR("Session doesn't exist : socket [%d], handle [%d], handle [%d]", socket, handle, sessionID);
 		}
 
 		return result;
 	}
 
-	unsigned int ServerResource::getChannelCount(int socket, unsigned int context, unsigned int sessionID)
+	unsigned int ServerResource::getChannelCount(int socket, unsigned int handle, unsigned int sessionID)
 	{
 		unsigned int result = -1;
 		ServiceInstance *instance = NULL;
 
-		if ((instance = getService(socket, context)) != NULL)
+		if ((instance = getService(socket, handle)) != NULL)
 		{
 			result = instance->getChannelCountBySession(sessionID);
 		}
 		else
 		{
-			_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
+			_ERR("getService doesn't exist : socket [%d], handle [%d]", socket, handle);
 		}
 
 		return result;
 	}
 
-	void ServerResource::removeSession(int socket, unsigned int context, unsigned int sessionID)
+	void ServerResource::removeSession(int socket, unsigned int handle, unsigned int sessionID)
 	{
 		ServiceInstance *instance = NULL;
 
-		if ((instance = getService(socket, context)) != NULL)
+		if ((instance = getService(socket, handle)) != NULL)
 		{
 			instance->closeSession(sessionID);
 		}
 		else
 		{
-			_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
+			_ERR("getService doesn't exist : socket [%d], handle [%d]", socket, handle);
 		}
 	}
 
@@ -594,13 +591,13 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	unsigned int ServerResource::createChannel(int socket, unsigned int context, unsigned int sessionID, int channelType, ByteArray aid)
+	unsigned int ServerResource::createChannel(int socket, unsigned int handle, unsigned int sessionID, int channelType, ByteArray aid)
 		throw(ExceptionBase &)
 	{
 		unsigned int result = -1;
 		ServiceInstance *service = NULL;
 
-		if ((service = getService(socket, context)) != NULL)
+		if ((service = getService(socket, handle)) != NULL)
 		{
 			if (service->isVaildSessionHandle(sessionID) == true)
 			{
@@ -631,41 +628,41 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_ERR("getService is failed [%d] [%d]", socket, context);
+			_ERR("getService is failed [%d] [%d]", socket, handle);
 			throw ExceptionBase(SCARD_ERROR_UNAVAILABLE);
 		}
 
 		return result;
 	}
 
-	Channel *ServerResource::getChannel(int socket, unsigned int context, unsigned int channelID)
+	Channel *ServerResource::getChannel(int socket, unsigned int handle, unsigned int channelID)
 	{
 		Channel *result = NULL;
 		ServiceInstance *instance = NULL;
 
-		if ((instance = getService(socket, context)) != NULL)
+		if ((instance = getService(socket, handle)) != NULL)
 		{
 			result = instance->getChannel(channelID);
 		}
 		else
 		{
-			_ERR("Channel doesn't exist : socket [%d], context [%d], handle [%d]", socket, context, channelID);
+			_ERR("Channel doesn't exist : socket [%d], handle [%d], handle [%d]", socket, handle, channelID);
 		}
 
 		return result;
 	}
 
-	void ServerResource::removeChannel(int socket, unsigned int context, unsigned int channelID)
+	void ServerResource::removeChannel(int socket, unsigned int handle, unsigned int channelID)
 	{
 		ServiceInstance *instance = NULL;
 
-		if ((instance = getService(socket, context)) != NULL)
+		if ((instance = getService(socket, handle)) != NULL)
 		{
 			instance->closeChannel(channelID);
 		}
 		else
 		{
-			_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
+			_ERR("getService doesn't exist : socket [%d], handle [%d]", socket, handle);
 		}
 	}
 
@@ -870,11 +867,11 @@ namespace smartcard_service_api
 		return (getTerminalByReaderID(reader) != NULL);
 	}
 
-	bool ServerResource::isValidSessionHandle(int socket, unsigned int context, unsigned int session)
+	bool ServerResource::isValidSessionHandle(int socket, unsigned int handle, unsigned int session)
 	{
 		ServiceInstance *instance = NULL;
 
-		return (((instance = getService(socket, context)) != NULL) && (instance->isVaildSessionHandle(session)));
+		return (((instance = getService(socket, handle)) != NULL) && (instance->isVaildSessionHandle(session)));
 	}
 
 	int ServerResource::getReadersInformation(ByteArray &info)

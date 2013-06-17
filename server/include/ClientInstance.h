@@ -64,7 +64,7 @@ namespace smartcard_service_api
 		void setPID(int pid);
 		inline int getPID() { return pid; }
 
-		ServiceInstance *createService(unsigned int context);
+		ServiceInstance *createService();
 		ServiceInstance *getService(unsigned int context);
 		void removeService(unsigned int context);
 		void removeServices();

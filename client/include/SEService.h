@@ -35,10 +35,10 @@ namespace smartcard_service_api
 {
 	typedef void (*serviceConnected)(SEServiceHelper *service, void *context);
 
-	class SEService: public SEServiceHelper
+	class SEService : public SEServiceHelper
 	{
 	private:
-		int pid;
+		unsigned int handle;
 		void *context;
 		serviceConnected handler;
 		SEServiceListener *listener;

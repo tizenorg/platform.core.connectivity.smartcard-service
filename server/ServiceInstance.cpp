@@ -26,6 +26,22 @@
 
 namespace smartcard_service_api
 {
+	ServiceInstance::ServiceInstance(ClientInstance *parent) :
+		parent(parent)
+	{
+		handle = IntegerHandle::assignHandle();
+	}
+
+	ServiceInstance::~ServiceInstance()
+	{
+		closeSessions();
+
+		if (handle != IntegerHandle::INVALID_HANDLE) {
+			IntegerHandle::releaseHandle(handle);
+			handle = IntegerHandle::INVALID_HANDLE;
+		}
+	}
+
 	unsigned int ServiceInstance::openSession(Terminal *terminal, vector<ByteArray> &certHashes, void *caller)
 	{
 		unsigned int handle = IntegerHandle::assignHandle();

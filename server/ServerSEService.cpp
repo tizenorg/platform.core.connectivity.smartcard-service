@@ -194,12 +194,14 @@ namespace smartcard_service_api
 		Message *msg = (Message *)message;
 		Message response(*msg);
 		ServerResource &resource = ServerResource::getInstance();
+		ServiceInstance *service;
 
-		if (resource.createService(socket, msg->error) != NULL)
+		if ((service = resource.createService(socket)) != NULL)
 		{
 			_ERR("client added : pid [%d]", msg->error);
 
 			response.error = SCARD_ERROR_OK;
+			response.param2 = service->getHandle();
 
 			if ((count = resource.getReadersInformation(info)) > 0)
 			{

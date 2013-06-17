@@ -45,20 +45,20 @@ namespace smartcard_service_api
 		return clientDispatcher;
 	}
 
-	bool ClientDispatcher::addSEService(void *context, SEService *service)
+	bool ClientDispatcher::addSEService(unsigned int handle, SEService *service)
 	{
 		bool result = true;
-		map<void *, SEService *>::iterator item;
+		map<unsigned int, SEService *>::iterator item;
 
 		_BEGIN();
 
-		if ((item = mapSESerivces.find(context)) == mapSESerivces.end())
+		if ((item = mapSESerivces.find(handle)) == mapSESerivces.end())
 		{
-			mapSESerivces.insert(make_pair(context, service));
+			mapSESerivces.insert(make_pair(handle, service));
 		}
 		else
 		{
-			_DBG("SEService [%p] exists", context);
+			_DBG("SEService [%p] exists", handle);
 		}
 
 		_END();
@@ -66,13 +66,13 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void ClientDispatcher::removeSEService(void *context)
+	void ClientDispatcher::removeSEService(unsigned int handle)
 	{
-		map<void *, SEService *>::iterator item;
+		map<unsigned int, SEService *>::iterator item;
 
 		_BEGIN();
 
-		if ((item = mapSESerivces.find(context)) != mapSESerivces.end())
+		if ((item = mapSESerivces.find(handle)) != mapSESerivces.end())
 		{
 			mapSESerivces.erase(item);
 		}
@@ -174,7 +174,7 @@ namespace smartcard_service_api
 		case Message::MSG_NOTIFY_SE_INSERTED :
 		case Message::MSG_NOTIFY_SE_REMOVED :
 			{
-				map<void *, SEService *>::iterator item;
+				map<unsigned int, SEService *>::iterator item;
 
 				for (item = mapSESerivces.begin(); item != mapSESerivces.end(); item++)
 				{
@@ -190,7 +190,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_OPERATION_RELEASE_CLIENT :
 			{
-				map<void *, SEService *>::iterator item;
+				map<unsigned int, SEService *>::iterator item;
 
 				for (item = mapSESerivces.begin(); item != mapSESerivces.end(); item++)
 				{

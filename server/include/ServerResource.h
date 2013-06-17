@@ -121,22 +121,22 @@ namespace smartcard_service_api
 		void removeClient(int socket);
 		void removeClients();
 
-		ServiceInstance *createService(int socket, unsigned int context);
-		ServiceInstance *getService(int socket, unsigned int context);
-		void removeService(int socket, unsigned int context);
+		ServiceInstance *createService(int socket);
+		ServiceInstance *getService(int socket, unsigned int handle);
+		void removeService(int socket, unsigned int handle);
 		void removeServices(int socket);
 
-		unsigned int createSession(int socket, unsigned int context, unsigned int readerID, vector<ByteArray> &certHashes, void *caller);
-		ServerSession *getSession(int socket, unsigned int context, unsigned int sessionID);
-		unsigned int getChannelCount(int socket, unsigned int context, unsigned int sessionID);
-		void removeSession(int socket, unsigned int context, unsigned int session);
-		bool isValidSessionHandle(int socket, unsigned int context, unsigned int sessionID);
+		unsigned int createSession(int socket, unsigned int handle, unsigned int readerID, vector<ByteArray> &certHashes, void *caller);
+		ServerSession *getSession(int socket, unsigned int handle, unsigned int sessionID);
+		unsigned int getChannelCount(int socket, unsigned int handle, unsigned int sessionID);
+		void removeSession(int socket, unsigned int handle, unsigned int session);
+		bool isValidSessionHandle(int socket, unsigned int handle, unsigned int sessionID);
 
-		unsigned int createChannel(int socket, unsigned int context,
+		unsigned int createChannel(int socket, unsigned int handle,
 			unsigned int sessionID, int channelType, ByteArray aid)
 			throw(ExceptionBase &);
-		Channel *getChannel(int socket, unsigned int context, unsigned int channelID);
-		void removeChannel(int socket, unsigned int context, unsigned int channelID);
+		Channel *getChannel(int socket, unsigned int handle, unsigned int channelID);
+		void removeChannel(int socket, unsigned int handle, unsigned int channelID);
 
 		void addAccessControlList(Terminal *terminal, AccessControlList *acl);
 		void addAccessControlList(ServerChannel *channel, AccessControlList *acl);

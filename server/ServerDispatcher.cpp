@@ -83,6 +83,7 @@ namespace smartcard_service_api
 				Message response(*msg);
 				ByteArray info;
 				ClientInstance *instance = NULL;
+				ServiceInstance *service = NULL;
 
 				response.param1 = 0;
 				response.param2 = 0;
@@ -103,9 +104,10 @@ namespace smartcard_service_api
 					}
 
 					/* create service */
-					if (resource->createService(socket, (unsigned int)msg->userParam) != NULL)
+					if ((service = resource->createService(socket)) != NULL)
 					{
 						response.error = SCARD_ERROR_OK;
+						response.param2 = service->getHandle();
 
 						if ((count = resource->getReadersInformation(info)) > 0)
 						{
@@ -144,7 +146,7 @@ namespace smartcard_service_api
 
 				response.error = SCARD_ERROR_OK;
 
-				resource->removeService(socket, msg->error/* service context */);
+				resource->removeService(socket, msg->param1);
 
 				/* response to client */
 				ServerIPC::getInstance()->sendMessage(socket, &response);

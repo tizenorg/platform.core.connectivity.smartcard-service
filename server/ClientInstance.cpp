@@ -32,36 +32,29 @@ namespace smartcard_service_api
 		this->pid = pid;
 	}
 
-	ServiceInstance *ClientInstance::createService(unsigned int context)
+	ServiceInstance *ClientInstance::createService()
 	{
 		ServiceInstance *result = NULL;
 
-		if ((result = getService(context)) == NULL)
+		result = new ServiceInstance(this);
+		if (result != NULL)
 		{
-			result = new ServiceInstance(this, context);
-			if (result != NULL)
-			{
-				mapServices.insert(make_pair(context, result));
-			}
-			else
-			{
-				_ERR("alloc failed");
-			}
+			mapServices.insert(make_pair(result->getHandle(), result));
 		}
 		else
 		{
-			_ERR("service already exist [%d]", context);
+			_ERR("alloc failed");
 		}
 
 		return result;
 	}
 
-	ServiceInstance *ClientInstance::getService(unsigned int context)
+	ServiceInstance *ClientInstance::getService(unsigned int handle)
 	{
 		ServiceInstance *result = NULL;
 		map<unsigned int, ServiceInstance *>::iterator item;
 
-		if ((item = mapServices.find(context)) != mapServices.end())
+		if ((item = mapServices.find(handle)) != mapServices.end())
 		{
 			result = item->second;
 		}
@@ -69,11 +62,11 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void ClientInstance::removeService(unsigned int context)
+	void ClientInstance::removeService(unsigned int handle)
 	{
 		map<unsigned int, ServiceInstance *>::iterator item;
 
-		if ((item = mapServices.find(context)) != mapServices.end())
+		if ((item = mapServices.find(handle)) != mapServices.end())
 		{
 			delete item->second;
 			mapServices.erase(item);

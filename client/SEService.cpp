@@ -35,32 +35,25 @@
 
 namespace smartcard_service_api
 {
-	SEService::SEService() :
-		SEServiceHelper()
+	SEService::SEService() : SEServiceHelper(),
+		handle(-1), context(NULL),
+		handler(NULL), listener(NULL)
 	{
-		this->context = NULL;
-		this->handler = NULL;
-		this->listener = NULL;
-		connected = false;
 	}
 
 	SEService::SEService(void *user_data, serviceConnected handler)
 		throw(ErrorIO &, ErrorIllegalParameter &) :
-		SEServiceHelper()
+		SEServiceHelper(), handle(-1),
+		listener(NULL)
 	{
-		this->listener = NULL;
-		connected = false;
-
 		initialize(user_data, handler);
 	}
 
 	SEService::SEService(void *user_data, SEServiceListener *listener)
 		throw(ErrorIO &, ErrorIllegalParameter &) :
-		SEServiceHelper()
+		SEServiceHelper(), handle(-1),
+		handler(NULL)
 	{
-		this->handler = NULL;
-		connected = false;
-
 		initialize(user_data, listener);
 	}
 
@@ -114,6 +107,7 @@ namespace smartcard_service_api
 			Message msg;
 
 			msg.message = Message::MSG_REQUEST_SHUTDOWN;
+			msg.param1 = (unsigned long)handle;
 			msg.error = (unsigned long)this; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)NULL;
@@ -141,6 +135,7 @@ namespace smartcard_service_api
 			Message msg;
 
 			msg.message = Message::MSG_REQUEST_SHUTDOWN;
+			msg.param1 = (unsigned long)handle;
 			msg.error = (unsigned long)this; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
@@ -153,7 +148,7 @@ namespace smartcard_service_api
 				rv = waitTimedCondition(0);
 				if (rv == 0)
 				{
-					ClientDispatcher::getInstance().removeSEService(context);
+					ClientDispatcher::getInstance().removeSEService(handle);
 
 					connected = false;
 				}
@@ -205,8 +200,6 @@ namespace smartcard_service_api
 
 			return result;
 		}
-
-		clientDispatcher->addSEService(context, this);
 
 		{
 			/* send message to load se */
@@ -311,6 +304,9 @@ namespace smartcard_service_api
 			_INFO("[MSG_REQUEST_READERS]");
 
 			service->connected = true;
+			service->handle = (unsigned int)msg->param2;
+
+			ClientDispatcher::getInstance().addSEService(service->handle, service);
 
 			/* parse message data */
 			service->parseReaderInformation(msg->param1, msg->data);
@@ -409,7 +405,7 @@ namespace smartcard_service_api
 			{
 				service->listener->errorHandler(service, msg->error, service->context);
 
-				ClientDispatcher::getInstance().removeSEService(service->context);
+				ClientDispatcher::getInstance().removeSEService(service->handle);
 				service->connected = false;
 			}
 			else
