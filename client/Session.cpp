@@ -27,7 +27,12 @@
 #include "Session.h"
 #include "Reader.h"
 #include "ClientChannel.h"
+#ifdef USE_GDBUS
+#include "smartcard-service-gdbus.h"
+#include "GDBusHelper.h"
+#else
 #include "ClientIPC.h"
+#endif
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -49,6 +54,31 @@ namespace smartcard_service_api
 
 		this->context = context;
 		this->handle = handle;
+
+#ifdef USE_GDBUS
+		/* initialize client */
+		if (!g_thread_supported())
+		{
+			g_thread_init(NULL);
+		}
+
+		g_type_init();
+
+		/* init default context */
+		GError *error = NULL;
+
+		proxy = smartcard_service_session_proxy_new_for_bus_sync(
+			G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE,
+			"org.tizen.SmartcardService",
+			"/org/tizen/SmartcardService/Session",
+			NULL, &error);
+		if (proxy == NULL)
+		{
+			_ERR("Can not create proxy : %s", error->message);
+			g_error_free(error);
+			return;
+		}
+#endif
 		closed = false;
 	}
 
@@ -75,19 +105,191 @@ namespace smartcard_service_api
 			channels[i]->closeSync();
 		}
 	}
+#ifdef USE_GDBUS
+	void Session::session_get_atr_cb(GObject *source_object,
+		GAsyncResult *res, gpointer user_data)
+	{
+		CallbackParam *param = (CallbackParam *)user_data;
+		Session *session;
+		getATRCallback callback;
+		gint result;
+		GVariant *var_atr;
+		GError *error = NULL;
+		ByteArray atr;
 
+		_INFO("MSG_REQUEST_GET_ATR");
+
+		if (param == NULL) {
+			_ERR("null parameter!!!");
+			return;
+		}
+
+		session = (Session *)param->instance;
+		callback = (getATRCallback)param->callback;
+
+		if (smartcard_service_session_call_get_atr_finish(
+			SMARTCARD_SERVICE_SESSION(source_object),
+			&result, &var_atr, res, &error) == true) {
+			if (result == SCARD_ERROR_OK) {
+				GDBusHelper::convertVariantToByteArray(var_atr, atr);
+
+				session->atr = atr;
+			} else {
+				_ERR("smartcard_service_session_call_get_atr failed, [%d]", result);
+			}
+		} else {
+			_ERR("smartcard_service_session_call_get_atr failed, [%s]", error->message);
+			g_error_free(error);
+
+			result = SCARD_ERROR_IPC_FAILED;
+		}
+
+		if (callback != NULL) {
+			callback(atr.getBuffer(), atr.getLength(), result, param->user_param);
+		}
+
+		delete param;
+	}
+
+	void Session::session_open_channel_cb(GObject *source_object,
+		GAsyncResult *res, gpointer user_data)
+	{
+		CallbackParam *param = (CallbackParam *)user_data;
+		Session *session;
+		openChannelCallback callback;
+		gint result;
+		guint channel_id;
+		GVariant *var_response;
+		GError *error = NULL;
+		Channel *channel;
+
+		_INFO("MSG_REQUEST_OPEN_CHANNEL");
+
+		if (param == NULL) {
+			_ERR("null parameter!!!");
+			return;
+		}
+
+		session = (Session *)param->instance;
+		callback = (openChannelCallback)param->callback;
+
+		if (smartcard_service_session_call_open_channel_finish(
+			SMARTCARD_SERVICE_SESSION(source_object),
+			&result, &channel_id, &var_response,
+			res, &error) == true) {
+			if (result == SCARD_ERROR_OK) {
+				ByteArray response;
+
+				GDBusHelper::convertVariantToByteArray(
+					var_response, response);
+
+				/* create new instance of channel */
+				channel = new ClientChannel(session->context,
+					session, channel_id,
+					response, (void *)channel_id);
+				if (channel != NULL) {
+					session->channels.push_back(channel);
+				} else {
+					_ERR("alloc failed");
+
+					result = SCARD_ERROR_OUT_OF_MEMORY;
+				}
+			} else {
+				_ERR("smartcard_service_session_call_open_channel failed, [%d]", result);
+			}
+		} else {
+			_ERR("smartcard_service_session_call_open_channel failed, [%s]", error->message);
+			g_error_free(error);
+
+			result = SCARD_ERROR_IPC_FAILED;
+		}
+
+		if (callback != NULL) {
+			callback(channel, result, param->user_param);
+		}
+
+		delete param;
+	}
+
+	void Session::session_close_cb(GObject *source_object,
+		GAsyncResult *res, gpointer user_data)
+	{
+		CallbackParam *param = (CallbackParam *)user_data;
+		Session *session;
+		closeSessionCallback callback;
+		gint result;
+		GError *error = NULL;
+
+		_INFO("MSG_REQUEST_CLOSE_SESSION");
+
+		if (param == NULL) {
+			_ERR("null parameter!!!");
+			return;
+		}
+
+		session = (Session *)param->instance;
+		callback = (closeSessionCallback)param->callback;
+
+		if (smartcard_service_session_call_close_session_finish(
+			SMARTCARD_SERVICE_SESSION(source_object),
+			&result, res, &error) == true) {
+			if (result == SCARD_ERROR_OK) {
+				session->closed = true;
+			} else {
+				_ERR("smartcard_service_session_call_close_session failed, [%d]", result);
+			}
+		} else {
+			_ERR("smartcard_service_session_call_close_session failed, [%s]", error->message);
+			g_error_free(error);
+
+			result = SCARD_ERROR_IPC_FAILED;
+		}
+
+		if (callback != NULL) {
+			callback(result, param->user_param);
+		}
+
+		delete param;
+	}
+#endif
 	ByteArray Session::getATRSync()
 		throw (ExceptionBase &, ErrorIO &, ErrorSecurity &,
 			ErrorIllegalState &, ErrorIllegalParameter &)
 	{
 		ByteArray result;
+
 		if (getReader()->isSecureElementPresent() == true)
 		{
 			if (atr.isEmpty() == true)
 			{
+#ifdef USE_GDBUS
+				gint ret;
+				GVariant *var_atr = NULL;
+				GError *error = NULL;
+
+				if (smartcard_service_session_call_get_atr_sync(
+					(SmartcardServiceSession *)proxy,
+					GPOINTER_TO_UINT(context),
+					GPOINTER_TO_UINT(handle),
+					&ret, &var_atr, NULL, &error) == true) {
+					if (ret == SCARD_ERROR_OK) {
+						GDBusHelper::convertVariantToByteArray(var_atr, result);
+
+						atr = result;
+					} else {
+						_ERR("smartcard_service_session_call_get_atr_sync failed, [%d]", ret);
+
+						THROW_ERROR(ret);
+					}
+				} else {
+					_ERR("smartcard_service_session_call_get_atr_sync failed, [%s]", error->message);
+					g_error_free(error);
+
+					THROW_ERROR(SCARD_ERROR_IPC_FAILED);
+				}
+#else
 				Message msg;
 				int rv;
-
 #ifdef CLIENT_IPC_THREAD
 				/* request channel handle from server */
 				msg.message = Message::MSG_REQUEST_GET_ATR;
@@ -118,6 +320,7 @@ namespace smartcard_service_api
 					ThrowError::throwError(this->error);
 				}
 #endif
+#endif
 			}
 
 			result = atr;
@@ -139,10 +342,24 @@ namespace smartcard_service_api
 		{
 			if (atr.isEmpty() == true)
 			{
+#ifdef USE_GDBUS
+				CallbackParam *param = new CallbackParam();
+
+				param->instance = this;
+				param->callback = (void *)callback;
+				param->user_param = userData;
+
+				smartcard_service_session_call_get_atr(
+					(SmartcardServiceSession *)proxy,
+					GPOINTER_TO_UINT(context),
+					GPOINTER_TO_UINT(handle), NULL,
+					&Session::session_get_atr_cb, param);
+
+				result = SCARD_ERROR_OK;
+#else
 				Message msg;
 
-
-			/* request channel handle from server */
+				/* request channel handle from server */
 				msg.message = Message::MSG_REQUEST_GET_ATR;
 				msg.param1 = (unsigned long)handle;
 				msg.error = (unsigned long)context; /* using error to context */
@@ -159,6 +376,7 @@ namespace smartcard_service_api
 					_ERR("sendMessage failed");
 					result = SCARD_ERROR_IPC_FAILED;
 				}
+#endif
 			}
 			else
 			{
@@ -181,15 +399,37 @@ namespace smartcard_service_api
 		throw (ExceptionBase &, ErrorIO &, ErrorSecurity &,
 			ErrorIllegalState &, ErrorIllegalParameter &)
 	{
-		Message msg;
-		int rv;
-
-#ifdef CLIENT_IPC_THREAD
 		if (isClosed() == false)
 		{
 			closed = true;
 			closeChannels();
+#ifdef USE_GDBUS
+			gint ret;
+			GError *error = NULL;
 
+			if (smartcard_service_session_call_close_session_sync(
+				(SmartcardServiceSession *)proxy,
+				GPOINTER_TO_UINT(context),
+				GPOINTER_TO_UINT(handle),
+				&ret, NULL, &error) == true) {
+				if (ret == SCARD_ERROR_OK) {
+					closed = true;
+				} else {
+					_ERR("smartcard_service_session_call_close_session_sync failed, [%d]", ret);
+
+					THROW_ERROR(ret);
+				}
+			} else {
+				_ERR("smartcard_service_session_call_get_atr_sync failed, [%s]", error->message);
+				g_error_free(error);
+
+				THROW_ERROR(SCARD_ERROR_IPC_FAILED);
+			}
+#else
+			int rv;
+			Message msg;
+
+#ifdef CLIENT_IPC_THREAD
 			/* request channel handle from server */
 			msg.message = Message::MSG_REQUEST_CLOSE_SESSION;
 			msg.param1 = (unsigned long)handle;
@@ -219,20 +459,33 @@ namespace smartcard_service_api
 			{
 				ThrowError::throwError(this->error);
 			}
-		}
 #endif
+#endif
+		}
 	}
 
 	int Session::close(closeSessionCallback callback, void *userData)
 	{
 		int result = SCARD_ERROR_OK;
-		Message msg;
 
 		if (isClosed() == false)
 		{
 			closed = true;
 			closeChannels();
+#ifdef USE_GDBUS
+			CallbackParam *param = new CallbackParam();
 
+			param->instance = this;
+			param->callback = (void *)callback;
+			param->user_param = userData;
+
+			smartcard_service_session_call_close_session(
+				(SmartcardServiceSession *)proxy,
+				GPOINTER_TO_UINT(context),
+				GPOINTER_TO_UINT(handle), NULL,
+				&Session::session_close_cb, param);
+#else
+			Message msg;
 			/* request channel handle from server */
 			msg.message = Message::MSG_REQUEST_CLOSE_SESSION;
 			msg.param1 = (unsigned long)handle;
@@ -246,6 +499,7 @@ namespace smartcard_service_api
 				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
+#endif
 		}
 
 		return result;
@@ -253,14 +507,17 @@ namespace smartcard_service_api
 
 	unsigned int Session::getChannelCountSync()
 	{
-		channelCount = -1;
+		unsigned int count = 0;
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
+#ifdef USE_GDBUS
+			count = channels.size();
+#else
 			Message msg;
 			int rv;
 
-
+			channelCount = -1;
 #ifdef CLIENT_IPC_THREAD
 			/* request channel handle from server */
 			msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
@@ -268,8 +525,6 @@ namespace smartcard_service_api
 			msg.error = (unsigned long)context; /* using error to context */
 			msg.caller = (void *)this;
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
-
-			channelCount = -1;
 
 			syncLock();
 			if (ClientIPC::getInstance().sendMessage(&msg) == true)
@@ -280,6 +535,8 @@ namespace smartcard_service_api
 					_ERR("time over");
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
+
+				count = channelCount;
 			}
 			else
 			{
@@ -293,6 +550,7 @@ namespace smartcard_service_api
 				ThrowError::throwError(this->error);
 			}
 #endif
+#endif
 		}
 		else
 		{
@@ -300,7 +558,7 @@ namespace smartcard_service_api
 			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
-		return channelCount;
+		return count;
 	}
 
 	int Session::getChannelCount(getChannelCountCallback callback, void *userData)
@@ -309,8 +567,9 @@ namespace smartcard_service_api
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
+#ifdef USE_GDBUS
+#else
 			Message msg;
-
 
 			msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
 			msg.param1 = (unsigned long)handle;
@@ -328,6 +587,7 @@ namespace smartcard_service_api
 				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
+#endif
 		}
 		else
 		{
@@ -338,14 +598,60 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	Channel *Session::openChannelSync(int id, ByteArray aid)
+	Channel *Session::openChannelSync(int id, ByteArray &aid)
 		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 			ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		openedChannel = NULL;
+		Channel *channel = NULL;
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
+#ifdef USE_GDBUS
+			gint ret;
+			GVariant *var_aid = NULL, *var_response = NULL;
+			guint channel_id;
+			GError *error = NULL;
+
+			var_aid = GDBusHelper::convertByteArrayToVariant(aid);
+
+			if (smartcard_service_session_call_open_channel_sync(
+				(SmartcardServiceSession *)proxy,
+				GPOINTER_TO_UINT(context),
+				GPOINTER_TO_UINT(handle),
+				(guint)id, var_aid, &ret, &channel_id,
+				&var_response, NULL, &error) == true) {
+				if (ret == SCARD_ERROR_OK && channel_id != 0) {
+					ByteArray response;
+
+					GDBusHelper::convertVariantToByteArray(
+						var_response, response);
+
+					/* create new instance of channel */
+					channel = new ClientChannel(context,
+						this, channel_id,
+						response, (void *)channel_id);
+					if (channel != NULL)
+					{
+						channels.push_back(channel);
+					}
+					else
+					{
+						_ERR("alloc failed");
+
+						THROW_ERROR(SCARD_ERROR_OUT_OF_MEMORY);
+					}
+				} else {
+					_ERR("smartcard_service_session_call_open_channel_sync failed, [%d]", ret);
+
+					THROW_ERROR(ret);
+				}
+			} else {
+				_ERR("smartcard_service_session_call_open_channel_sync failed, [%s]", error->message);
+				g_error_free(error);
+
+				THROW_ERROR(SCARD_ERROR_IPC_FAILED);
+			}
+#else
 			Message msg;
 			int rv;
 
@@ -368,6 +674,8 @@ namespace smartcard_service_api
 					_ERR("time over");
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
+
+				channel = openedChannel;
 			}
 			else
 			{
@@ -380,22 +688,42 @@ namespace smartcard_service_api
 			{
 				ThrowError::throwError(this->error);
 			}
+#endif
 		}
 		else
 		{
 			_ERR("unavailable session");
+
 			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
-		return (Channel *)openedChannel;
+		return (Channel *)channel;
 	}
 
-	int Session::openChannel(int id, ByteArray aid, openChannelCallback callback, void *userData)
+	int Session::openChannel(int id, ByteArray &aid, openChannelCallback callback, void *userData)
 	{
 		int result;
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
+#ifdef USE_GDBUS
+			GVariant *var_aid;
+
+			CallbackParam *param = new CallbackParam();
+
+			param->instance = this;
+			param->callback = (void *)callback;
+			param->user_param = userData;
+
+			var_aid = GDBusHelper::convertByteArrayToVariant(aid);
+
+			smartcard_service_session_call_open_channel(
+				(SmartcardServiceSession *)proxy,
+				GPOINTER_TO_UINT(context),
+				GPOINTER_TO_UINT(handle),
+				(guint)id, var_aid, NULL,
+				&Session::session_open_channel_cb, param);
+#else
 			Message msg;
 
 			/* request channel handle from server */
@@ -417,6 +745,7 @@ namespace smartcard_service_api
 				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
+#endif
 		}
 		else
 		{
@@ -427,7 +756,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	Channel *Session::openBasicChannelSync(ByteArray aid)
+	Channel *Session::openBasicChannelSync(ByteArray &aid)
 		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openChannelSync(0, aid);
@@ -436,10 +765,12 @@ namespace smartcard_service_api
 	Channel *Session::openBasicChannelSync(unsigned char *aid, unsigned int length)
 		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		return openBasicChannelSync(ByteArray(aid, length));
+		ByteArray temp(aid, length);
+
+		return openBasicChannelSync(temp);
 	}
 
-	int Session::openBasicChannel(ByteArray aid, openChannelCallback callback, void *userData)
+	int Session::openBasicChannel(ByteArray &aid, openChannelCallback callback, void *userData)
 	{
 		return openChannel(0, aid, callback, userData);
 	}
@@ -447,10 +778,12 @@ namespace smartcard_service_api
 	int Session::openBasicChannel(unsigned char *aid, unsigned int length,
 		openChannelCallback callback, void *userData)
 	{
-		return openBasicChannel(ByteArray(aid, length), callback, userData);
+		ByteArray temp(aid, length);
+
+		return openBasicChannel(temp, callback, userData);
 	}
 
-	Channel *Session::openLogicalChannelSync(ByteArray aid)
+	Channel *Session::openLogicalChannelSync(ByteArray &aid)
 		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openChannelSync(1, aid);
@@ -459,10 +792,12 @@ namespace smartcard_service_api
 	Channel *Session::openLogicalChannelSync(unsigned char *aid, unsigned int length)
 		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		return openLogicalChannelSync(ByteArray(aid, length));
+		ByteArray temp(aid, length);
+
+		return openLogicalChannelSync(temp);
 	}
 
-	int Session::openLogicalChannel(ByteArray aid, openChannelCallback callback, void *userData)
+	int Session::openLogicalChannel(ByteArray &aid, openChannelCallback callback, void *userData)
 	{
 		return openChannel(1, aid, callback, userData);
 	}
@@ -470,9 +805,12 @@ namespace smartcard_service_api
 	int Session::openLogicalChannel(unsigned char *aid, unsigned int length,
 		openChannelCallback callback, void *userData)
 	{
-		return openLogicalChannel(ByteArray(aid, length), callback, userData);
+		ByteArray temp(aid, length);
+
+		return openLogicalChannel(temp, callback, userData);
 	}
 
+#ifndef USE_GDBUS
 	bool Session::dispatcherCallback(void *message)
 	{
 		Message *msg = (Message *)message;
@@ -617,6 +955,7 @@ namespace smartcard_service_api
 
 		return result;
 	}
+#endif
 } /* namespace smartcard_service_api */
 
 /* export C API */

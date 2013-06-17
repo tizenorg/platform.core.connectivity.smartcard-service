@@ -18,6 +18,10 @@
 #define READER_H_
 
 /* standard library header */
+#ifdef USE_GDBUS
+#include <glib.h>
+#include <gio/gio.h>
+#endif
 
 /* SLP library header */
 
@@ -36,16 +40,24 @@ namespace smartcard_service_api
 	private:
 		void *context;
 		void *handle;
+#ifdef USE_GDBUS
+		void *proxy;
+#else
 		/* temporary data for sync function */
 		int error;
 		Session *openedSession;
+#endif
 
 		Reader(void *context, const char *name, void *handle);
 		~Reader();
 
-		void unavailable();
-
+		inline void unavailable() { present = false; }
+#ifdef USE_GDBUS
+		static void reader_open_session_cb(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+#else
 		static bool dispatcherCallback(void *message);
+#endif
 
 	public:
 		void closeSessions()
@@ -57,7 +69,9 @@ namespace smartcard_service_api
 				ErrorIllegalParameter &, ErrorSecurity &);
 
 		friend class SEService;
+#ifndef USE_GDBUS
 		friend class ClientDispatcher;
+#endif
 	};
 } /* namespace smartcard_service_api */
 #endif /* __cplusplus */

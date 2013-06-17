@@ -23,10 +23,15 @@
 
 /* local header */
 #include "Debug.h"
-#include "Message.h"
-#include "ClientIPC.h"
 #include "Reader.h"
 #include "Session.h"
+#ifdef USE_GDBUS
+#include "GDBusHelper.h"
+#include "smartcard-service-gdbus.h"
+#else
+#include "Message.h"
+#include "ClientIPC.h"
+#endif
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -34,15 +39,12 @@
 
 namespace smartcard_service_api
 {
-	Reader::Reader(void *context, const char *name, void *handle)
-		: ReaderHelper()
+	Reader::Reader(void *context, const char *name, void *handle) :
+		ReaderHelper(), context(context), handle(handle)
 	{
 		unsigned int length = 0;
 
 		_BEGIN();
-
-		this->context = NULL;
-		this->handle = NULL;
 
 		if (context == NULL || name == NULL || strlen(name) == 0 || handle == NULL)
 		{
@@ -58,6 +60,30 @@ namespace smartcard_service_api
 		length = (length < sizeof(this->name)) ? length : sizeof(this->name);
 		memcpy(this->name, name, length);
 
+#ifdef USE_GDBUS
+		/* initialize client */
+		if (!g_thread_supported())
+		{
+			g_thread_init(NULL);
+		}
+
+		g_type_init();
+
+		/* init default context */
+		GError *error = NULL;
+
+		proxy = smartcard_service_reader_proxy_new_for_bus_sync(
+			G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE,
+			"org.tizen.SmartcardService",
+			"/org/tizen/SmartcardService/Reader",
+			NULL, &error);
+		if (proxy == NULL)
+		{
+			_ERR("Can not create proxy : %s", error->message);
+			g_error_free(error);
+			return;
+		}
+#endif
 		present = true;
 
 		_END();
@@ -92,13 +118,48 @@ namespace smartcard_service_api
 		throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 			ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		openedSession = NULL;
+		Session *session = NULL;
 
 		if (isSecureElementPresent() == true)
 		{
+#ifdef USE_GDBUS
+			gint result;
+			GError *error = NULL;
+			guint session_id;
+
+			if (smartcard_service_reader_call_open_session_sync(
+				(SmartcardServiceReader *)proxy,
+				GPOINTER_TO_UINT(context),
+				GPOINTER_TO_UINT(handle),
+				&result, &session_id, NULL, &error) == true) {
+				if (result == SCARD_ERROR_OK) {
+					/* create new instance of channel */
+
+					session = new Session(context, this,
+						GUINT_TO_POINTER(session_id));
+					if (session != NULL) {
+						sessions.push_back(session);
+					} else {
+						_ERR("Session creating instance failed");
+
+						THROW_ERROR(SCARD_ERROR_OUT_OF_MEMORY);
+					}
+				} else {
+					_ERR("smartcard_service_reader_call_open_session_sync failed, [%d]", result);
+
+					THROW_ERROR(result);
+				}
+			} else {
+				_ERR("smartcard_service_reader_call_open_session_sync failed, [%s]", error->message);
+				g_error_free(error);
+
+				THROW_ERROR(SCARD_ERROR_IPC_FAILED);
+			}
+#else
 			Message msg;
 			int rv;
 
+			openedSession = NULL;
 #ifdef CLIENT_IPC_THREAD
 			/* request channel handle from server */
 			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
@@ -116,6 +177,8 @@ namespace smartcard_service_api
 					_ERR("time over");
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
+
+				session = openedSession;
 			}
 			else
 			{
@@ -129,6 +192,7 @@ namespace smartcard_service_api
 				ThrowError::throwError(this->error);
 			}
 #endif
+#endif
 		}
 		else
 		{
@@ -136,9 +200,62 @@ namespace smartcard_service_api
 			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
-		return (Session *)openedSession;
+		return session;
 	}
 
+#ifdef USE_GDBUS
+	void Reader::reader_open_session_cb(GObject *source_object,
+		GAsyncResult *res, gpointer user_data)
+	{
+		CallbackParam *param = (CallbackParam *)user_data;
+		Reader *reader;
+		openSessionCallback callback;
+		Session *session = NULL;
+		gint result;
+		guint handle;
+		GError *error = NULL;
+
+		_INFO("MSG_REQUEST_OPEN_SESSION");
+
+		if (param == NULL) {
+			_ERR("null parameter!!!");
+			return;
+		}
+
+		reader = (Reader *)param->instance;
+		callback = (openSessionCallback)param->callback;
+
+		if (smartcard_service_reader_call_open_session_finish(
+			SMARTCARD_SERVICE_READER(source_object),
+			&result, &handle, res, &error) == true) {
+			if (result == SCARD_ERROR_OK) {
+				/* create new instance of channel */
+				session = new Session(reader->context, reader,
+					GUINT_TO_POINTER(handle));
+				if (session != NULL) {
+					reader->sessions.push_back(session);
+				} else {
+					_ERR("Session creating instance failed");
+
+					result = SCARD_ERROR_OUT_OF_MEMORY;
+				}
+			} else {
+				_ERR("smartcard_service_reader_call_open_session failed, [%d]", result);
+			}
+		} else {
+			_ERR("smartcard_service_reader_call_open_session failed, [%s]", error->message);
+			g_error_free(error);
+
+			result = SCARD_ERROR_IPC_FAILED;
+		}
+
+		if (callback != NULL) {
+			callback(session, result, param->user_param);
+		}
+
+		delete param;
+	}
+#endif
 	int Reader::openSession(openSessionCallback callback, void *userData)
 	{
 		int result;
@@ -147,6 +264,21 @@ namespace smartcard_service_api
 
 		if (isSecureElementPresent() == true)
 		{
+#ifdef USE_GDBUS
+			CallbackParam *param = new CallbackParam();
+
+			param->instance = this;
+			param->callback = (void *)callback;
+			param->user_param = userData;
+
+			smartcard_service_reader_call_open_session(
+				(SmartcardServiceReader *)proxy,
+				GPOINTER_TO_UINT(context),
+				GPOINTER_TO_UINT(handle),
+				NULL, &Reader::reader_open_session_cb, param);
+
+			result = SCARD_ERROR_OK;
+#else
 			Message msg;
 
 			/* request channel handle from server */
@@ -166,6 +298,7 @@ namespace smartcard_service_api
 				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
+#endif
 		}
 		else
 		{
@@ -178,6 +311,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
+#ifndef USE_GDBUS
 	bool Reader::dispatcherCallback(void *message)
 	{
 		Message *msg = (Message *)message;
@@ -249,7 +383,7 @@ namespace smartcard_service_api
 
 		return result;
 	}
-
+#endif
 } /* namespace smartcard_service_api */
 
 /* export C API */

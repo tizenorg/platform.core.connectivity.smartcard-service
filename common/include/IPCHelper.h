@@ -17,6 +17,7 @@
 #ifndef IPCHELPER_H_
 #define IPCHELPER_H_
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <glib.h>
 #include <pthread.h>
@@ -87,4 +88,5 @@ namespace smartcard_service_api
 	};
 
 } /* namespace smartcard_service_api */
+#endif
 #endif /* IPCHELPER_H_ */

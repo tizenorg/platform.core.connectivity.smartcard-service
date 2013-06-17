@@ -10,12 +10,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} SRCS)
 
 #IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
-#        SET(CMAKE_BUILD_TYPE "Debug")
+#	SET(CMAKE_BUILD_TYPE "Debug")
 #ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 #MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_common REQUIRED dlog glib-2.0 aul libssl pkgmgr pkgmgr-info)
+pkg_check_modules(pkgs_common REQUIRED glib-2.0 gio-unix-2.0 dlog aul libssl pkgmgr pkgmgr-info)
 
 MESSAGE("${LIB_NAME} ld flag : ${pkgs_common_LDFLAGS}")
 
@@ -71,5 +71,5 @@ SET(EXPORT_HEADER
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${LIB_INSTALL_DIR})
 FOREACH(hfile ${EXPORT_HEADER})
-        INSTALL(FILES ${hfile} DESTINATION include/${LIB_NAME})
+	INSTALL(FILES ${hfile} DESTINATION include/${LIB_NAME})
 ENDFOREACH(hfile)

@@ -51,7 +51,7 @@ namespace smartcard_service_api
 		int getChannelNumber() { return channelNum; }
 		Terminal *getTerminal() { return terminal; }
 
-		int close(closeCallback callback, void *userParam) { return -1; }
+		int close(closeChannelCallback callback, void *userParam) { return -1; }
 		int transmit(ByteArray command, transmitCallback callback, void *userParam) { return -1; };
 
 		friend class ServerReader;

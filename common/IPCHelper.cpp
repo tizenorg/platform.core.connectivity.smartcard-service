@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <stdio.h>
 #include <stdlib.h>
@@ -679,3 +680,4 @@ ERROR :
 	}
 
 } /* namespace smartcard_service_api */
+#endif

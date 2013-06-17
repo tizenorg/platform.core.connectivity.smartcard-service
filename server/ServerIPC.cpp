@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <string.h>
 #include <sys/socket.h>
@@ -286,3 +287,4 @@ EXTERN_API void server_ipc_create_listen_socket()
 
 	ipc->createListenSocket();
 }
+#endif /* USE_GDBUS */

@@ -1,6 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(smartcard-daemon CXX)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -11,7 +12,7 @@ IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_server REQUIRED glib-2.0 gobject-2.0 security-server vconf dlog dbus-glib-1)
+pkg_check_modules(pkgs_server REQUIRED glib-2.0 gio-2.0 security-server vconf dlog dbus-glib-1)
 
 FOREACH(flag ${pkgs_server_CFLAGS})
 	SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} ${flag}")
@@ -19,12 +20,6 @@ FOREACH(flag ${pkgs_server_CFLAGS})
 ENDFOREACH(flag)
 
 MESSAGE("CHECK MODULE in ${PROJECT_NAME} ${pkgs_server_LDFLAGS}")
-
-IF("${USE_AUTOSTART}" STREQUAL "1")
-	FIND_PROGRAM(DBUS_BINDING_TOOL NAMES dbus-binding-tool)
-	EXEC_PROGRAM("${DBUS_BINDING_TOOL}" ARGS "--prefix=smartcard_service ${CMAKE_CURRENT_SOURCE_DIR}/smartcard-service.xml --mode=glib-server --output=${CMAKE_CURRENT_SOURCE_DIR}/include/smartcard-service-binding.h")
-	EXEC_PROGRAM("${DBUS_BINDING_TOOL}" ARGS "--prefix=smartcard_service ${CMAKE_CURRENT_SOURCE_DIR}/smartcard-service.xml --mode=glib-client --output=${CMAKE_CURRENT_SOURCE_DIR}/include/smartcard-service-glue.h")
-ENDIF()
 
 SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} -pipe -fomit-frame-pointer -Wall -Wno-trigraphs  -fno-strict-aliasing -Wl,-zdefs -fvisibility=hidden -std=c++0x")
 SET(ARM_CXXFLAGS "${ARM_CXXLAGS} -mapcs -mno-sched-prolog -mabi=aapcs-linux -Uarm -fno-common -fpic")

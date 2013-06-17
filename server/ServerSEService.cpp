@@ -29,6 +29,7 @@
 #include "Message.h"
 #include "TerminalInterface.h"
 #include "ServerSEService.h"
+#include "ServerIPC.h"
 #include "ServerResource.h"
 
 namespace smartcard_service_api
@@ -189,6 +190,7 @@ namespace smartcard_service_api
 
 	bool ServerSEService::dispatcherCallback(void *message, int socket)
 	{
+#ifndef USE_GDBUS
 		int count;
 		ByteArray info;
 		Message *msg = (Message *)message;
@@ -223,7 +225,7 @@ namespace smartcard_service_api
 
 		/* response to client */
 		ServerIPC::getInstance()->sendMessage(socket, &response);
-
+#endif
 		return false;
 	}
 

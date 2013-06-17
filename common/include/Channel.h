@@ -32,7 +32,7 @@ namespace smartcard_service_api
 
 	typedef void (*transmitCallback)(unsigned char *buffer, unsigned int length,
 		int error, void *userParam);
-	typedef void (*closeCallback)(int error, void *userParam);
+	typedef void (*closeChannelCallback)(int error, void *userParam);
 
 	class Channel : public Synchronous
 	{
@@ -55,7 +55,7 @@ namespace smartcard_service_api
 		inline ByteArray getSelectResponse() const throw() { return selectResponse; }
 		inline SessionHelper *getSession() const throw() { return session; }
 
-		virtual int close(closeCallback callback, void *userParam) = 0;
+		virtual int close(closeChannelCallback callback, void *userParam) = 0;
 		virtual int transmit(ByteArray command, transmitCallback callback, void *userData) = 0;
 
 		virtual void closeSync()

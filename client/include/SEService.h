@@ -18,6 +18,10 @@
 #define SESERVICE_H_
 
 /* standard library header */
+#ifdef USE_GDBUS
+#include <glib.h>
+#include <gio/gio.h>
+#endif
 
 /* SLP library header */
 
@@ -42,11 +46,18 @@ namespace smartcard_service_api
 		void *context;
 		serviceConnected handler;
 		SEServiceListener *listener;
-
+#ifdef USE_GDBUS
+		void *proxy;
+#endif
 		SEService();
 
-		static bool dispatcherCallback(void *message);
+		void addReader(unsigned int handle, const char *name);
 		bool parseReaderInformation(unsigned int count, ByteArray data);
+#ifdef USE_GDBUS
+		bool parseReaderInformation(GVariant *variant);
+#else
+		static bool dispatcherCallback(void *message);
+#endif
 
 		bool _initialize()
 			throw(ErrorIO &);
@@ -57,6 +68,18 @@ namespace smartcard_service_api
 		SEService *initializeSync(void *context, serviceConnected handler)
 			throw(ErrorIO &, ErrorIllegalParameter &);
 
+#ifdef USE_GDBUS
+		static void reader_inserted(GObject *source_object,
+			guint reader_id, gchar *reader_name,
+			gpointer user_data);
+		static void reader_removed(GObject *source_object,
+			guint reader_id, gchar *reader_name,
+			gpointer user_data);
+		static void se_service_shutdown_cb(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+		static void se_service_cb(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+#endif
 	public:
 		SEService(void *user_data, serviceConnected handler)
 			throw(ErrorIO &, ErrorIllegalParameter &);
@@ -72,7 +95,9 @@ namespace smartcard_service_api
 		void shutdown();
 		void shutdownSync();
 
+#ifndef USE_GDBUS
 		friend class ClientDispatcher;
+#endif
 	};
 } /* namespace smartcard_service_api */
 #endif /* __cplusplus */

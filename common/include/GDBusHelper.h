@@ -14,32 +14,36 @@
  * limitations under the License.
  */
 
-#ifndef SERVERDISPATCHER_H_
-#define SERVERDISPATCHER_H_
-#ifndef USE_GDBUS
-/* standard library header */
+#ifndef GDBUSHELPER_H_
+#define GDBUSHELPER_H_
 
-/* SLP library header */
+#ifdef USE_GDBUS
+#include <glib.h>
 
-/* local header */
-#include "DispatcherHelper.h"
+#include "ByteArray.h"
 
 namespace smartcard_service_api
 {
-	class ServerIPC;
-
-	class ServerDispatcher: public DispatcherHelper
+	class CallbackParam
 	{
-	private:
-		ServerDispatcher();
-		~ServerDispatcher();
-
-		void *dispatcherThreadFunc(DispatcherMsg *msg, void *data);
-
-	public:
-		static ServerDispatcher *getInstance();
+	public :
+		void *instance;
+		void *callback;
+		void *user_param;
 	};
 
+	class GDBusHelper
+	{
+	public :
+		GDBusHelper();
+		~GDBusHelper();
+
+		static void convertVariantToByteArray(GVariant *var,
+			ByteArray &array);
+
+		static GVariant *convertByteArrayToVariant(
+			const ByteArray &array);
+	};
 } /* namespace smartcard_service_api */
-#endif /* USE_GDBUS */
-#endif /* SERVERDISPATCHER_H_ */
+#endif
+#endif /* GDBUSHELPER_H_ */

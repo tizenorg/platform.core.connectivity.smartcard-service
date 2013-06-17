@@ -16,7 +16,7 @@
 
 #ifndef SERVERIPC_H_
 #define SERVERIPC_H_
-
+#ifndef USE_GDBUS
 /* standard library header */
 #ifdef __cplusplus
 #include <map>
@@ -69,5 +69,5 @@ void server_ipc_create_listen_socket();
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-
+#endif /* USE_GDBUS */
 #endif /* SERVERIPC_H_ */

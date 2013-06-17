@@ -7,15 +7,15 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../client/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 #AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/ SRCS)
-#SET(SRCS "${CMAKE_CURRENT_SOURCE_DIR}/test-client-async.cpp")
-SET(SRCS "${CMAKE_CURRENT_SOURCE_DIR}/test-client.cpp")
+SET(SRCS "${CMAKE_CURRENT_SOURCE_DIR}/test-client-sync.cpp")
+#SET(SRCS "${CMAKE_CURRENT_SOURCE_DIR}/test-client.cpp")
 
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 	SET(CMAKE_BUILD_TYPE "Release")
 ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_test_client REQUIRED glib-2.0 gthread-2.0 gobject-2.0 security-server vconf dlog)
+pkg_check_modules(pkgs_test_client REQUIRED glib-2.0 gthread-2.0 gobject-2.0 security-server vconf dlog dbus-glib-1)
 
 FOREACH(flag ${pkgs_test_client_CFLAGS})
 	SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} ${flag}")
@@ -45,4 +45,4 @@ ADD_DEFINITIONS("-DLOG_TAG=\"SMARTCARD_SERVICE_TEST\"")
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_test_client_LDFLAGS} "-L../common" "-lsmartcard-service-common" "-L../client" "-lsmartcard-service" "-pie -ldl")
-#INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
+INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)

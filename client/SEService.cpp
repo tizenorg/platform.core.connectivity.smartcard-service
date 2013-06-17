@@ -18,16 +18,21 @@
 #include <unistd.h>
 #include <string.h>
 #include <glib.h>
+#include <glib-object.h>
 
 /* SLP library header */
 
 /* local header */
 #include "Debug.h"
-#include "ClientIPC.h"
-#include "ClientDispatcher.h"
 #include "SEService.h"
 #include "Reader.h"
+#ifdef USE_GDBUS
+#include "smartcard-service-gdbus.h"
+#else
 #include "Message.h"
+#include "ClientIPC.h"
+#include "ClientDispatcher.h"
+#endif
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -36,9 +41,11 @@
 namespace smartcard_service_api
 {
 	SEService::SEService() : SEServiceHelper(),
-		handle(-1), context(NULL),
-		handler(NULL), listener(NULL)
+		handle(-1), context(NULL), handler(NULL), listener(NULL)
 	{
+#ifdef USE_GDBUS
+		proxy = NULL;
+#endif
 	}
 
 	SEService::SEService(void *user_data, serviceConnected handler)
@@ -93,6 +100,128 @@ namespace smartcard_service_api
 		return new SEService(user_data, handler);
 	}
 
+#ifdef USE_GDBUS
+	void SEService::reader_inserted(GObject *source_object,
+		guint reader_id, gchar *reader_name, gpointer user_data)
+	{
+		Reader *reader = NULL;
+		SEService *service = (SEService *)user_data;
+
+		_INFO("[MSG_NOTIFY_SE_INSERTED]");
+
+		/* add readers */
+		reader = new Reader(service->context,
+			reader_name, GUINT_TO_POINTER(reader_id));
+		if (reader != NULL)
+		{
+			service->readers.push_back(reader);
+		}
+		else
+		{
+			_ERR("alloc failed");
+		}
+
+		if (service->listener != NULL)
+		{
+			service->listener->eventHandler(service,
+				reader_name, 1, service->context);
+		}
+		else
+		{
+			_DBG("listener is null");
+		}
+	}
+
+	void SEService::reader_removed(GObject *source_object,
+		guint reader_id, gchar *reader_name, gpointer user_data)
+	{
+		SEService *service = (SEService *)user_data;
+		size_t i;
+
+		_INFO("[MSG_NOTIFY_SE_REMOVED]");
+
+		for (i = 0; i < service->readers.size(); i++)
+		{
+			if (((Reader *)service->readers[i])->handle ==
+				GUINT_TO_POINTER(reader_id))
+			{
+				((Reader *)service->readers[i])->unavailable();
+				break;
+			}
+		}
+
+		if (service->listener != NULL)
+		{
+			service->listener->eventHandler(service,
+				reader_name, 2, service->context);
+		}
+		else
+		{
+			_DBG("listener is null");
+		}
+	}
+
+	void SEService::se_service_shutdown_cb(GObject *source_object,
+		GAsyncResult *res, gpointer user_data)
+	{
+		SEService *service = (SEService *)user_data;
+		gint result;
+		GError *error = NULL;
+
+		if (smartcard_service_se_service_call_shutdown_finish(
+			SMARTCARD_SERVICE_SE_SERVICE(source_object),
+			&result, res, &error) == true) {
+			if (result == SCARD_ERROR_OK) {
+				service->connected = false;
+			} else {
+				_ERR("smartcard_service_se_service_call_shutdown failed, [%d]", result);
+			}
+		} else {
+			_ERR("smartcard_service_se_service_call_shutdown failed, [%s]", error->message);
+			g_error_free(error);
+		}
+	}
+
+	void SEService::se_service_cb(GObject *source_object,
+		GAsyncResult *res, gpointer user_data)
+	{
+		SEService *service = (SEService *)user_data;
+		gint result;
+		guint handle;
+		GVariant *readers = NULL;
+		GError *error = NULL;
+
+		if (service == NULL) {
+			_ERR("null parameter!!!");
+			return;
+		}
+
+		if (smartcard_service_se_service_call_se_service_finish(
+			SMARTCARD_SERVICE_SE_SERVICE(source_object),
+			&result, &handle, &readers, res, &error) == true) {
+			if (result == SCARD_ERROR_OK) {
+				service->connected = true;
+				service->handle = handle;
+				service->parseReaderInformation(readers);
+			}
+		} else {
+			_ERR("smartcard_service_se_service_call_se_service failed, [%s]", error->message);
+			g_error_free(error);
+
+			result = SCARD_ERROR_IPC_FAILED;
+		}
+
+		if (service->handler != NULL) {
+			service->handler(service, service->context);
+		} else if (service->listener != NULL) {
+			if (result == SCARD_ERROR_OK) {
+				service->listener->serviceConnected(service, service->context);
+			} else {
+				service->listener->errorHandler(service, result, service->context);
+			}
+		}
+	}
+#endif
 	void SEService::shutdown()
 	{
 		if (connected == true)
@@ -103,7 +232,11 @@ namespace smartcard_service_api
 			{
 				readers[i]->closeSessions();
 			}
-
+#ifdef USE_GDBUS
+			smartcard_service_se_service_call_shutdown(
+				(SmartcardServiceSeService *)proxy, handle,
+				NULL, &SEService::se_service_shutdown_cb, this);
+#else
 			Message msg;
 
 			msg.message = Message::MSG_REQUEST_SHUTDOWN;
@@ -116,12 +249,12 @@ namespace smartcard_service_api
 			{
 				_ERR("time over");
 			}
+#endif
 		}
 	}
 
 	void SEService::shutdownSync()
 	{
-#ifdef CLIENT_IPC_THREAD
 		if (connected == true)
 		{
 			uint32_t i;
@@ -130,7 +263,21 @@ namespace smartcard_service_api
 			{
 				readers[i]->closeSessions();
 			}
+#ifdef USE_GDBUS
+			gint result;
+			GError *error = NULL;
 
+			if (smartcard_service_se_service_call_shutdown_sync(
+				(SmartcardServiceSeService *)proxy,
+				handle, &result, NULL, &error) == false) {
+				_ERR("smartcard_service_se_service_call_shutdown_sync failed, [%s]", error->message);
+
+				g_error_free(error);
+			}
+
+			connected = false;
+#else
+#ifdef CLIENT_IPC_THREAD
 			/* send message to load se */
 			Message msg;
 
@@ -162,16 +309,18 @@ namespace smartcard_service_api
 				_ERR("sendMessage failed");
 			}
 			syncUnlock();
-		}
 #endif
+#endif
+		}
 	}
 
 	bool SEService::_initialize() throw(ErrorIO &)
 	{
 		bool result = false;
+#ifndef USE_GDBUS
 		ClientIPC *clientIPC;
 		ClientDispatcher *clientDispatcher;
-
+#endif
 		_BEGIN();
 
 		/* initialize client */
@@ -180,6 +329,35 @@ namespace smartcard_service_api
 			g_thread_init(NULL);
 		}
 
+		g_type_init();
+
+#ifdef USE_GDBUS
+		/* init default context */
+		GError *error = NULL;
+
+		proxy = smartcard_service_se_service_proxy_new_for_bus_sync(
+			G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE,
+			"org.tizen.SmartcardService",
+			"/org/tizen/SmartcardService/SeService",
+			NULL, &error);
+		if (proxy == NULL)
+		{
+			_ERR("Can not create proxy : %s", error->message);
+			g_error_free(error);
+			return false;
+		}
+
+		g_signal_connect(proxy, "reader-inserted",
+				G_CALLBACK(&SEService::reader_inserted), this);
+
+		g_signal_connect(proxy, "reader-removed",
+				G_CALLBACK(&SEService::reader_removed), this);
+
+		/* request reader */
+		smartcard_service_se_service_call_se_service(
+			(SmartcardServiceSeService *)proxy, NULL,
+			&SEService::se_service_cb, this);
+#else
 		clientDispatcher = &ClientDispatcher::getInstance();
 		clientIPC = &ClientIPC::getInstance();
 
@@ -212,7 +390,7 @@ namespace smartcard_service_api
 
 			result = clientIPC->sendMessage(&msg);
 		}
-
+#endif
 		_END();
 
 		return result;
@@ -246,6 +424,39 @@ namespace smartcard_service_api
 		return _initialize();
 	}
 
+#ifdef USE_GDBUS
+	bool SEService::parseReaderInformation(GVariant *variant)
+	{
+		Reader *reader = NULL;
+
+		GVariantIter *iter;
+		gsize count;
+		guint handle;
+		gchar *name;
+
+		g_variant_get(variant, "a(us)", &iter);
+
+		count = g_variant_iter_n_children(iter);
+		while (g_variant_iter_loop(iter, "(us)", &handle, &name) == true)
+		{
+			SECURE_LOGD("Reader : name [%s], handle [%08x]", name, handle);
+
+			/* add readers */
+			reader = new Reader((void *)this->handle, name, GUINT_TO_POINTER(handle));
+			if (reader == NULL)
+			{
+				_ERR("alloc failed");
+				continue;
+			}
+
+			readers.push_back(reader);
+		}
+
+		g_variant_iter_free(iter);
+
+		return true;
+	}
+#endif
 	bool SEService::parseReaderInformation(unsigned int count, ByteArray data)
 	{
 		size_t i;
@@ -282,6 +493,7 @@ namespace smartcard_service_api
 		return true;
 	}
 
+#ifndef USE_GDBUS
 	bool SEService::dispatcherCallback(void *message)
 	{
 		Message *msg = (Message *)message;
@@ -425,7 +637,7 @@ namespace smartcard_service_api
 
 		return result;
 	}
-
+#endif
 } /* namespace smartcard_service_api */
 
 /* export C API */

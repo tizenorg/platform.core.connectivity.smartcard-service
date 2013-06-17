@@ -20,7 +20,9 @@
 /* standard library header */
 #include <map>
 #include <vector>
+#ifndef USE_GDBUS
 #include <glib.h>
+#endif
 
 /* SLP library header */
 
@@ -32,49 +34,62 @@ namespace smartcard_service_api
 {
 	class ClientInstance
 	{
-	private:
+	private :
+#ifdef USE_GDBUS
+		string name;
+#else
 		void *ioChannel;
 		int socket;
 		int watchID;
 		int state;
-		int pid;
+#endif
+		pid_t pid;
 		vector<ByteArray> certHashes;
 		map<unsigned int, ServiceInstance *> mapServices;
 
-		static gboolean _getCertificationHashes(gpointer user_data);
-
-	public:
-		ClientInstance(void *ioChannel, int socket, int watchID, int state, int pid)
+	public :
+#ifdef USE_GDBUS
+		ClientInstance(const char *name, pid_t pid) : name(name), pid(pid)
 		{
-			this->ioChannel = ioChannel;
-			this->socket = socket;
-			this->watchID = watchID;
-			this->state = state;
-			this->pid = pid;
 		}
+#else
+		ClientInstance(void *ioChannel, int socket, int watchID,
+			int state, int pid) : ioChannel(ioChannel),
+			socket(socket), watchID(watchID), state(state), pid(pid)
+		{
+		}
+
+		ClientInstance(pid_t pid) : ioChannel(NULL),
+			socket(pid), watchID(0), state(0), pid(pid)
+		{
+		}
+#endif
 		~ClientInstance() { removeServices(); }
-
+#ifdef USE_GDBUS
+		inline bool operator ==(const char *name) const { return (this->name.compare(name) == 0); }
+#else
 		inline bool operator ==(const int &socket) const { return (this->socket == socket); }
+#endif
 
+#ifndef USE_GDBUS
 		inline void *getIOChannel() { return ioChannel; }
 		inline int getSocket() { return socket; }
 		inline int getWatchID() { return watchID; }
 		inline int getState() { return state; }
-
+#endif
 		void setPID(int pid);
 		inline int getPID() { return pid; }
 
 		ServiceInstance *createService();
-		ServiceInstance *getService(unsigned int context);
-		void removeService(unsigned int context);
+		ServiceInstance *getService(unsigned int handle);
+		void removeService(unsigned int handle);
 		void removeServices();
-
+#ifndef USE_GDBUS
 		bool sendMessageToAllServices(int socket, Message &msg);
+#endif
 		void generateCertificationHashes();
 
 		inline vector<ByteArray> &getCertificationHashes() { return certHashes; }
-
-		friend gboolean _getCertificationHashes(gpointer user_data);
 	};
 } /* namespace smartcard_service_api */
 #endif /* CLIENTINSTANCE_H_ */

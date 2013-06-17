@@ -38,7 +38,6 @@ namespace smartcard_service_api
 	class ServerSession : public SessionHelper
 	{
 	private:
-		void *caller;
 		Terminal *terminal;
 		vector<ByteArray> certHashes;
 
@@ -47,9 +46,9 @@ namespace smartcard_service_api
 		int getATR(getATRCallback callback, void *userData){ return -1; }
 		int close(closeSessionCallback callback, void *userData){ return -1; }
 
-		int openBasicChannel(ByteArray aid, openChannelCallback callback, void *userData){ return -1; }
+		int openBasicChannel(ByteArray &aid, openChannelCallback callback, void *userData){ return -1; }
 		int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData){ return -1; }
-		int openLogicalChannel(ByteArray aid, openChannelCallback callback, void *userData){ return -1; }
+		int openLogicalChannel(ByteArray &aid, openChannelCallback callback, void *userData){ return -1; }
 		int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData){ return -1; }
 	public:
 		~ServerSession();
@@ -62,20 +61,20 @@ namespace smartcard_service_api
 		void closeChannels()
 			throw(ErrorIO &, ErrorIllegalState &);
 
-		Channel *openBasicChannelSync(ByteArray aid)
+		Channel *openBasicChannelSync(ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		Channel *openBasicChannelSync(ByteArray aid, void *caller)
+		Channel *openBasicChannelSync(ByteArray &aid, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
-		Channel *openLogicalChannelSync(ByteArray aid)
+		Channel *openLogicalChannelSync(ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		Channel *openLogicalChannelSync(ByteArray aid, void *caller)
+		Channel *openLogicalChannelSync(ByteArray &aid, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);

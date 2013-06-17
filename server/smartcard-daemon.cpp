@@ -20,14 +20,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <glib.h>
+#include <glib-object.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <signal.h>
-#ifdef __cplusplus
 #include <vector>
-#endif /* __cplusplus */
-#ifdef USE_AUTOSTART
+#if defined(USE_AUTOSTART) && !defined(USE_GDBUS)
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-bindings.h>
 #endif
@@ -38,19 +37,23 @@
 #include "Debug.h"
 #include "ServerIPC.h"
 #include "ServerResource.h"
+#ifdef USE_GDBUS
+#include "smartcard-service-gdbus.h"
+#include "ServerGDBus.h"
+#else
 #ifdef USE_AUTOSTART
 #include "SmartcardDbus.h"
 #include "smartcard-service-binding.h"
 #endif
+#endif
 
 /* definition */
-#ifdef __cplusplus
 using namespace std;
 using namespace smartcard_service_api;
-#endif /* __cplusplus */
 
 /* global variable */
-#ifdef USE_AUTOSTART
+GMainLoop *main_loop = NULL;
+#if defined(USE_AUTOSTART) && !defined(USE_GDBUS)
 GObject *object = NULL;
 DBusGConnection *connection = NULL;
 #endif
@@ -98,6 +101,32 @@ static void daemonize(void)
 }
 #endif
 
+#ifdef USE_GDBUS
+static void _bus_acquired_cb(GDBusConnection *connection,
+	const gchar *path, gpointer user_data)
+{
+	_DBG("bus path : %s", path);
+
+	ServerResource::getInstance().setMainLoopInstance(main_loop);
+
+	ServerGDBus::getInstance().init();
+}
+
+static void _name_acquired_cb(GDBusConnection *connection,
+	const gchar *name, gpointer user_data)
+{
+	_DBG("name : %s", name);
+}
+
+static void _name_lost_cb(GDBusConnection *connnection,
+	const gchar *name, gpointer user_data)
+{
+	_DBG("name : %s", name);
+
+	ServerGDBus::getInstance().deinit();
+}
+
+#else
 #ifdef USE_AUTOSTART
 G_DEFINE_TYPE(Smartcard_Service, smartcard_service, G_TYPE_OBJECT)
 
@@ -190,48 +219,64 @@ static void _finalize_dbus()
 	_END();
 }
 #endif
+#endif
 
 static void __sighandler(int sig)
 {
 	_DBG("signal!! [%d]", sig);
 
+#ifdef USE_GDBUS
+#else
 #ifdef USE_AUTOSTART
 	_finalize_dbus();
+#endif
 #endif
 }
 
 int main()
 {
-	GMainLoop *loop = NULL;
-
+#ifdef USE_GDBUS
+	guint id = 0;
+#endif
 	signal(SIGTERM, &__sighandler);
 
 #ifndef USE_AUTOSTART
 	daemonize();
 #endif
 
-	if (!g_thread_supported())
-	{
+	if (!g_thread_supported()) {
 		g_thread_init(NULL);
 	}
 
-	loop = g_main_new(TRUE);
+	g_type_init();
 
-#ifdef __cplusplus
-	ServerResource::getInstance().setMainLoopInstance(loop);
+	main_loop = g_main_new(TRUE);
+
+#ifdef USE_GDBUS
+	id = g_bus_own_name(G_BUS_TYPE_SYSTEM,
+			"org.tizen.SmartcardService",
+			G_BUS_NAME_OWNER_FLAGS_NONE,
+			_bus_acquired_cb,
+			_name_acquired_cb,
+			_name_lost_cb,
+			NULL,
+			NULL);
+#else
+	ServerResource::getInstance().setMainLoopInstance(main_loop);
 	ServerIPC::getInstance()->createListenSocket();
-#else /* __cplusplus */
-	server_resource_set_main_loop_instance(loop);
-	server_ipc_create_listen_socket();
-#endif /* __cplusplus */
-
 #ifdef USE_AUTOSTART
 	_initialize_dbus();
 #endif
-	g_main_loop_run(loop);
+#endif
+	g_main_loop_run(main_loop);
 
+#ifdef USE_GDBUS
+	if (id)
+		g_bus_unown_name(id);
+#else
 #ifdef USE_AUTOSTART
 	_finalize_dbus();
+#endif
 #endif
 	/* release secure element.. (pure virtual function problem..) */
 	ServerResource::getInstance().unloadSecureElements();

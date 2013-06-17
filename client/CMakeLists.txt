@@ -5,6 +5,7 @@ SET(LIB_NAME "smartcard-service")
 SET(VERSION_MAJOR 1)
 SET(VERSION ${VERSION_MAJOR}.0.0)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../server/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -12,12 +13,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} SRCS)
 
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
-        SET(CMAKE_BUILD_TYPE "Release")
+	SET(CMAKE_BUILD_TYPE "Release")
 ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_client REQUIRED gthread-2.0 dlog dbus-glib-1 security-server)
+pkg_check_modules(pkgs_client REQUIRED glib-2.0 dlog dbus-glib-1 security-server)
 
 MESSAGE("${LIB_NAME} ld flag : ${pkgs_client_LDFLAGS}")
 
@@ -84,5 +85,5 @@ SET(EXPORT_HEADER
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${LIB_INSTALL_DIR})
 FOREACH(hfile ${EXPORT_HEADER})
-        INSTALL(FILES ${hfile} DESTINATION include/${LIB_NAME})
+	INSTALL(FILES ${hfile} DESTINATION include/${LIB_NAME})
 ENDFOREACH(hfile)

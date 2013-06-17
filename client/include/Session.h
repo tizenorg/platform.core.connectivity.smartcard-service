@@ -18,6 +18,9 @@
 #define SESSION_H_
 
 /* standard library header */
+#ifdef USE_GDBUS
+#include <gio/gio.h>
+#endif
 
 /* SLP library header */
 
@@ -37,20 +40,31 @@ namespace smartcard_service_api
 	private:
 		void *context;
 		void *handle;
+#ifdef USE_GDBUS
+		void *proxy;
+#else
 		/* temporary data for sync function */
 		int error;
 		Channel *openedChannel;
 		unsigned int channelCount;
-
+#endif
 		Session(void *context, Reader *reader, void *handle);
 		~Session();
 
-		int openChannel(int id, ByteArray aid, openChannelCallback callback, void *userData);
-		static bool dispatcherCallback(void *message);
-
-		Channel *openChannelSync(int id, ByteArray aid)
+		int openChannel(int id, ByteArray &aid, openChannelCallback callback, void *userData);
+		Channel *openChannelSync(int id, ByteArray &aid)
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
+#ifdef USE_GDBUS
+		static void session_get_atr_cb(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+		static void session_open_channel_cb(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+		static void session_close_cb(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+#else
+		static bool dispatcherCallback(void *message);
+#endif
 
 	public:
 		void closeChannels()
@@ -59,9 +73,9 @@ namespace smartcard_service_api
 		int getATR(getATRCallback callback, void *userData);
 		int close(closeSessionCallback callback, void *userData);
 
-		int openBasicChannel(ByteArray aid, openChannelCallback callback, void *userData);
+		int openBasicChannel(ByteArray &aid, openChannelCallback callback, void *userData);
 		int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
-		int openLogicalChannel(ByteArray aid, openChannelCallback callback, void *userData);
+		int openLogicalChannel(ByteArray &aid, openChannelCallback callback, void *userData);
 		int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
 		int getChannelCount(getChannelCountCallback callback, void * userData);
 
@@ -73,7 +87,7 @@ namespace smartcard_service_api
 			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
 				ErrorIllegalState &, ErrorIllegalParameter &);
 
-		Channel *openBasicChannelSync(ByteArray aid)
+		Channel *openBasicChannelSync(ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
@@ -81,7 +95,7 @@ namespace smartcard_service_api
 			throw(ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
-		Channel *openLogicalChannelSync(ByteArray aid)
+		Channel *openLogicalChannelSync(ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
@@ -91,10 +105,11 @@ namespace smartcard_service_api
 
 		unsigned int getChannelCountSync();
 
+#ifndef USE_GDBUS
 		friend class ClientDispatcher;
+#endif
 		friend class Reader;
 	};
-
 } /* namespace smartcard_service_api */
 #endif /* __cplusplus */
 

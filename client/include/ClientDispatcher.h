@@ -16,7 +16,7 @@
 
 #ifndef CLIENTDISPATCHER_H_
 #define CLIENTDISPATCHER_H_
-
+#ifndef USE_GDBUS
 /* standard library header */
 #include <map>
 
@@ -49,4 +49,5 @@ namespace smartcard_service_api
 	};
 
 } /* namespace open_mobile_api */
+#endif /* USE_GDBUS */
 #endif /* CLIENTDISPATCHER_H_ */

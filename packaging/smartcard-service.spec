@@ -1,14 +1,20 @@
+# FOR COMMENTING DEFINITION, MUST USE %% instead of %
+%global use_autostart "-DUSE_AUTOSTART=1"
+%global use_gdbus "-DUSE_GDBUS=1"
+#%%global test_client "-DTEST_CLIENT=1"
+
 Name:       smartcard-service
 Summary:    Smartcard Service FW
-Version:    0.1.19
-Release:    3
+Version:    0.1.20
+Release:    0
 Group:      libs
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
-#IFNDEF USE_AUTOSTART
-#Source1:    smartcard-service-server.init
-#ENDIF
+%if 0%{!?use_autostart:1}
+Source1:    smartcard-service-server.init
+%endif
 BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(gio-unix-2.0)
 BuildRequires: pkgconfig(security-server)
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(vconf)
@@ -18,6 +24,8 @@ BuildRequires: pkgconfig(dbus-glib-1)
 BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: pkgconfig(pkgmgr-info)
 BuildRequires: cmake
+BuildRequires: python
+BuildRequires: python-xml
 BuildRequires: gettext-tools
 
 Requires(post):   /sbin/ldconfig
@@ -66,23 +74,19 @@ smartcard service.
 %build
 mkdir obj-arm-limux-qnueabi
 cd obj-arm-limux-qnueabi
-#IFNDEF USE_AUTOSTART
-#cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix}
-#ELSE
-%cmake .. -DUSE_AUTOSTART=1 # daemon will be started when client makes instance by DBUS
-#ENDIF
+%cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix} %{?use_autostart} %{?use_gdbus} %{?test_client}
 #make %{?jobs:-j%jobs}
 
 %install
 cd obj-arm-limux-qnueabi
 %make_install
-#IFNDEF USE_AUTOSTART
-#%__mkdir -p  %{buildroot}/etc/init.d/
-#%__mkdir -p  %{buildroot}/etc/rc.d/rc3.d/
-#%__mkdir -p  %{buildroot}/etc/rc.d/rc5.d/
-#%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
-#chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
-#ENDIF
+%if 0%{!?use_autostart:1}
+	%__mkdir -p  %{buildroot}/etc/init.d/
+	%__mkdir -p  %{buildroot}/etc/rc.d/rc3.d/
+	%__mkdir -p  %{buildroot}/etc/rc.d/rc5.d/
+	%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
+	chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
+%endif
 mkdir -p %{buildroot}/usr/share/license
 cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service %{buildroot}/usr/share/license/
 cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-common %{buildroot}/usr/share/license/
@@ -90,17 +94,17 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 
 %post
 /sbin/ldconfig
-#IFNDEF USE_AUTOSTART
-#ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc3.d/S79smartcard-service-server
-#ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc5.d/S79smartcard-service-server
-#ENDIF
+%if 0%{!?use_autostart:1}
+	ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc3.d/S79smartcard-service-server
+	ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc5.d/S79smartcard-service-server
+%endif
 
 %postun
 /sbin/ldconfig
-#IFNDEF USE_AUTOSTART
-#rm -f /etc/rc.d/rc3.d/S79smartcard-service-server
-#rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
-#ENDIF
+%if 0%{!?use_autostart:1}
+	rm -f /etc/rc.d/rc3.d/S79smartcard-service-server
+	rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
+%endif
 
 %files
 %manifest smartcard-service.manifest
@@ -132,10 +136,12 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 %manifest smartcard-service-server.manifest
 %defattr(-,root,root,-)
 %{_bindir}/smartcard-daemon
-#/usr/bin/smartcard-test-client
-#IFNDEF USE_AUTOSTART
-#/etc/init.d/smartcard-service-server
-#ELSE
-/usr/share/dbus-1/services/org.tizen.smartcard_service.service
-#ENDIF
+%if 0%{?test_client:1}
+	/usr/bin/smartcard-test-client
+%endif
+%if 0%{?use_autostart:1}
+	/usr/share/dbus-1/services/org.tizen.smartcard_service.service
+%else
+	/etc/init.d/smartcard-service-server
+%endif
 /usr/share/license/smartcard-service-server

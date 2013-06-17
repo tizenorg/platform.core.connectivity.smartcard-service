@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <glib.h>
 
@@ -215,4 +216,4 @@ namespace smartcard_service_api
 	}
 
 } /* namespace open_mobile_api */
-
+#endif /* USE_GDBUS */

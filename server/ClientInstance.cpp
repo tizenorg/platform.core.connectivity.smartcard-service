@@ -85,6 +85,7 @@ namespace smartcard_service_api
 		mapServices.clear();
 	}
 
+#ifndef USE_GDBUS
 	bool ClientInstance::sendMessageToAllServices(int socket, Message &msg)
 	{
 		bool result = true;
@@ -98,6 +99,7 @@ namespace smartcard_service_api
 
 		return result;
 	}
+#endif
 
 	void ClientInstance::generateCertificationHashes()
 	{
