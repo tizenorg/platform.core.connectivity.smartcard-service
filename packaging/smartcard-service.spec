@@ -5,6 +5,7 @@ Release:    1
 Group:      libs
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
+Source1001: 	smartcard-service.manifest
 #Source1:    smartcard-service-server.init
 
 BuildRequires: pkgconfig(glib-2.0)
@@ -28,6 +29,7 @@ Smartcard Service FW.
 
 %prep
 %setup -q
+cp %{SOURCE1001} .
 
 %package    devel
 Summary:    Smartcard service
@@ -94,31 +96,31 @@ rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 
 
 %files
-%manifest smartcard-service.manifest
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsmartcard-service.so.*
 
 %files  devel
-%manifest smartcard-service-devel.manifest
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_includedir}/smartcard-service/*
 %{_libdir}/libsmartcard-service.so
 %{_libdir}/pkgconfig/smartcard-service.pc
 
 %files -n smartcard-service-common
-%manifest smartcard-service-common.manifest
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsmartcard-service-common.so.*
 
 %files -n smartcard-service-common-devel
-%manifest smartcard-service-common-devel.manifest
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_includedir}/smartcard-service-common/*
 %{_libdir}/libsmartcard-service-common.so
 %{_libdir}/pkgconfig/smartcard-service-common.pc
 
 %files -n smartcard-service-server
-%manifest smartcard-service-server.manifest
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_bindir}/smartcard-daemon
 /usr/share/dbus-1/services/org.tizen.smartcard_service.service
