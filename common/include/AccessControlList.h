@@ -57,16 +57,16 @@ namespace smartcard_service_api
 		int updateACL(Channel *channel) { return loadACL(channel); }
 		void releaseACL();
 
-		bool isAuthorizedAccess(ByteArray &aid,
+		virtual bool isAuthorizedAccess(ByteArray &aid,
 			ByteArray &certHash);
-		bool isAuthorizedAccess(unsigned char *aidBuffer,
+		virtual bool isAuthorizedAccess(unsigned char *aidBuffer,
 			unsigned int aidLength, unsigned char *certHashBuffer,
 			unsigned int certHashLength);
-		bool isAuthorizedAccess(ByteArray &aid,
+		virtual bool isAuthorizedAccess(ByteArray &aid,
 			vector<ByteArray> &certHashes);
-		bool isAuthorizedAccess(ByteArray &aid,
+		virtual bool isAuthorizedAccess(ByteArray &aid,
 			vector<ByteArray> &certHashes, ByteArray &command);
-		bool isAuthorizedNFCAccess(ByteArray &aid,
+		virtual bool isAuthorizedNFCAccess(ByteArray &aid,
 			vector<ByteArray> &certHashes);
 	};
 

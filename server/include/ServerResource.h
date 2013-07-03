@@ -87,7 +87,7 @@ namespace smartcard_service_api
 
 		int _openLogicalChannel(Terminal *terminal);
 		int _closeLogicalChannel(Terminal *terminal, int channelNum);
-		bool _isAuthorizedAccess(ServerChannel *channel, int pid, ByteArray aid, vector<ByteArray> &hashes);
+		bool _isAuthorizedAccess(ServerChannel *channel, ByteArray aid, vector<ByteArray> &hashes);
 		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid)
 			throw(ExceptionBase &);
 

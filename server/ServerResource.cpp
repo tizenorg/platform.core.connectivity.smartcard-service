@@ -802,7 +802,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	bool ServerResource::_isAuthorizedAccess(ServerChannel *channel, int pid, ByteArray aid, vector<ByteArray> &hashes)
+	bool ServerResource::_isAuthorizedAccess(ServerChannel *channel, ByteArray aid, vector<ByteArray> &hashes)
 	{
 		bool result = true;
 		AccessControlList *acList = NULL;
@@ -835,8 +835,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_ERR("acList is null");
-			result = false;
+			acList->loadACL(channel);
 		}
 
 		if (acList != NULL)
@@ -949,8 +948,8 @@ namespace smartcard_service_api
 		channel = service->getChannel(result);
 
 		/* check */
-		if (_isAuthorizedAccess(channel, service->getParent()->getPID(),
-				aid, service->getParent()->getCertificationHashes()) == true)
+		if (_isAuthorizedAccess(channel, aid,
+			service->getParent()->getCertificationHashes()) == true)
 		{
 			int rv = 0;
 
@@ -1431,7 +1430,7 @@ namespace smartcard_service_api
 				if (acl == NULL) {
 
 					/* load access control defined by Global Platform */
-					GPACE *acl = new GPACE();
+					acl = new GPACE();
 					if (acl != NULL) {
 						int ret;
 
@@ -1449,12 +1448,18 @@ namespace smartcard_service_api
 					acl->updateACL(channel);
 				}
 
-				delete channel;
-
 				if (acl != NULL) {
 					result = acl->isAuthorizedNFCAccess(aid, hashes);
+				} else {
+					_ERR("acl is null");
 				}
+
+				delete channel;
+			} else {
+				_ERR("alloc failed");
 			}
+		} else {
+			_ERR("_openLogicalChannel failed");
 		}
 
 		return result;

@@ -75,19 +75,19 @@ namespace smartcard_service_api
 		{
 			vector<pair<ByteArray, ByteArray> >::iterator item;
 
-			_DBG("        +---- Granted APDUs");
+			_DBG("         +---- Granted APDUs");
 
 			for (item = listFilters.begin(); item != listFilters.end(); item++)
 			{
-				_DBG("        +----- APDU : %s, Mask : %s", item->first.toString(), item->second.toString());
+				_DBG("         +----- APDU : %s, Mask : %s", item->first.toString(), item->second.toString());
 			}
 		}
 		else
 		{
-			_DBG("        +---- APDU Access ALLOW : %s", apduRule ? "ALWAYS" : "NEVER");
+			_DBG("         +---- APDU Access ALLOW : %s", apduRule ? "ALWAYS" : "NEVER");
 		}
 
-		_DBG("        +---- NFC  Access ALLOW : %s", nfcRule ? "ALWAYS" : "NEVER");
+		_DBG("         +---- NFC  Access ALLOW : %s", nfcRule ? "ALWAYS" : "NEVER");
 	}
 
 	bool AccessRule::isAuthorizedNFCAccess(void)
