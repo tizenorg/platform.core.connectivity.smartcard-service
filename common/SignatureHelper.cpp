@@ -39,6 +39,11 @@
 
 namespace smartcard_service_api
 {
+	int SignatureHelper::getPackageName(int pid, char *package, size_t length)
+	{
+		return aul_app_get_pkgname_bypid(pid, package, length);
+	}
+
 	ByteArray SignatureHelper::getCertificationHash(const char *packageName)
 	{
 		ByteArray result;

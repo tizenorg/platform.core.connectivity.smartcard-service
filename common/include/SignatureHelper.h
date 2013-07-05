@@ -38,6 +38,7 @@ namespace smartcard_service_api
 	class SignatureHelper
 	{
 	public:
+		static int getPackageName(int pid, char *package, size_t length);
 		static ByteArray getCertificationHash(const char *packageName);
 		static ByteArray getCertificationHash(int pid);
 		static bool getCertificationHashes(int pid, vector<ByteArray> &certHashes);
@@ -55,10 +56,10 @@ extern "C"
 
 typedef struct _certiHash
 {
-   uint8_t *value;
-   uint32_t length;
-   struct _certiHash *next;
-}certiHash;
+	uint8_t *value;
+	uint32_t length;
+	struct _certiHash *next;
+} certiHash;
 
 typedef void (*signature_helper_get_certificate_hashes_cb)(void *user_param, uint8_t *hash, uint32_t length);
 
