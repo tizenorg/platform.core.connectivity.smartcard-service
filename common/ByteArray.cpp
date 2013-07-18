@@ -97,7 +97,26 @@ namespace smartcard_service_api
 		return getBuffer(0);
 	}
 
+	const uint8_t *ByteArray::getBuffer() const
+	{
+		return getBuffer(0);
+	}
+
 	uint8_t *ByteArray::getBuffer(size_t offset)
+	{
+		if (length == 0)
+			return NULL;
+
+		if (offset >= length)
+		{
+			_ERR("buffer overflow, offset [%d], length [%d]", offset, length);
+			return NULL;
+		}
+
+		return buffer + offset;
+	}
+
+	const uint8_t *ByteArray::getBuffer(size_t offset) const
 	{
 		if (length == 0)
 			return NULL;

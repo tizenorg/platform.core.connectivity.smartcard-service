@@ -60,9 +60,9 @@ namespace smartcard_service_api
 		size_t size() const;
 		inline size_t getLength() const { return size(); }
 		uint8_t *getBuffer();
-		inline const uint8_t *getBuffer() const { return getBuffer(); }
+		const uint8_t *getBuffer() const;
 		uint8_t *getBuffer(size_t offset);
-		inline const uint8_t *getBuffer(size_t offset) const { return getBuffer(offset); }
+		const uint8_t *getBuffer(size_t offset) const;
 
 		uint8_t at(size_t index) const;
 		uint8_t reverseAt(size_t index) const;
