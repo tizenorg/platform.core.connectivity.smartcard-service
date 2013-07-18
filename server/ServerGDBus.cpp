@@ -33,6 +33,73 @@ using namespace std;
 
 namespace smartcard_service_api
 {
+	GDBusDispatcher::GDBusDispatcher() : Synchronous()
+	{
+	}
+
+	GDBusDispatcher::~GDBusDispatcher()
+	{
+	}
+
+	GDBusDispatcher &GDBusDispatcher::getInstance()
+	{
+		static GDBusDispatcher dispatcher;
+
+		return dispatcher;
+	}
+
+	void GDBusDispatcher::push(dispatcher_cb_t cb, const vector<void *> &params)
+	{
+		_BEGIN();
+
+		syncLock();
+
+		q.push(make_pair(cb, params));
+		if (q.size() == 1) {
+			/* start dispatch */
+			_INFO("start dispatch");
+			g_idle_add(&GDBusDispatcher::dispatch, this);
+		}
+
+		syncUnlock();
+
+		_END();
+	}
+
+	gboolean GDBusDispatcher::dispatch(gpointer user_data)
+	{
+		GDBusDispatcher *dispatcher = (GDBusDispatcher *)user_data;
+		gboolean result = false;
+
+		_BEGIN();
+
+		dispatcher->syncLock();
+
+		pair<dispatcher_cb_t, vector<void *> > &job =
+			dispatcher->q.front();
+
+		dispatcher->syncUnlock();
+
+		job.first(job.second);
+
+		dispatcher->syncLock();
+
+		dispatcher->q.pop();
+		if (dispatcher->q.size() > 0) {
+			_INFO("remaining messages : %d", dispatcher->q.size());
+
+			result = true;
+		} else {
+			_INFO("dispatch finish");
+		}
+
+		dispatcher->syncUnlock();
+
+		_END();
+
+		return result;
+	}
+
 	ServerGDBus::ServerGDBus() : dbus_proxy(NULL), connection(NULL),
 		seService(NULL), reader(NULL), session(NULL), channel(NULL)
 	{
@@ -197,8 +264,8 @@ namespace smartcard_service_api
 		return g_variant_builder_end(&builder);
 	}
 
-	static gboolean _handle_se_service(SmartcardServiceSeService *object,
-		GDBusMethodInvocation *invocation)
+	static gboolean __process_se_service(SmartcardServiceSeService *object,
+		GDBusMethodInvocation *invocation, void *user_data)
 	{
 		_INFO("[MSG_REQUEST_READERS]");
 
@@ -272,8 +339,48 @@ namespace smartcard_service_api
 		return true;
 	}
 
-	static gboolean _handle_shutdown(SmartcardServiceSeService *object,
-		GDBusMethodInvocation *invocation, guint handle)
+	static void _process_se_service(vector<void *> &params)
+	{
+		SmartcardServiceSeService *object;
+		GDBusMethodInvocation *invocation;
+		void *user_data;
+
+		if (params.size() != 3) {
+			_ERR("invalid parameter");
+
+			return;
+		}
+
+		object = (SmartcardServiceSeService *)params[0];
+		invocation = (GDBusMethodInvocation *)params[1];
+		user_data = params[2];
+
+		__process_se_service(object, invocation, user_data);
+	}
+
+	static gboolean _handle_se_service(SmartcardServiceSeService *object,
+		GDBusMethodInvocation *invocation, void *user_data)
+	{
+		vector<void *> params;
+
+		g_object_ref(object);
+		params.push_back((void *)object);
+
+		g_object_ref(invocation);
+		params.push_back((void *)invocation);
+
+		params.push_back((void *)user_data);
+
+		GDBusDispatcher::getInstance().push(_process_se_service,
+			params);
+
+		return true;
+	}
+
+
+	static gboolean __process_shutdown(SmartcardServiceSeService *object,
+		GDBusMethodInvocation *invocation,
+		guint handle, void *user_data)
 	{
 		_INFO("[MSG_REQUEST_SHUTDOWN]");
 
@@ -288,6 +395,48 @@ namespace smartcard_service_api
 		return true;
 	}
 
+	static void _process_shutdown(vector<void *> &params)
+	{
+		SmartcardServiceSeService *object;
+		GDBusMethodInvocation *invocation;
+		guint handle;
+		void *user_data;
+
+		if (params.size() != 4) {
+			_ERR("invalid parameter");
+
+			return;
+		}
+
+		object = (SmartcardServiceSeService *)params[0];
+		invocation = (GDBusMethodInvocation *)params[1];
+		handle = (guint)params[2];
+		user_data = params[3];
+
+		__process_shutdown(object, invocation, handle, user_data);
+	}
+
+	static gboolean _handle_shutdown(SmartcardServiceSeService *object,
+		GDBusMethodInvocation *invocation, guint handle,
+		void *user_data)
+	{
+		vector<void *> params;
+
+		g_object_ref(object);
+		params.push_back((void *)object);
+
+		g_object_ref(invocation);
+		params.push_back((void *)invocation);
+
+		params.push_back((void *)handle);
+		params.push_back(user_data);
+
+		GDBusDispatcher::getInstance().push(_process_shutdown,
+			params);
+
+		return true;
+	}
+
 	bool ServerGDBus::initSEService()
 	{
 		GError *error = NULL;
@@ -295,20 +444,20 @@ namespace smartcard_service_api
 		seService = smartcard_service_se_service_skeleton_new();
 
 		g_signal_connect(seService,
-				"handle-se-service",
-				G_CALLBACK(_handle_se_service),
-				NULL);
+			"handle-se-service",
+			G_CALLBACK(_handle_se_service),
+			this);
 
 		g_signal_connect(seService,
-				"handle-shutdown",
-				G_CALLBACK(_handle_shutdown),
-				NULL);
+			"handle-shutdown",
+			G_CALLBACK(_handle_shutdown),
+			this);
 
 		if (g_dbus_interface_skeleton_export(
-					G_DBUS_INTERFACE_SKELETON(seService),
-					connection,
-					"/org/tizen/SmartcardService/SeService",
-					&error) == false)
+			G_DBUS_INTERFACE_SKELETON(seService),
+			connection,
+			"/org/tizen/SmartcardService/SeService",
+			&error) == false)
 		{
 			_ERR("Can not skeleton_export %s", error->message);
 
@@ -350,9 +499,9 @@ namespace smartcard_service_api
 	 *
 	 *
 	 */
-	static gboolean _handle_open_session(SmartcardServiceReader *object,
+	static gboolean __process_open_session(SmartcardServiceReader *object,
 		GDBusMethodInvocation *invocation, guint service_id,
-		guint reader_id)
+		guint reader_id, void *user_data)
 	{
 		unsigned int handle = IntegerHandle::INVALID_HANDLE;
 		int result;
@@ -391,6 +540,52 @@ namespace smartcard_service_api
 		return true;
 	}
 
+	static void _process_open_session(vector<void *> &params)
+	{
+		SmartcardServiceReader *object;
+		GDBusMethodInvocation *invocation;
+		guint service_id;
+		guint reader_id;
+		void *user_data;
+
+		if (params.size() != 5) {
+			_ERR("invalid parameter");
+
+			return;
+		}
+
+		object = (SmartcardServiceReader *)params[0];
+		invocation = (GDBusMethodInvocation *)params[1];
+		service_id = (guint)params[2];
+		reader_id = (guint)params[3];
+		user_data = params[4];
+
+		__process_open_session(object, invocation, service_id,
+			reader_id, user_data);
+	}
+
+	static gboolean _handle_open_session(SmartcardServiceReader *object,
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint reader_id, void *user_data)
+	{
+		vector<void *> params;
+
+		g_object_ref(object);
+		params.push_back((void *)object);
+
+		g_object_ref(invocation);
+		params.push_back((void *)invocation);
+
+		params.push_back((void *)service_id);
+		params.push_back((void *)reader_id);
+		params.push_back(user_data);
+
+		GDBusDispatcher::getInstance().push(_process_open_session,
+			params);
+
+		return true;
+	}
+
 	bool ServerGDBus::initReader()
 	{
 		GError *error = NULL;
@@ -398,15 +593,15 @@ namespace smartcard_service_api
 		reader = smartcard_service_reader_skeleton_new();
 
 		g_signal_connect(reader,
-				"handle-open-session",
-				G_CALLBACK(_handle_open_session),
-				NULL);
+			"handle-open-session",
+			G_CALLBACK(_handle_open_session),
+			this);
 
 		if (g_dbus_interface_skeleton_export(
-					G_DBUS_INTERFACE_SKELETON(reader),
-					connection,
-					"/org/tizen/SmartcardService/Reader",
-					&error) == false)
+			G_DBUS_INTERFACE_SKELETON(reader),
+			connection,
+			"/org/tizen/SmartcardService/Reader",
+			&error) == false)
 		{
 			_ERR("Can not skeleton_export %s", error->message);
 
@@ -432,9 +627,9 @@ namespace smartcard_service_api
 	 *
 	 *
 	 */
-	static gboolean _handle_close_session(SmartcardServiceSession *object,
+	static gboolean __process_close_session(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation, guint service_id,
-		guint session_id)
+		guint session_id, void *user_data)
 	{
 		_INFO("[MSG_REQUEST_CLOSE_SESSION]");
 
@@ -454,9 +649,55 @@ namespace smartcard_service_api
 		return true;
 	}
 
-	static gboolean _handle_get_atr(SmartcardServiceSession *object,
+	static void _process_close_session(vector<void *> &params)
+	{
+		SmartcardServiceSession *object;
+		GDBusMethodInvocation *invocation;
+		guint service_id;
+		guint session_id;
+		void *user_data;
+
+		if (params.size() != 5) {
+			_ERR("invalid parameter");
+
+			return;
+		}
+
+		object = (SmartcardServiceSession *)params[0];
+		invocation = (GDBusMethodInvocation *)params[1];
+		service_id = (guint)params[2];
+		session_id = (guint)params[3];
+		user_data = params[4];
+
+		__process_close_session(object, invocation, service_id,
+			session_id, user_data);
+	}
+
+	static gboolean _handle_close_session(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation, guint service_id,
-		guint session_id)
+		guint session_id, void *user_data)
+	{
+		vector<void *> params;
+
+		g_object_ref(object);
+		params.push_back((void *)object);
+
+		g_object_ref(invocation);
+		params.push_back((void *)invocation);
+
+		params.push_back((void *)service_id);
+		params.push_back((void *)session_id);
+		params.push_back(user_data);
+
+		GDBusDispatcher::getInstance().push(_process_close_session,
+			params);
+
+		return true;
+	}
+
+	static gboolean __process_get_atr(SmartcardServiceSession *object,
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint session_id, void *user_data)
 	{
 		int result;
 		GVariant *atr = NULL;
@@ -512,9 +753,55 @@ namespace smartcard_service_api
 		return true;
 	}
 
-	static gboolean _handle_open_channel(SmartcardServiceSession *object,
+	static void _process_get_atr(vector<void *> &params)
+	{
+		SmartcardServiceSession *object;
+		GDBusMethodInvocation *invocation;
+		guint service_id;
+		guint session_id;
+		void *user_data;
+
+		if (params.size() != 5) {
+			_ERR("invalid parameter");
+
+			return;
+		}
+
+		object = (SmartcardServiceSession *)params[0];
+		invocation = (GDBusMethodInvocation *)params[1];
+		service_id = (guint)params[2];
+		session_id = (guint)params[3];
+		user_data = params[4];
+
+		__process_get_atr(object, invocation, service_id,
+			session_id, user_data);
+	}
+
+	static gboolean _handle_get_atr(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation, guint service_id,
-		guint session_id, guint type, GVariant *aid)
+		guint session_id, void *user_data)
+	{
+		vector<void *> params;
+
+		g_object_ref(object);
+		params.push_back((void *)object);
+
+		g_object_ref(invocation);
+		params.push_back((void *)invocation);
+
+		params.push_back((void *)service_id);
+		params.push_back((void *)session_id);
+		params.push_back(user_data);
+
+		GDBusDispatcher::getInstance().push(_process_get_atr,
+			params);
+
+		return true;
+	}
+
+	static gboolean __process_open_channel(SmartcardServiceSession *object,
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint session_id, guint type, GVariant *aid, void *user_data)
 	{
 		int result = SCARD_ERROR_UNKNOWN;
 		GVariant *response = NULL;
@@ -567,6 +854,60 @@ namespace smartcard_service_api
 		return true;
 	}
 
+	static void _process_open_channel(vector<void *> &params)
+	{
+		SmartcardServiceSession *object;
+		GDBusMethodInvocation *invocation;
+		guint service_id;
+		guint session_id;
+		guint type;
+		GVariant *aid;
+		void *user_data;
+
+		if (params.size() != 7) {
+			_ERR("invalid parameter");
+
+			return;
+		}
+
+		object = (SmartcardServiceSession *)params[0];
+		invocation = (GDBusMethodInvocation *)params[1];
+		service_id = (guint)params[2];
+		session_id = (guint)params[3];
+		type = (guint)params[4];
+		aid = (GVariant *)params[5];
+		user_data = params[6];
+
+		__process_open_channel(object, invocation, service_id,
+			session_id, type, aid, user_data);
+	}
+
+	static gboolean _handle_open_channel(SmartcardServiceSession *object,
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint session_id, guint type, GVariant *aid, void *user_data)
+	{
+		vector<void *> params;
+
+		g_object_ref(object);
+		params.push_back((void *)object);
+
+		g_object_ref(invocation);
+		params.push_back((void *)invocation);
+
+		params.push_back((void *)service_id);
+		params.push_back((void *)session_id);
+		params.push_back((void *)type);
+
+		g_object_ref(aid);
+		params.push_back((void *)aid);
+		params.push_back(user_data);
+
+		GDBusDispatcher::getInstance().push(_process_open_channel,
+			params);
+
+		return true;
+	}
+
 	bool ServerGDBus::initSession()
 	{
 		GError *error = NULL;
@@ -574,25 +915,25 @@ namespace smartcard_service_api
 		session = smartcard_service_session_skeleton_new();
 
 		g_signal_connect(session,
-				"handle-close-session",
-				G_CALLBACK(_handle_close_session),
-				NULL);
+			"handle-close-session",
+			G_CALLBACK(_handle_close_session),
+			this);
 
 		g_signal_connect(session,
-				"handle-get-atr",
-				G_CALLBACK(_handle_get_atr),
-				NULL);
+			"handle-get-atr",
+			G_CALLBACK(_handle_get_atr),
+			this);
 
 		g_signal_connect(session,
-				"handle-open-channel",
-				G_CALLBACK(_handle_open_channel),
-				NULL);
+			"handle-open-channel",
+			G_CALLBACK(_handle_open_channel),
+			this);
 
 		if (g_dbus_interface_skeleton_export(
-					G_DBUS_INTERFACE_SKELETON(session),
-					connection,
-					"/org/tizen/SmartcardService/Session",
-					&error) == false)
+			G_DBUS_INTERFACE_SKELETON(session),
+			connection,
+			"/org/tizen/SmartcardService/Session",
+			&error) == false)
 		{
 			_ERR("Can not skeleton_export %s", error->message);
 
@@ -618,9 +959,9 @@ namespace smartcard_service_api
 	 *
 	 *
 	 */
-	static gboolean _handle_close_channel(SmartcardServiceChannel *object,
+	static gboolean __process_close_channel(SmartcardServiceChannel *object,
 		GDBusMethodInvocation *invocation, guint service_id,
-		guint channel_id)
+		guint channel_id, void *user_data)
 	{
 		int result;
 
@@ -644,9 +985,55 @@ namespace smartcard_service_api
 		return true;
 	}
 
-	static gboolean _handle_transmit(SmartcardServiceChannel *object,
+	static void _process_close_channel(vector<void *> &params)
+	{
+		SmartcardServiceChannel *object;
+		GDBusMethodInvocation *invocation;
+		guint service_id;
+		guint channel_id;
+		void *user_data;
+
+		if (params.size() != 7) {
+			_ERR("invalid parameter");
+
+			return;
+		}
+
+		object = (SmartcardServiceChannel *)params[0];
+		invocation = (GDBusMethodInvocation *)params[1];
+		service_id = (guint)params[2];
+		channel_id = (guint)params[3];
+		user_data = params[4];
+
+		__process_close_channel(object, invocation, service_id,
+			channel_id, user_data);
+	}
+
+	static gboolean _handle_close_channel(SmartcardServiceChannel *object,
 		GDBusMethodInvocation *invocation, guint service_id,
-		guint channel_id, GVariant *command)
+		guint channel_id, void *user_data)
+	{
+		vector<void *> params;
+
+		g_object_ref(object);
+		params.push_back((void *)object);
+
+		g_object_ref(invocation);
+		params.push_back((void *)invocation);
+
+		params.push_back((void *)service_id);
+		params.push_back((void *)channel_id);
+		params.push_back(user_data);
+
+		GDBusDispatcher::getInstance().push(_process_close_channel,
+			params);
+
+		return true;
+	}
+
+	static gboolean __process_transmit(SmartcardServiceChannel *object,
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint channel_id, GVariant *command, void *user_data)
 	{
 		int result;
 		Channel *channel = NULL;
@@ -693,6 +1080,58 @@ namespace smartcard_service_api
 		return true;
 	}
 
+	static void _process_transmit(vector<void *> &params)
+	{
+		SmartcardServiceChannel *object;
+		GDBusMethodInvocation *invocation;
+		guint service_id;
+		guint channel_id;
+		GVariant *command;
+		void *user_data;
+
+		if (params.size() != 7) {
+			_ERR("invalid parameter");
+
+			return;
+		}
+
+		object = (SmartcardServiceChannel *)params[0];
+		invocation = (GDBusMethodInvocation *)params[1];
+		service_id = (guint)params[2];
+		channel_id = (guint)params[3];
+		command = (GVariant *)params[4];
+		user_data = params[5];
+
+		__process_transmit(object, invocation, service_id,
+			channel_id, command, user_data);
+	}
+
+	static gboolean _handle_transmit(SmartcardServiceChannel *object,
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint channel_id, GVariant *command, void *user_data)
+	{
+		vector<void *> params;
+
+		g_object_ref(object);
+		params.push_back((void *)object);
+
+		g_object_ref(invocation);
+		params.push_back((void *)invocation);
+
+		params.push_back((void *)service_id);
+		params.push_back((void *)channel_id);
+
+		g_object_ref(command);
+		params.push_back((void *)command);
+
+		params.push_back(user_data);
+
+		GDBusDispatcher::getInstance().push(_process_transmit,
+			params);
+
+		return true;
+	}
+
 	bool ServerGDBus::initChannel()
 	{
 		GError *error = NULL;
@@ -700,20 +1139,20 @@ namespace smartcard_service_api
 		channel = smartcard_service_channel_skeleton_new();
 
 		g_signal_connect(channel,
-				"handle-close-channel",
-				G_CALLBACK(_handle_close_channel),
-				NULL);
+			"handle-close-channel",
+			G_CALLBACK(_handle_close_channel),
+			this);
 
 		g_signal_connect(channel,
-				"handle-transmit",
-				G_CALLBACK(_handle_transmit),
-				NULL);
+			"handle-transmit",
+			G_CALLBACK(_handle_transmit),
+			this);
 
 		if (g_dbus_interface_skeleton_export(
-					G_DBUS_INTERFACE_SKELETON(channel),
-					connection,
-					"/org/tizen/SmartcardService/Channel",
-					&error) == false)
+			G_DBUS_INTERFACE_SKELETON(channel),
+			connection,
+			"/org/tizen/SmartcardService/Channel",
+			&error) == false)
 		{
 			_ERR("Can not skeleton_export %s", error->message);
 

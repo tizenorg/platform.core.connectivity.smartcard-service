@@ -16,14 +16,41 @@
 
 #ifndef SERVERGDBUS_H_
 #define SERVERGDBUS_H_
-
 #ifdef USE_GDBUS
+/* standard library header */
 #include <glib.h>
+#include <queue>
+#include <vector>
 
+/* SLP library header */
+
+/* local header */
+#include "Synchronous.h"
 #include "smartcard-service-gdbus.h"
+
+using namespace std;
 
 namespace smartcard_service_api
 {
+	typedef void (*dispatcher_cb_t)(vector<void *> &params);
+
+	class GDBusDispatcher : public Synchronous
+	{
+	public :
+		static GDBusDispatcher &getInstance();
+
+		/* push to queue */
+		void push(dispatcher_cb_t cb, const vector<void *> &params);
+
+	private :
+		std::queue<pair<dispatcher_cb_t, vector<void *> > > q;
+
+		GDBusDispatcher();
+		~GDBusDispatcher();
+
+		static gboolean dispatch(gpointer user_data);
+	};
+
 	class ServerGDBus
 	{
 	public :
@@ -45,7 +72,6 @@ namespace smartcard_service_api
 			const char *reader_name);
 
 	private :
-
 		GDBusConnection *connection;
 
 		SmartcardServiceSeService *seService;
