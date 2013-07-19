@@ -98,10 +98,9 @@ namespace smartcard_service_api
 				{
 					PKCS15OID oid(tlv.getValue());
 
-					_DBG("OID DataObject");
+					_DBG("OID DataObject : %s", oid.getOID().toString().c_str());
 
-					pair<ByteArray, PKCS15OID> newPair(oid.getOID(), oid);
-					mapOID.insert(newPair);
+					mapOID.insert(make_pair(oid.getOID(), oid));
 				}
 				break;
 

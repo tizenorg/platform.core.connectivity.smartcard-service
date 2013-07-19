@@ -61,6 +61,13 @@ namespace smartcard_service_api
 		if (array.size() == 0)
 			return false;
 
+		currentTLV = this;
+		parentTLV = parent;
+		childTLV = NULL;
+		offset = 0;
+		currentT = 0;
+		currentL = 0;
+
 		tlvBuffer = array;
 
 		return true;

@@ -410,7 +410,7 @@ namespace smartcard_service_api
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				var_command, NULL,
-				&ClientChannel::channel_close_cb, param);
+				&ClientChannel::channel_transmit_cb, param);
 
 			result = SCARD_ERROR_OK;
 #else
