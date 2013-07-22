@@ -24,7 +24,9 @@
 #include <sys/socket.h>
 
 /* SLP library header */
+#ifdef USER_SPACE_SMACK
 #include "security-server.h"
+#endif
 
 /* local header */
 #include "smartcard-types.h"
@@ -283,18 +285,26 @@ namespace smartcard_service_api
 		return pid;
 	}
 
-	static bool _is_authorized_request(GVariant *privilege,
+	static bool _is_authorized_request(GDBusMethodInvocation *invocation,
 		const char *rights)
 	{
 		bool result = true;
 #ifdef USER_SPACE_SMACK
-		ByteArray temp;
+		pid_t pid;
+		const char *name;
+		ClientInstance *instance;
 
-		/* apply user space smack */
-		GDBusHelper::convertVariantToByteArray(privilege, temp);
+		name = g_dbus_method_invocation_get_sender(invocation);
 
-		result = (security_server_check_privilege_by_cookie(
-			(char *)temp.getBuffer(),
+		instance = ServerResource::getInstance().getClient(name);
+		if (instance != NULL) {
+			pid = instance->getPID();
+		} else {
+			pid = ServerGDBus::getInstance().getPID(name);
+		}
+
+		result = (security_server_check_privilege_by_pid(
+			pid,
 			"smartcard-service",
 			rights) == SECURITY_SERVER_API_SUCCESS);
 #endif
@@ -325,26 +335,25 @@ namespace smartcard_service_api
 		GDBusMethodInvocation *invocation,
 		void *user_data)
 	{
-		_INFO("[MSG_REQUEST_READERS]");
-
 		gint result = SCARD_ERROR_OK;
 		GVariant *readers = NULL;
 		vector<pair<unsigned int, string> > list;
 		unsigned int handle = IntegerHandle::INVALID_HANDLE;
 		const char *name;
+		pid_t pid;
+
+		_INFO("[MSG_REQUEST_READERS]");
 
 		ServerResource &resource = ServerResource::getInstance();
 
 		name = g_dbus_method_invocation_get_sender(invocation);
-
-		pid_t pid;
 
 		/* load secure elements */
 		resource.loadSecureElements();
 
 		pid = ServerGDBus::getInstance().getPID(name);
 
-		_INFO("service requested, pid [%d]", pid);
+		_DBG("service requested, pid [%d]", pid);
 
 		if (pid > 0) {
 			ClientInstance *instance;
@@ -423,13 +432,12 @@ namespace smartcard_service_api
 
 	static gboolean _handle_se_service(SmartcardServiceSeService *object,
 		GDBusMethodInvocation *invocation,
-		GVariant *privilege,
 		void *user_data)
 	{
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(privilege, "r") == true) {
+		if (_is_authorized_request(invocation, "r") == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -463,9 +471,9 @@ namespace smartcard_service_api
 
 		_INFO("[MSG_REQUEST_SHUTDOWN]");
 
-		name = g_dbus_method_invocation_get_sender(invocation);
-
 		ServerResource &resource = ServerResource::getInstance();
+
+		name = g_dbus_method_invocation_get_sender(invocation);
 
 		resource.removeService(name, handle);
 
@@ -509,14 +517,13 @@ namespace smartcard_service_api
 
 	static gboolean _handle_shutdown(SmartcardServiceSeService *object,
 		GDBusMethodInvocation *invocation,
-		GVariant *privilege,
 		guint handle,
 		void *user_data)
 	{
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(privilege, "r") == true) {
+		if (_is_authorized_request(invocation, "r") == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -671,14 +678,13 @@ namespace smartcard_service_api
 
 	static gboolean _handle_open_session(SmartcardServiceReader *object,
 		GDBusMethodInvocation *invocation,
-		GVariant *privilege,
 		guint service_id,
 		guint reader_id, void *user_data)
 	{
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(privilege, "r") == true) {
+		if (_is_authorized_request(invocation, "r") == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -800,14 +806,13 @@ namespace smartcard_service_api
 
 	static gboolean _handle_close_session(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation,
-		GVariant *privilege,
 		guint service_id,
 		guint session_id, void *user_data)
 	{
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(privilege, "r") == true) {
+		if (_is_authorized_request(invocation, "r") == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -838,14 +843,13 @@ namespace smartcard_service_api
 		ByteArray resp;
 		GVariant *atr = NULL;
 		const char *name;
+		ServiceInstance *client = NULL;
 
 		_INFO("[MSG_REQUEST_GET_ATR]");
 
 		ServerResource &resource = ServerResource::getInstance();
 
 		name = g_dbus_method_invocation_get_sender(invocation);
-
-		ServiceInstance *client = NULL;
 
 		client = resource.getService(name, service_id);
 		if (client != NULL) {
@@ -911,14 +915,13 @@ namespace smartcard_service_api
 
 	static gboolean _handle_get_atr(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation,
-		GVariant *privilege,
 		guint service_id,
 		guint session_id, void *user_data)
 	{
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(privilege, "r") == true) {
+		if (_is_authorized_request(invocation, "r") == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -1036,14 +1039,13 @@ namespace smartcard_service_api
 
 	static gboolean _handle_open_channel(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation,
-		GVariant *privilege,
 		guint service_id,
 		guint session_id, guint type, GVariant *aid, void *user_data)
 	{
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(privilege, "rw") == true) {
+		if (_is_authorized_request(invocation, "rw") == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -1179,13 +1181,12 @@ namespace smartcard_service_api
 
 	static gboolean _handle_close_channel(SmartcardServiceChannel *object,
 		GDBusMethodInvocation *invocation,
-		GVariant *privilege,
 		guint service_id, guint channel_id, void *user_data)
 	{
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(privilege, "r") == true) {
+		if (_is_authorized_request(invocation, "r") == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -1291,7 +1292,6 @@ namespace smartcard_service_api
 
 	static gboolean _handle_transmit(SmartcardServiceChannel *object,
 		GDBusMethodInvocation *invocation,
-		GVariant *privilege,
 		guint service_id,
 		guint channel_id,
 		GVariant *command,
@@ -1300,7 +1300,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(privilege, "r") == true) {
+		if (_is_authorized_request(invocation, "r") == true) {
 			/* enqueue message */
 			g_object_ref(object);
 			params.push_back((void *)object);

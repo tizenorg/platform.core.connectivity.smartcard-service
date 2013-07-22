@@ -237,7 +237,6 @@ namespace smartcard_service_api
 #ifdef USE_GDBUS
 			smartcard_service_se_service_call_shutdown(
 				(SmartcardServiceSeService *)proxy,
-				ClientGDBus::getCookie(),
 				handle,
 				NULL,
 				&SEService::se_service_shutdown_cb,
@@ -275,7 +274,6 @@ namespace smartcard_service_api
 
 			if (smartcard_service_se_service_call_shutdown_sync(
 				(SmartcardServiceSeService *)proxy,
-				ClientGDBus::getCookie(),
 				handle,
 				&result,
 				NULL,
@@ -366,7 +364,6 @@ namespace smartcard_service_api
 		/* request reader */
 		smartcard_service_se_service_call_se_service(
 			(SmartcardServiceSeService *)proxy,
-			ClientGDBus::getCookie(),
 			NULL,
 			&SEService::se_service_cb,
 			this);

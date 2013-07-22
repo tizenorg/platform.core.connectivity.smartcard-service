@@ -196,7 +196,6 @@ namespace smartcard_service_api
 
 				if (smartcard_service_channel_call_close_channel_sync(
 					(SmartcardServiceChannel *)proxy,
-					ClientGDBus::getCookie(),
 					GPOINTER_TO_UINT(context),
 					GPOINTER_TO_UINT(handle),
 					&ret, NULL, &error) == true) {
@@ -272,7 +271,6 @@ namespace smartcard_service_api
 
 				smartcard_service_channel_call_close_channel(
 					(SmartcardServiceChannel *)proxy,
-					ClientGDBus::getCookie(),
 					GPOINTER_TO_UINT(context),
 					GPOINTER_TO_UINT(handle), NULL,
 					&ClientChannel::channel_close_cb, param);
@@ -321,7 +319,6 @@ namespace smartcard_service_api
 
 			if (smartcard_service_channel_call_transmit_sync(
 				(SmartcardServiceChannel *)proxy,
-				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				var_command, &rv, &var_response,
@@ -406,7 +403,6 @@ namespace smartcard_service_api
 
 			smartcard_service_channel_call_transmit(
 				(SmartcardServiceChannel *)proxy,
-				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				var_command, NULL,

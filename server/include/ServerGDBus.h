@@ -26,6 +26,7 @@
 
 /* local header */
 #include "Synchronous.h"
+#include "GDBusHelper.h"
 #include "smartcard-service-gdbus.h"
 
 using namespace std;

@@ -27,7 +27,6 @@
 #include "Session.h"
 #ifdef USE_GDBUS
 #include "ClientGDBus.h"
-#include "smartcard-service-gdbus.h"
 #else
 #include "Message.h"
 #include "ClientIPC.h"
@@ -120,7 +119,6 @@ namespace smartcard_service_api
 
 			if (smartcard_service_reader_call_open_session_sync(
 				(SmartcardServiceReader *)proxy,
-				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				&result, &session_id, NULL, &error) == true) {
@@ -264,7 +262,6 @@ namespace smartcard_service_api
 
 			smartcard_service_reader_call_open_session(
 				(SmartcardServiceReader *)proxy,
-				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				NULL, &Reader::reader_open_session_cb, param);

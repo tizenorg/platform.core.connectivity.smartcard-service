@@ -20,7 +20,7 @@ MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 # pkg config
 INCLUDE(FindPkgConfig)
 
-SET(PKG_MODULE glib-2.0 security-server dlog)
+SET(PKG_MODULE glib-2.0 dlog)
 IF(NOT DEFINED USE_GDBUS)
 	SET(PKG_MODULE ${PKG_MODULE} dbus-glib-1)
 ENDIF()

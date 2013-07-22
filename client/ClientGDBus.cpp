@@ -19,9 +19,6 @@
 #include <glib.h>
 
 /* SLP library header */
-#ifdef USER_SPACE_SMACK
-#include "security-server.h"
-#endif
 
 /* local header */
 #include "smartcard-types.h"
@@ -33,39 +30,5 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	ByteArray ClientGDBus::cookie = ByteArray::EMPTY;
-
-	GVariant *ClientGDBus::getCookie()
-	{
-		GVariant *result;
-#ifdef USER_SPACE_SMACK
-		if (cookie.isEmpty()) {
-			uint8_t *buffer;
-			int len;
-
-			len = security_server_get_cookie_size();
-			if (len > 0) {
-				buffer = new uint8_t[len];
-				if (buffer != NULL) {
-					if (security_server_request_cookie(
-						(char *)buffer, len) == 0) {
-						cookie.assign(buffer, len);
-					} else {
-						_ERR("security_server_request_cookie failed");
-					}
-
-					delete[] buffer;
-				} else {
-					_ERR("alloc failed");
-				}
-			} else {
-				_ERR("security_server_get_cookie_size failed");
-			}
-		}
-#endif
-		result = GDBusHelper::convertByteArrayToVariant(cookie);
-
-		return result;
-	}
 } /* namespace smartcard_service_api */
 #endif

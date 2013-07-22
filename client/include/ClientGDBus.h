@@ -31,11 +31,6 @@ namespace smartcard_service_api
 {
 	class ClientGDBus
 	{
-	public :
-		static GVariant *getCookie();
-
-	private :
-		static ByteArray cookie;
 	};
 } /* namespace smartcard_service_api */
 #endif
