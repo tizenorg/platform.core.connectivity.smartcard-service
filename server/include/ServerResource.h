@@ -69,7 +69,6 @@ namespace smartcard_service_api
 		map<int, ClientInstance *> mapClients; /* client pid <-> client instance map */
 #endif
 		map<Terminal *, AccessControlList *> mapACL; /* terminal instance <-> access control instance map */
-		void *mainLoop;
 #ifndef USE_GDBUS
 		ServerIPC *serverIPC;
 		ServerDispatcher *serverDispatcher;
@@ -94,16 +93,6 @@ namespace smartcard_service_api
 	public:
 		/* static member */
 		static ServerResource &getInstance();
-
-		/* non-static member */
-		inline void setMainLoopInstance(void *mainLoop)
-		{
-			this->mainLoop = mainLoop;
-		}
-		inline void *getMainLoopInstance()
-		{
-			return this->mainLoop;
-		}
 
 		int loadSecureElements();
 		void unloadSecureElements();
@@ -181,6 +170,8 @@ namespace smartcard_service_api
 #endif
 		bool isAuthorizedNFCAccess(Terminal *terminal, const ByteArray &aid,
 			const vector<ByteArray> &hashes);
+
+		void finish();
 
 		friend void terminalCallback(void *terminal, int event, int error, void *user_param);
 	};

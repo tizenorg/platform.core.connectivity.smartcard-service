@@ -143,9 +143,7 @@ namespace smartcard_service_api
 				_INFO("terminated client, pid [%d]", client->getPID());
 				resource.removeClient(old_owner);
 
-				if (resource.getClientCount() == 0) {
-					g_main_loop_quit((GMainLoop *)resource.getMainLoopInstance());
-				}
+				resource.finish();
 			}
 		}
 	}
@@ -482,11 +480,7 @@ namespace smartcard_service_api
 			invocation, SCARD_ERROR_OK);
 
 		/* terminate */
-		if (resource.getClientCount() == 0) {
-			_INFO("no client connected. terminate server");
-
-			g_main_loop_quit((GMainLoop *)resource.getMainLoopInstance());
-		}
+		resource.finish();
 
 		return true;
 	}

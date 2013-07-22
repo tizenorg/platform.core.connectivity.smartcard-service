@@ -227,7 +227,7 @@ END :
 		ByteArray temp;
 		map<ByteArray, AccessCondition>::const_iterator iterMap;
 
-		_DBG("================ Access Control Rules ==================");
+		_DBG("========================== Access Control Rules ============================");
 		for (iterMap = mapConditions.begin(); iterMap != mapConditions.end(); iterMap++)
 		{
 			temp = iterMap->first;
@@ -236,7 +236,7 @@ END :
 
 			iterMap->second.printAccessConditions();
 		}
-		_DBG("========================================================");
+		_DBG("============================================================================");
 	}
 
 } /* namespace smartcard_service_api */

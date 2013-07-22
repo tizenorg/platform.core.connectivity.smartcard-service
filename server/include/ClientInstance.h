@@ -27,7 +27,9 @@
 /* SLP library header */
 
 /* local header */
+#ifndef USE_GDBUS
 #include "Message.h"
+#endif
 #include "ServiceInstance.h"
 
 namespace smartcard_service_api
@@ -49,7 +51,8 @@ namespace smartcard_service_api
 
 	public :
 #ifdef USE_GDBUS
-		ClientInstance(const char *name, pid_t pid) : name(name), pid(pid)
+		ClientInstance(const char *name, pid_t pid) :
+			name(name), pid(pid)
 		{
 		}
 #else
@@ -64,7 +67,7 @@ namespace smartcard_service_api
 		{
 		}
 #endif
-		~ClientInstance() { removeServices(); }
+		inline ~ClientInstance() { removeServices(); }
 #ifdef USE_GDBUS
 		inline bool operator ==(const char *name) const { return (this->name.compare(name) == 0); }
 #else
@@ -77,8 +80,8 @@ namespace smartcard_service_api
 		inline int getWatchID() { return watchID; }
 		inline int getState() { return state; }
 #endif
-		void setPID(int pid);
-		inline int getPID() { return pid; }
+		inline void setPID(int pid) { this->pid = pid; }
+		inline int getPID() const { return pid; }
 
 		ServiceInstance *createService();
 		ServiceInstance *getService(unsigned int handle);

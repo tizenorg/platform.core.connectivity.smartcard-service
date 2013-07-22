@@ -27,11 +27,6 @@
 
 namespace smartcard_service_api
 {
-	void ClientInstance::setPID(int pid)
-	{
-		this->pid = pid;
-	}
-
 	ServiceInstance *ClientInstance::createService()
 	{
 		ServiceInstance *result = NULL;

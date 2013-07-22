@@ -34,6 +34,7 @@
 #ifdef USE_GDBUS
 #include "ServerGDBus.h"
 #endif
+#include "smartcard-daemon.h"
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -84,8 +85,7 @@ namespace smartcard_service_api
 
 #define OMAPI_SE_PATH "/usr/lib/se"
 
-	ServerResource::ServerResource()
-		: mainLoop(NULL), seLoaded(false)
+	ServerResource::ServerResource() : seLoaded(false)
 	{
 		_BEGIN();
 #ifndef USE_GDBUS
@@ -1532,11 +1532,13 @@ namespace smartcard_service_api
 
 		return result;
 	}
+
+	void ServerResource::finish()
+	{
+		if (getClientCount() == 0) {
+			_INFO("no client connected. terminate server");
+
+			smartcard_daemon_exit();
+		}
+	}
 } /* namespace smartcard_service_api */
-
-using namespace smartcard_service_api;
-
-EXTERN_API void server_resource_set_main_loop_instance(void *instance)
-{
-	ServerResource::getInstance().setMainLoopInstance(instance);
-}

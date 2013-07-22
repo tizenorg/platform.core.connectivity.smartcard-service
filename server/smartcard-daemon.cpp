@@ -107,7 +107,7 @@ static void _bus_acquired_cb(GDBusConnection *connection,
 {
 	_DBG("bus path : %s", path);
 
-	ServerResource::getInstance().setMainLoopInstance(main_loop);
+	ServerResource::getInstance();
 
 	ServerGDBus::getInstance().init();
 }
@@ -233,7 +233,7 @@ static void __sighandler(int sig)
 #endif
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 #ifdef USE_GDBUS
 	guint id = 0;
@@ -262,7 +262,6 @@ int main()
 			NULL,
 			NULL);
 #else
-	ServerResource::getInstance().setMainLoopInstance(main_loop);
 	ServerIPC::getInstance()->createListenSocket();
 #ifdef USE_AUTOSTART
 	_initialize_dbus();
@@ -282,4 +281,9 @@ int main()
 	ServerResource::getInstance().unloadSecureElements();
 
 	return 0;
+}
+
+void smartcard_daemon_exit()
+{
+	g_main_loop_quit(main_loop);
 }
