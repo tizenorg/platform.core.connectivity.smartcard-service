@@ -56,5 +56,5 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_server_LDFLAGS} "-L../common" "-lsm
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 IF("${USE_AUTOSTART}" STREQUAL "1")
-	INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/smartcard-service.service DESTINATION share/dbus-1/services)
+	INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.tizen.smartcard_service.service DESTINATION share/dbus-1/services)
 ENDIF()
