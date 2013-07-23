@@ -43,12 +43,9 @@ namespace smartcard_service_api
 		static const int NOTIFY_SE_AVAILABLE = 1;
 		static const int NOTIFY_SE_NOT_AVAILABLE = -1;
 
-		Terminal()
-		{
-			statusCallback = NULL;
-			initialized = false;
-			name = NULL;
-		}
+		Terminal() : statusCallback(NULL),
+			initialized(false), name(NULL) {}
+
 		virtual ~Terminal() {}
 
 		virtual bool initialize() = 0;

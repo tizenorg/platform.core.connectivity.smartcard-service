@@ -16,7 +16,7 @@
 
 #ifndef DISPATCHERMSG_H_
 #define DISPATCHERMSG_H_
-
+#ifndef USE_GDBUS
 /* standard library header */
 
 /* SLP library header */
@@ -83,4 +83,5 @@ namespace smartcard_service_api
 	};
 
 } /* namespace smartcard_service_api */
+#endif
 #endif /* DISPATCHERMSG_H_ */

@@ -15,7 +15,7 @@ IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_test_client REQUIRED glib-2.0 gthread-2.0 gobject-2.0 security-server vconf dlog dbus-glib-1)
+pkg_check_modules(pkgs_test_client REQUIRED glib-2.0 dlog)
 
 FOREACH(flag ${pkgs_test_client_CFLAGS})
 	SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} ${flag}")

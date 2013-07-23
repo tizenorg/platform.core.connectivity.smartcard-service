@@ -174,9 +174,9 @@ namespace smartcard_service_api
 		void addAccessControlList(ServerChannel *channel, AccessControlList *acl);
 		AccessControlList *getAccessControlList(Terminal *terminal);
 		AccessControlList *getAccessControlList(ServerChannel *channel);
-
+#ifndef USE_GDBUS
 		bool sendMessageToAllClients(Message &msg);
-
+#endif
 		bool isAuthorizedNFCAccess(Terminal *terminal, ByteArray &aid,
 			vector<ByteArray> &hashes);
 

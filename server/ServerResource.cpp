@@ -31,6 +31,9 @@
 #include "SignatureHelper.h"
 #include "GPACE.h"
 #include "PKCS15.h"
+#ifdef USE_GDBUS
+#include "ServerGDBus.h"
+#endif
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -871,7 +874,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+			_ERR("transmitSync failed, rv [%d], length [%d]", rv, response.getLength());
 		}
 
 		return result;
@@ -1300,11 +1303,11 @@ namespace smartcard_service_api
 		return result;
 	}
 
+#ifndef USE_GDBUS
 	bool ServerResource::sendMessageToAllClients(Message &msg)
 	{
 		bool result = true;
-#ifdef USE_GDBUS
-#else
+
 		map<int, ClientInstance *>::iterator item;
 
 		for (item = mapClients.begin(); item != mapClients.end(); item++)
@@ -1312,10 +1315,10 @@ namespace smartcard_service_api
 			if (item->second->sendMessageToAllServices(item->second->getSocket(), msg) == false)
 				result = false;
 		}
-#endif
 
 		return result;
 	}
+#endif
 
 	void ServerResource::terminalCallback(void *terminal, int event, int error, void *user_param)
 	{
@@ -1327,19 +1330,25 @@ namespace smartcard_service_api
 			{
 				ServerResource &instance = ServerResource::getInstance();
 				unsigned int terminalID = IntegerHandle::INVALID_HANDLE;
-				Message msg;
 
 				_INFO("[NOTIFY_SE_AVAILABLE]");
 
 				terminalID = instance.getTerminalID((char *)terminal);
 				if (terminalID != IntegerHandle::INVALID_HANDLE)
 				{
+					unsigned int readerID = instance.createReader(terminalID);
+#ifdef USE_GDBUS
+					ServerGDBus::getInstance().emitReaderInserted(readerID, (const char *)terminal);
+#else
+					Message msg;
+
 					/* send all client to refresh reader */
 					msg.message = msg.MSG_NOTIFY_SE_INSERTED;
-					msg.param1 = instance.createReader(terminalID);
+					msg.param1 = readerID;
 					msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
 
 					instance.sendMessageToAllClients(msg);
+#endif
 				}
 			}
 			break;
@@ -1348,11 +1357,14 @@ namespace smartcard_service_api
 			{
 				ServerResource &instance = ServerResource::getInstance();
 				unsigned int readerID = IntegerHandle::INVALID_HANDLE;
-				Message msg;
 
 				_INFO("[NOTIFY_SE_NOT_AVAILABLE]");
 
 				readerID = instance.getReaderID((char *)terminal);
+#ifdef USE_GDBUS
+				ServerGDBus::getInstance().emitReaderRemoved(readerID, (const char *)terminal);
+#else
+				Message msg;
 
 				/* send all client to refresh reader */
 				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
@@ -1360,6 +1372,7 @@ namespace smartcard_service_api
 				msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
 
 				instance.sendMessageToAllClients(msg);
+#endif
 				instance.removeReader(readerID);
 			}
 			break;

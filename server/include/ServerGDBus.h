@@ -39,6 +39,11 @@ namespace smartcard_service_api
 		void _deinit();
 		pid_t getPID(const char *name);
 
+		void emitReaderInserted(unsigned int reader_id,
+			const char *reader_name);
+		void emitReaderRemoved(unsigned int reader_id,
+			const char *reader_name);
+
 	private :
 
 		GDBusConnection *connection;

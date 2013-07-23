@@ -17,8 +17,15 @@ IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
+# pkg config
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_client REQUIRED glib-2.0 dlog dbus-glib-1 security-server)
+
+SET(PKG_MODULE glib-2.0 security-server dlog)
+IF(NOT DEFINED USE_GDBUS)
+	SET(PKG_MODULE ${PKG_MODULE} dbus-glib-1)
+ENDIF()
+
+pkg_check_modules(pkgs_client REQUIRED ${PKG_MODULE})
 
 MESSAGE("${LIB_NAME} ld flag : ${pkgs_client_LDFLAGS}")
 

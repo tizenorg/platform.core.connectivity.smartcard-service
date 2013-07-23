@@ -26,11 +26,13 @@
 
 /* local header */
 #include "Debug.h"
-#include "Message.h"
 #include "TerminalInterface.h"
-#include "ServerSEService.h"
+#ifndef USE_GDBUS
+#include "Message.h"
 #include "ServerIPC.h"
+#endif
 #include "ServerResource.h"
+#include "ServerSEService.h"
 
 namespace smartcard_service_api
 {
@@ -231,27 +233,36 @@ namespace smartcard_service_api
 
 	void ServerSEService::terminalCallback(void *terminal, int event, int error, void *user_param)
 	{
-		Message msg;
-//		Terminal *term = NULL;
-
 		switch (event)
 		{
 		case Terminal::NOTIFY_SE_AVAILABLE :
-			/* send all client to refresh reader */
-			msg.message = msg.MSG_NOTIFY_SE_INSERTED;
-			msg.data.setBuffer((unsigned char *)terminal,
-				strlen((char *)terminal) + 1);
+			{
+#ifndef USE_GDBUS
+				Message msg;
 
-			ServerResource::getInstance().sendMessageToAllClients(msg);
+				/* send all client to refresh reader */
+				msg.message = msg.MSG_NOTIFY_SE_INSERTED;
+				msg.data.setBuffer((unsigned char *)terminal,
+					strlen((char *)terminal) + 1);
+
+				ServerResource::getInstance().sendMessageToAllClients(msg);
+#endif
+			}
 			break;
 
 		case Terminal::NOTIFY_SE_NOT_AVAILABLE :
-			/* send all client to refresh reader */
-			msg.message = msg.MSG_NOTIFY_SE_REMOVED;
-			msg.data.setBuffer((unsigned char *)terminal,
-				strlen((char *)terminal) + 1);
+			{
+#ifndef USE_GDBUS
+				Message msg;
 
-			ServerResource::getInstance().sendMessageToAllClients(msg);
+				/* send all client to refresh reader */
+				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
+				msg.data.setBuffer((unsigned char *)terminal,
+					strlen((char *)terminal) + 1);
+
+				ServerResource::getInstance().sendMessageToAllClients(msg);
+#endif
+			}
 			break;
 
 		default :

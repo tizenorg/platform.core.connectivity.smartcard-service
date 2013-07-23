@@ -6,13 +6,23 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/ SRCS)
+IF(DEFINED USE_GDBUS)
+	AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/private SRCS)
+ENDIF()
 
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 	SET(CMAKE_BUILD_TYPE "Release")
 ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 
+# pkg config
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_server REQUIRED glib-2.0 gio-2.0 security-server vconf dlog dbus-glib-1)
+
+SET(PKG_MODULE glib-2.0 gio-2.0 gio-unix-2.0 security-server dlog)
+IF(NOT DEFINED USE_GDBUS)
+	SET(PKG_MODULE ${PKG_MODULE} dbus-glib-1)
+ENDIF()
+
+pkg_check_modules(pkgs_server REQUIRED ${PKG_MODULE})
 
 FOREACH(flag ${pkgs_server_CFLAGS})
 	SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} ${flag}")

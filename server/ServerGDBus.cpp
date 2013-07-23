@@ -330,6 +330,22 @@ namespace smartcard_service_api
 		}
 	}
 
+	void ServerGDBus::emitReaderInserted(unsigned int reader_id,
+		const char *reader_name)
+	{
+		smartcard_service_se_service_emit_reader_inserted(
+			SMARTCARD_SERVICE_SE_SERVICE(seService),
+			reader_id, reader_name);
+	}
+
+	void ServerGDBus::emitReaderRemoved(unsigned int reader_id,
+		const char *reader_name)
+	{
+		smartcard_service_se_service_emit_reader_removed(
+			SMARTCARD_SERVICE_SE_SERVICE(seService),
+			reader_id, reader_name);
+	}
+
 	/* Reader *
 	 *
 	 *

@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <glib.h>
-#include <dbus/dbus-glib.h>
 
 #include "Debug.h"
 #include "SEService.h"
@@ -76,60 +75,6 @@ class TestEventHandler : public SEServiceListener
 	}
 };
 
-bool net_nfc_is_authorized_nfc_access(const char *package, uint8_t *aid, uint32_t aid_len)
-{
-	bool result = false;
-	DBusGConnection *connection;
-	GError *error = NULL;
-
-	dbus_g_thread_init();
-
-	g_type_init();
-
-	connection = dbus_g_bus_get(DBUS_BUS_SYSTEM, &error);
-	if (error == NULL)
-	{
-		DBusGProxy *proxy;
-
-		proxy = dbus_g_proxy_new_for_name(connection, "org.tizen.smartcard_service",
-			"/org/tizen/smartcard_service", "org.tizen.smartcard_service");
-		if (proxy != NULL)
-		{
-			gint rule = 0;
-			GArray temp = { (gchar *)aid, aid_len };
-
-			if (dbus_g_proxy_call(proxy, "check_nfc_access", &error,
-				G_TYPE_STRING, package,
-				dbus_g_type_get_collection("GArray", G_TYPE_UCHAR), &temp, G_TYPE_INVALID,
-				G_TYPE_INT, rule, G_TYPE_INVALID) == false)
-			{
-				_ERR("check_nfc_access failed");
-				if (error != NULL)
-				{
-					_ERR("message : [%s]", error->message);
-					g_error_free(error);
-				}
-			}
-			else
-			{
-				_INFO("check_nfc_access returns : %d", rule);
-				result = !!rule;
-			}
-		}
-		else
-		{
-			_ERR("ERROR: Can't make dbus proxy");
-		}
-	}
-	else
-	{
-		_ERR("ERROR: Can't get on system bus [%s]", error->message);
-		g_error_free(error);
-	}
-
-	return result;
-}
-
 TestEventHandler testEventHandler;
 
 void testConnectedCallback(SEServiceHelper *service, void *userData)
@@ -141,7 +86,6 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 
 	_BEGIN();
 
-//	net_nfc_is_authorized_nfc_access("autoutc099.SecureElementUnitTest", buffer, sizeof(buffer));
 	if (service != NULL)
 	{
 		_DBG("callback called, service [%p]", service);

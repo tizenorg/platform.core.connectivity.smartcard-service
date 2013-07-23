@@ -18,7 +18,6 @@ BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(gio-unix-2.0)
 BuildRequires: pkgconfig(security-server)
 BuildRequires: pkgconfig(dlog)
-BuildRequires: pkgconfig(vconf)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(libssl)
 BuildRequires: pkgconfig(pkgmgr)
@@ -27,8 +26,10 @@ BuildRequires: pkgconfig(pkgmgr-info)
 BuildRequires: pkgconfig(dbus-glib-1)
 %endif
 # for gdbus
+%if 0%{?use_gdbus:1}
 BuildRequires: python
 BuildRequires: python-xml
+%endif
 
 Requires(post):   /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
