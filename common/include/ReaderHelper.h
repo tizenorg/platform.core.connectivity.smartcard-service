@@ -33,17 +33,20 @@ namespace smartcard_service_api
 {
 	class SEServiceHelper;
 
-	typedef void (*openSessionCallback)(SessionHelper *session, int error, void *userData);
+	typedef void (*openSessionCallback)(SessionHelper *session, int error,
+		void *userData);
 
 	class ReaderHelper : public Synchronous
 	{
 	protected:
-		string name;
-		vector<SessionHelper *> sessions;
 		SEServiceHelper *seService;
+		string name;
 		bool present;
+		vector<SessionHelper *> sessions;
 
 		ReaderHelper() : seService(NULL), present(false) {}
+		ReaderHelper(const char *name) : seService(NULL), name(name),
+			present(false) {}
 		virtual ~ReaderHelper() {}
 
 	public:

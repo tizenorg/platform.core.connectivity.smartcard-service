@@ -28,8 +28,7 @@
 #include "Reader.h"
 #include "ClientChannel.h"
 #ifdef USE_GDBUS
-#include "smartcard-service-gdbus.h"
-#include "GDBusHelper.h"
+#include "ClientGDBus.h"
 #else
 #include "ClientIPC.h"
 #endif
@@ -270,6 +269,7 @@ namespace smartcard_service_api
 
 				if (smartcard_service_session_call_get_atr_sync(
 					(SmartcardServiceSession *)proxy,
+					ClientGDBus::getCookie(),
 					GPOINTER_TO_UINT(context),
 					GPOINTER_TO_UINT(handle),
 					&ret, &var_atr, NULL, &error) == true) {
@@ -352,6 +352,7 @@ namespace smartcard_service_api
 
 				smartcard_service_session_call_get_atr(
 					(SmartcardServiceSession *)proxy,
+					ClientGDBus::getCookie(),
 					GPOINTER_TO_UINT(context),
 					GPOINTER_TO_UINT(handle), NULL,
 					&Session::session_get_atr_cb, param);
@@ -411,6 +412,7 @@ namespace smartcard_service_api
 
 			if (smartcard_service_session_call_close_session_sync(
 				(SmartcardServiceSession *)proxy,
+				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				&ret, NULL, &error) == true) {
@@ -483,6 +485,7 @@ namespace smartcard_service_api
 
 			smartcard_service_session_call_close_session(
 				(SmartcardServiceSession *)proxy,
+				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle), NULL,
 				&Session::session_close_cb, param);
@@ -618,6 +621,7 @@ namespace smartcard_service_api
 
 			if (smartcard_service_session_call_open_channel_sync(
 				(SmartcardServiceSession *)proxy,
+				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				(guint)id, var_aid, &ret, &channel_id,
@@ -721,6 +725,7 @@ namespace smartcard_service_api
 
 			smartcard_service_session_call_open_channel(
 				(SmartcardServiceSession *)proxy,
+				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				(guint)id, var_aid, NULL,

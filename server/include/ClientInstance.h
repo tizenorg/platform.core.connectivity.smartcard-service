@@ -84,6 +84,7 @@ namespace smartcard_service_api
 		ServiceInstance *getService(unsigned int handle);
 		void removeService(unsigned int handle);
 		void removeServices();
+		inline size_t getServiceCounts() const { return mapServices.size(); }
 #ifndef USE_GDBUS
 		bool sendMessageToAllServices(int socket, const Message &msg);
 #endif

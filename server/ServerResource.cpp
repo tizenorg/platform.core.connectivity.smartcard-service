@@ -221,6 +221,11 @@ namespace smartcard_service_api
 		if ((instance = getClient(name)) != NULL)
 		{
 			instance->removeService(handle);
+			if (instance->getServiceCounts() == 0) {
+
+				/* remove client instance */
+				removeClient(name);
+			}
 		}
 		else
 		{
@@ -235,6 +240,9 @@ namespace smartcard_service_api
 		if ((instance = getClient(name)) != NULL)
 		{
 			instance->removeServices();
+
+			/* remove client instance */
+			removeClient(name);
 		}
 		else
 		{

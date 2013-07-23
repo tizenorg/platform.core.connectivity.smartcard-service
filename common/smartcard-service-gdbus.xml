@@ -8,6 +8,7 @@
       SeService
     -->
     <method name="SeService">
+      <arg type="a(y)" name="privilege" direction="in" />
       <arg type="i" name="result" direction="out" />
       <arg type="u" name="handle" direction="out" />
       <arg type="a(us)" name="readers" direction="out" />
@@ -17,6 +18,7 @@
       shutdown
     -->
     <method name="shutdown">
+      <arg type="a(y)" name="privilege" direction="in" />
       <arg type="u" name="service_id" direction="in" />
       <arg type="i" name="result" direction="out" />
     </method>
@@ -43,6 +45,7 @@
       openSession
     -->
     <method name="openSession">
+      <arg type="a(y)" name="privilege" direction="in" />
       <arg type="u" name="service_id" direction="in" />
       <arg type="u" name="reader_id" direction="in" />
       <arg type="i" name="result" direction="out" />
@@ -55,6 +58,7 @@
       getATR
     -->
     <method name="getATR">
+      <arg type="a(y)" name="privilege" direction="in" />
       <arg type="u" name="service_id" direction="in" />
       <arg type="u" name="session_id" direction="in" />
       <arg type="i" name="result" direction="out" />
@@ -64,6 +68,7 @@
       openChannel
     -->
     <method name="openChannel">
+      <arg type="a(y)" name="privilege" direction="in" />
       <arg type="u" name="service_id" direction="in" />
       <arg type="u" name="session_id" direction="in" />
       <arg type="u" name="type" direction="in" />
@@ -76,6 +81,7 @@
       closeSession
     -->
     <method name="closeSession">
+      <arg type="a(y)" name="privilege" direction="in" />
       <arg type="u" name="service_id" direction="in" />
       <arg type="u" name="session_id" direction="in" />
       <arg type="i" name="result" direction="out" />
@@ -87,6 +93,7 @@
       transmit
     -->
     <method name="transmit">
+      <arg type="a(y)" name="privilege" direction="in" />
       <arg type="u" name="service_id" direction="in" />
       <arg type="u" name="channel_id" direction="in" />
       <arg type="a(y)" name="command" direction="in" />
@@ -97,6 +104,7 @@
       closeChannel
     -->
     <method name="closeChannel">
+      <arg type="a(y)" name="privilege" direction="in" />
       <arg type="u" name="service_id" direction="in" />
       <arg type="u" name="channel_id" direction="in" />
       <arg type="i" name="result" direction="out" />

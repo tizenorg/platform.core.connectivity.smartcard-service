@@ -26,7 +26,7 @@
 #include "Reader.h"
 #include "Session.h"
 #ifdef USE_GDBUS
-#include "GDBusHelper.h"
+#include "ClientGDBus.h"
 #include "smartcard-service-gdbus.h"
 #else
 #include "Message.h"
@@ -40,20 +40,17 @@
 namespace smartcard_service_api
 {
 	Reader::Reader(void *context, const char *name, void *handle) :
-		ReaderHelper(), context(context), handle(handle)
+		ReaderHelper(name), context(context), handle(handle)
 	{
 		_BEGIN();
 
-		if (context == NULL || name == NULL || strlen(name) == 0 || handle == NULL)
+		if (context == NULL || name == NULL ||
+			strlen(name) == 0 || handle == NULL)
 		{
 			_ERR("invalid param");
 
 			return;
 		}
-
-		this->handle = handle;
-		this->context = context;
-		this->name = name;
 #ifdef USE_GDBUS
 		/* initialize client */
 		if (!g_thread_supported())
@@ -123,12 +120,12 @@ namespace smartcard_service_api
 
 			if (smartcard_service_reader_call_open_session_sync(
 				(SmartcardServiceReader *)proxy,
+				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				&result, &session_id, NULL, &error) == true) {
 				if (result == SCARD_ERROR_OK) {
 					/* create new instance of channel */
-
 					session = new Session(context, this,
 						GUINT_TO_POINTER(session_id));
 					if (session != NULL) {
@@ -267,6 +264,7 @@ namespace smartcard_service_api
 
 			smartcard_service_reader_call_open_session(
 				(SmartcardServiceReader *)proxy,
+				ClientGDBus::getCookie(),
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
 				NULL, &Reader::reader_open_session_cb, param);

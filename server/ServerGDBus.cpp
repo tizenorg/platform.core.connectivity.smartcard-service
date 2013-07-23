@@ -15,6 +15,7 @@
  */
 
 #ifdef USE_GDBUS
+/* standard library header */
 #include <unistd.h>
 #include <glib.h>
 #include <gio/gio.h>
@@ -22,6 +23,10 @@
 #include <string>
 #include <sys/socket.h>
 
+/* SLP library header */
+#include "security-server.h"
+
+/* local header */
 #include "smartcard-types.h"
 #include "Debug.h"
 #include "ByteArray.h"
@@ -48,22 +53,27 @@ namespace smartcard_service_api
 		return dispatcher;
 	}
 
-	void GDBusDispatcher::push(dispatcher_cb_t cb, const vector<void *> &params)
+	void GDBusDispatcher::_push(dispatcher_cb_t cb,
+		const vector<void *> &params)
 	{
-		_BEGIN();
-
 		syncLock();
 
 		q.push(make_pair(cb, params));
+		_INFO("request pushed, count [%d]", q.size());
+
 		if (q.size() == 1) {
 			/* start dispatch */
-			_INFO("start dispatch");
+			_INFO("start dispatcher");
 			g_idle_add(&GDBusDispatcher::dispatch, this);
 		}
 
 		syncUnlock();
+	}
 
-		_END();
+	void GDBusDispatcher::push(dispatcher_cb_t cb,
+		const vector<void *> &params)
+	{
+		GDBusDispatcher::getInstance()._push(cb, params);
 	}
 
 	gboolean GDBusDispatcher::dispatch(gpointer user_data)
@@ -90,7 +100,7 @@ namespace smartcard_service_api
 
 			result = true;
 		} else {
-			_INFO("dispatch finish");
+			_INFO("dispatch finished");
 		}
 
 		dispatcher->syncUnlock();
@@ -117,7 +127,7 @@ namespace smartcard_service_api
 		return serverGDBus;
 	}
 
-	void ServerGDBus::name_owner_changed(GDBusProxy *proxy,
+	static void name_owner_changed(GDBusProxy *proxy,
 		const gchar *name, const gchar *old_owner,
 		const gchar *new_owner, void *user_data)
 	{
@@ -136,6 +146,26 @@ namespace smartcard_service_api
 				}
 			}
 		}
+	}
+
+	static void _on_name_owner_changed(GDBusConnection *connection,
+		const gchar *sender_name, const gchar *object_path,
+		const gchar *interface_name, const gchar *signal_name,
+		GVariant *parameters, gpointer user_data)
+	{
+		GVariantIter *iter;
+		gchar *name;
+		gchar *old_owner;
+		gchar *new_owner;
+
+		iter = g_variant_iter_new(parameters);
+
+		g_variant_iter_next(iter, "s", &name);
+		g_variant_iter_next(iter, "s", &old_owner);
+		g_variant_iter_next(iter, "s", &new_owner);
+
+		name_owner_changed((GDBusProxy *)connection,
+			name, old_owner, new_owner, user_data);
 	}
 
 	bool ServerGDBus::_init()
@@ -159,9 +189,16 @@ namespace smartcard_service_api
 			return false;
 		}
 
-		g_signal_connect(dbus_proxy, "name-owner-changed",
-				G_CALLBACK(&ServerGDBus::name_owner_changed),
-				this);
+		/* subscribe signal */
+		g_dbus_connection_signal_subscribe(connection,
+			"org.freedesktop.DBus", /* bus name */
+			"org.freedesktop.DBus", /* interface */
+			"NameOwnerChanged", /* member */
+			"/org/freedesktop/DBus", /* path */
+			NULL, /* arg0 */
+			G_DBUS_SIGNAL_FLAGS_NONE,
+			_on_name_owner_changed,
+			NULL, NULL);
 
 		return true;
 	}
@@ -178,8 +215,6 @@ namespace smartcard_service_api
 	{
 		GError *error = NULL;
 
-		_init();
-
 		connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &error);
 		if (connection != NULL) {
 		} else {
@@ -188,6 +223,8 @@ namespace smartcard_service_api
 
 			return false;
 		}
+
+		_init();
 
 		initSEService();
 		initReader();
@@ -204,12 +241,12 @@ namespace smartcard_service_api
 		deinitSession();
 		deinitChannel();
 
+		_deinit();
+
 		if (connection != NULL) {
 			g_object_unref(connection);
 			connection = NULL;
 		}
-
-		_deinit();
 	}
 
 	static gboolean _call_get_connection_unix_process_id_sync(
@@ -218,10 +255,10 @@ namespace smartcard_service_api
 		GVariant *_ret;
 
 		_ret = g_dbus_proxy_call_sync(proxy,
-				"GetConnectionUnixProcessID",
-				g_variant_new("(s)", arg_name),
-				G_DBUS_CALL_FLAGS_NONE,
-				-1, cancellable, error);
+			"GetConnectionUnixProcessID",
+			g_variant_new("(s)", arg_name),
+			G_DBUS_CALL_FLAGS_NONE,
+			-1, cancellable, error);
 		if (_ret != NULL) {
 			g_variant_get(_ret, "(u)", out_pid);
 			g_variant_unref(_ret);
@@ -246,11 +283,30 @@ namespace smartcard_service_api
 		return pid;
 	}
 
+	static bool _is_authorized_request(GVariant *privilege,
+		const char *rights)
+	{
+		bool result = true;
+#ifdef USER_SPACE_SMACK
+		ByteArray temp;
+
+		/* apply user space smack */
+		GDBusHelper::convertVariantToByteArray(privilege, temp);
+
+		result = (security_server_check_privilege_by_cookie(
+			(char *)temp.getBuffer(),
+			"smartcard-service",
+			rights) == SECURITY_SERVER_API_SUCCESS);
+#endif
+		return result;
+	}
+
 	/* SEService *
 	 *
 	 *
 	 */
-	static GVariant *_reader_to_variant(vector<pair<unsigned int, string> > &readers)
+	static GVariant *_reader_to_variant(
+		vector<pair<unsigned int, string> > &readers)
 	{
 		GVariantBuilder builder;
 		uint32_t i;
@@ -258,14 +314,16 @@ namespace smartcard_service_api
 		g_variant_builder_init(&builder, G_VARIANT_TYPE("a(us)"));
 
 		for (i = 0; i < readers.size(); i++) {
-			g_variant_builder_add(&builder, "(us)", readers[i].first, readers[i].second.c_str());
+			g_variant_builder_add(&builder, "(us)",
+				readers[i].first, readers[i].second.c_str());
 		}
 
 		return g_variant_builder_end(&builder);
 	}
 
 	static gboolean __process_se_service(SmartcardServiceSeService *object,
-		GDBusMethodInvocation *invocation, void *user_data)
+		GDBusMethodInvocation *invocation,
+		void *user_data)
 	{
 		_INFO("[MSG_REQUEST_READERS]");
 
@@ -273,15 +331,18 @@ namespace smartcard_service_api
 		GVariant *readers = NULL;
 		vector<pair<unsigned int, string> > list;
 		unsigned int handle = IntegerHandle::INVALID_HANDLE;
+		const char *name;
 
 		ServerResource &resource = ServerResource::getInstance();
+
+		name = g_dbus_method_invocation_get_sender(invocation);
+
+		pid_t pid;
 
 		/* load secure elements */
 		resource.loadSecureElements();
 
-		const char *name = g_dbus_method_invocation_get_sender(invocation);
-
-		pid_t pid = ServerGDBus::getInstance().getPID(name);
+		pid = ServerGDBus::getInstance().getPID(name);
 
 		_INFO("service requested, pid [%d]", pid);
 
@@ -310,6 +371,9 @@ namespace smartcard_service_api
 					handle = service->getHandle();
 					resource.getReaders(list);
 
+					if (list.size() == 0) {
+						_INFO("no secure elements");
+					}
 				} else {
 					_ERR("createService failed");
 
@@ -327,10 +391,6 @@ namespace smartcard_service_api
 		}
 
 		readers = _reader_to_variant(list);
-		if (list.size() > 0) {
-		} else {
-			_INFO("no secure elements");
-		}
 
 		/* response to client */
 		smartcard_service_se_service_complete_se_service(object,
@@ -356,41 +416,69 @@ namespace smartcard_service_api
 		user_data = params[2];
 
 		__process_se_service(object, invocation, user_data);
+
+		g_object_unref(object);
+		g_object_unref(invocation);
 	}
 
 	static gboolean _handle_se_service(SmartcardServiceSeService *object,
-		GDBusMethodInvocation *invocation, void *user_data)
+		GDBusMethodInvocation *invocation,
+		GVariant *privilege,
+		void *user_data)
 	{
 		vector<void *> params;
 
-		g_object_ref(object);
-		params.push_back((void *)object);
+		/* apply user space smack */
+		if (_is_authorized_request(privilege, "r") == true) {
+			g_object_ref(object);
+			params.push_back((void *)object);
 
-		g_object_ref(invocation);
-		params.push_back((void *)invocation);
+			g_object_ref(invocation);
+			params.push_back((void *)invocation);
 
-		params.push_back((void *)user_data);
+			params.push_back((void *)user_data);
 
-		GDBusDispatcher::getInstance().push(_process_se_service,
-			params);
+			GDBusDispatcher::push(_process_se_service, params);
+		} else {
+			vector<pair<unsigned int, string> > list;
+
+			_ERR("access denied");
+
+			/* response to client */
+			smartcard_service_se_service_complete_se_service(object,
+				invocation,
+				SCARD_ERROR_SECURITY_NOT_ALLOWED,
+				IntegerHandle::INVALID_HANDLE,
+				_reader_to_variant(list));
+		}
 
 		return true;
 	}
-
 
 	static gboolean __process_shutdown(SmartcardServiceSeService *object,
 		GDBusMethodInvocation *invocation,
 		guint handle, void *user_data)
 	{
+		const char *name;
+
 		_INFO("[MSG_REQUEST_SHUTDOWN]");
 
-		const char *name = g_dbus_method_invocation_get_sender(invocation);
+		name = g_dbus_method_invocation_get_sender(invocation);
 
-		ServerResource::getInstance().removeService(name, handle);
+		ServerResource &resource = ServerResource::getInstance();
+
+		resource.removeService(name, handle);
 
 		/* response to client */
 		smartcard_service_se_service_complete_shutdown(object,
 			invocation, SCARD_ERROR_OK);
+
+		/* terminate */
+		if (resource.getClientCount() == 0) {
+			_INFO("no client connected. terminate server");
+
+			g_main_loop_quit((GMainLoop *)resource.getMainLoopInstance());
+		}
 
 		return true;
 	}
@@ -414,25 +502,38 @@ namespace smartcard_service_api
 		user_data = params[3];
 
 		__process_shutdown(object, invocation, handle, user_data);
+
+		g_object_unref(object);
+		g_object_unref(invocation);
 	}
 
 	static gboolean _handle_shutdown(SmartcardServiceSeService *object,
-		GDBusMethodInvocation *invocation, guint handle,
+		GDBusMethodInvocation *invocation,
+		GVariant *privilege,
+		guint handle,
 		void *user_data)
 	{
 		vector<void *> params;
 
-		g_object_ref(object);
-		params.push_back((void *)object);
+		/* apply user space smack */
+		if (_is_authorized_request(privilege, "r") == true) {
+			g_object_ref(object);
+			params.push_back((void *)object);
 
-		g_object_ref(invocation);
-		params.push_back((void *)invocation);
+			g_object_ref(invocation);
+			params.push_back((void *)invocation);
 
-		params.push_back((void *)handle);
-		params.push_back(user_data);
+			params.push_back((void *)handle);
+			params.push_back(user_data);
 
-		GDBusDispatcher::getInstance().push(_process_shutdown,
-			params);
+			GDBusDispatcher::push(_process_shutdown, params);
+		} else {
+			_ERR("access denied");
+
+			/* response to client */
+			smartcard_service_se_service_complete_shutdown(object,
+				invocation, SCARD_ERROR_SECURITY_NOT_ALLOWED);
+		}
 
 		return true;
 	}
@@ -505,31 +606,32 @@ namespace smartcard_service_api
 	{
 		unsigned int handle = IntegerHandle::INVALID_HANDLE;
 		int result;
+		const char *name;
 
 		_INFO("[MSG_REQUEST_OPEN_SESSION]");
 
 		ServerResource &resource = ServerResource::getInstance();
 
-		const char *name = g_dbus_method_invocation_get_sender(invocation);
+		name = g_dbus_method_invocation_get_sender(invocation);
 
-		if (resource.isValidReaderHandle(reader_id))
-		{
+		if (resource.isValidReaderHandle(reader_id)) {
 			vector<ByteArray> temp;
 
-			handle = resource.createSession(name, service_id, reader_id, temp, (void *)NULL);
-			if (handle != IntegerHandle::INVALID_HANDLE)
-			{
+			handle = resource.createSession(name,
+				service_id,
+				reader_id,
+				temp,
+				(void *)NULL);
+			if (handle != IntegerHandle::INVALID_HANDLE) {
 				result = SCARD_ERROR_OK;
-			}
-			else
-			{
+			} else {
 				_ERR("createSession failed [%d]", handle);
+
 				result = SCARD_ERROR_OUT_OF_MEMORY;
 			}
-		}
-		else
-		{
+		} else {
 			_ERR("request invalid reader handle [%d]", reader_id);
+
 			result = SCARD_ERROR_ILLEGAL_PARAM;
 		}
 
@@ -562,26 +664,41 @@ namespace smartcard_service_api
 
 		__process_open_session(object, invocation, service_id,
 			reader_id, user_data);
+
+		g_object_unref(object);
+		g_object_unref(invocation);
 	}
 
 	static gboolean _handle_open_session(SmartcardServiceReader *object,
-		GDBusMethodInvocation *invocation, guint service_id,
+		GDBusMethodInvocation *invocation,
+		GVariant *privilege,
+		guint service_id,
 		guint reader_id, void *user_data)
 	{
 		vector<void *> params;
 
-		g_object_ref(object);
-		params.push_back((void *)object);
+		/* apply user space smack */
+		if (_is_authorized_request(privilege, "r") == true) {
+			g_object_ref(object);
+			params.push_back((void *)object);
 
-		g_object_ref(invocation);
-		params.push_back((void *)invocation);
+			g_object_ref(invocation);
+			params.push_back((void *)invocation);
 
-		params.push_back((void *)service_id);
-		params.push_back((void *)reader_id);
-		params.push_back(user_data);
+			params.push_back((void *)service_id);
+			params.push_back((void *)reader_id);
+			params.push_back(user_data);
 
-		GDBusDispatcher::getInstance().push(_process_open_session,
-			params);
+			GDBusDispatcher::push(_process_open_session, params);
+		} else {
+			_ERR("access denied");
+
+			/* response to client */
+			smartcard_service_reader_complete_open_session(object,
+				invocation,
+				SCARD_ERROR_SECURITY_NOT_ALLOWED,
+				IntegerHandle::INVALID_HANDLE);
+		}
 
 		return true;
 	}
@@ -631,15 +748,20 @@ namespace smartcard_service_api
 		GDBusMethodInvocation *invocation, guint service_id,
 		guint session_id, void *user_data)
 	{
+		const char *name;
+
 		_INFO("[MSG_REQUEST_CLOSE_SESSION]");
 
 		ServerResource &resource = ServerResource::getInstance();
 
-		const char *name = g_dbus_method_invocation_get_sender(invocation);
+		name = g_dbus_method_invocation_get_sender(invocation);
 
-		if (resource.isValidSessionHandle(name, service_id, session_id))
-		{
-			resource.removeSession(name, service_id, session_id);
+		if (resource.isValidSessionHandle(name, service_id,
+			session_id)) {
+			resource.removeSession(name, service_id,
+				session_id);
+		} else {
+			_ERR("invalid parameters");
 		}
 
 		/* response to client */
@@ -671,26 +793,39 @@ namespace smartcard_service_api
 
 		__process_close_session(object, invocation, service_id,
 			session_id, user_data);
+
+		g_object_unref(object);
+		g_object_unref(invocation);
 	}
 
 	static gboolean _handle_close_session(SmartcardServiceSession *object,
-		GDBusMethodInvocation *invocation, guint service_id,
+		GDBusMethodInvocation *invocation,
+		GVariant *privilege,
+		guint service_id,
 		guint session_id, void *user_data)
 	{
 		vector<void *> params;
 
-		g_object_ref(object);
-		params.push_back((void *)object);
+		/* apply user space smack */
+		if (_is_authorized_request(privilege, "r") == true) {
+			g_object_ref(object);
+			params.push_back((void *)object);
 
-		g_object_ref(invocation);
-		params.push_back((void *)invocation);
+			g_object_ref(invocation);
+			params.push_back((void *)invocation);
 
-		params.push_back((void *)service_id);
-		params.push_back((void *)session_id);
-		params.push_back(user_data);
+			params.push_back((void *)service_id);
+			params.push_back((void *)session_id);
+			params.push_back(user_data);
 
-		GDBusDispatcher::getInstance().push(_process_close_session,
-			params);
+			GDBusDispatcher::push(_process_close_session, params);
+		} else {
+			_ERR("access denied");
+
+			/* response to client */
+			smartcard_service_session_complete_close_session(object,
+				invocation, SCARD_ERROR_SECURITY_NOT_ALLOWED);
+		}
 
 		return true;
 	}
@@ -700,51 +835,45 @@ namespace smartcard_service_api
 		guint session_id, void *user_data)
 	{
 		int result;
+		ByteArray resp;
 		GVariant *atr = NULL;
-		ServiceInstance *client = NULL;
+		const char *name;
 
 		_INFO("[MSG_REQUEST_GET_ATR]");
 
 		ServerResource &resource = ServerResource::getInstance();
 
-		const char *name = g_dbus_method_invocation_get_sender(invocation);
+		name = g_dbus_method_invocation_get_sender(invocation);
 
-		if ((client = resource.getService(name, service_id)) != NULL)
-		{
-			Terminal *terminal = NULL;
+		ServiceInstance *client = NULL;
 
-			if ((terminal = client->getTerminal(session_id)) != NULL)
-			{
+		client = resource.getService(name, service_id);
+		if (client != NULL) {
+			Terminal *terminal;
+
+			terminal = client->getTerminal(session_id);
+			if (terminal != NULL) {
 				int rv;
-				ByteArray temp;
 
-				if ((rv = terminal->getATRSync(temp)) == 0)
-				{
-					atr = GDBusHelper::convertByteArrayToVariant(temp);
+				if ((rv = terminal->getATRSync(resp)) == 0) {
 					result = SCARD_ERROR_OK;
-				}
-				else
-				{
-					_ERR("transmit failed [%d]", rv);
+				} else {
+					_ERR("getATRSync failed : name [%s], service_id [%d], session_id [%d]", name, service_id, session_id);
 
 					result = rv;
 				}
-			}
-			else
-			{
+			} else {
 				_ERR("getTerminal failed : name [%s], service_id [%d], session_id [%d]", name, service_id, session_id);
+
 				result = SCARD_ERROR_UNAVAILABLE;
 			}
-		}
-		else
-		{
+		} else {
 			_ERR("getClient failed : name [%s], service_id [%d], session_id [%d]", name, service_id, session_id);
+
 			result = SCARD_ERROR_UNAVAILABLE;
 		}
 
-		if (atr == NULL) {
-			atr = GDBusHelper::convertByteArrayToVariant(ByteArray::EMPTY);
-		}
+		atr = GDBusHelper::convertByteArrayToVariant(resp);
 
 		/* response to client */
 		smartcard_service_session_complete_get_atr(object, invocation,
@@ -775,26 +904,44 @@ namespace smartcard_service_api
 
 		__process_get_atr(object, invocation, service_id,
 			session_id, user_data);
+
+		g_object_unref(object);
+		g_object_unref(invocation);
 	}
 
 	static gboolean _handle_get_atr(SmartcardServiceSession *object,
-		GDBusMethodInvocation *invocation, guint service_id,
+		GDBusMethodInvocation *invocation,
+		GVariant *privilege,
+		guint service_id,
 		guint session_id, void *user_data)
 	{
 		vector<void *> params;
 
-		g_object_ref(object);
-		params.push_back((void *)object);
+		/* apply user space smack */
+		if (_is_authorized_request(privilege, "r") == true) {
+			g_object_ref(object);
+			params.push_back((void *)object);
 
-		g_object_ref(invocation);
-		params.push_back((void *)invocation);
+			g_object_ref(invocation);
+			params.push_back((void *)invocation);
 
-		params.push_back((void *)service_id);
-		params.push_back((void *)session_id);
-		params.push_back(user_data);
+			params.push_back((void *)service_id);
+			params.push_back((void *)session_id);
+			params.push_back(user_data);
 
-		GDBusDispatcher::getInstance().push(_process_get_atr,
-			params);
+			GDBusDispatcher::push(_process_get_atr, params);
+		} else {
+			ByteArray resp;
+
+			_ERR("access denied");
+
+			/* response to client */
+			smartcard_service_session_complete_get_atr(
+				object,
+				invocation,
+				SCARD_ERROR_SECURITY_NOT_ALLOWED,
+				GDBusHelper::convertByteArrayToVariant(resp));
+		}
 
 		return true;
 	}
@@ -804,35 +951,37 @@ namespace smartcard_service_api
 		guint session_id, guint type, GVariant *aid, void *user_data)
 	{
 		int result = SCARD_ERROR_UNKNOWN;
+		ByteArray resp;
 		GVariant *response = NULL;
 		unsigned int channelID = IntegerHandle::INVALID_HANDLE;
+		const char *name;
 
 		_INFO("[MSG_REQUEST_OPEN_CHANNEL]");
 
 		ServerResource &resource = ServerResource::getInstance();
 
-		const char *name = g_dbus_method_invocation_get_sender(invocation);
+		name = g_dbus_method_invocation_get_sender(invocation);
 
 		try
 		{
 			ByteArray tempAid;
 
-			GDBusHelper::convertVariantToByteArray(aid, tempAid);
+			GDBusHelper::convertVariantToByteArray(aid,
+				tempAid);
 
-			channelID = resource.createChannel(name, service_id, session_id, type, tempAid);
-			if (channelID != IntegerHandle::INVALID_HANDLE)
-			{
+			channelID = resource.createChannel(name,
+				service_id, session_id, type, tempAid);
+			if (channelID != IntegerHandle::INVALID_HANDLE) {
 				ServerChannel *temp;
 
-				temp = (ServerChannel *)resource.getChannel(name, service_id, channelID);
-				if (temp != NULL)
-				{
+				temp = (ServerChannel *)resource.getChannel(
+					name, service_id, channelID);
+				if (temp != NULL) {
+					resp = temp->getSelectResponse();
+
 					result = SCARD_ERROR_OK;
-					response = GDBusHelper::convertByteArrayToVariant(temp->getSelectResponse());
 				}
-			}
-			else
-			{
+			} else {
 				_ERR("channel is null.");
 
 				/* set error value */
@@ -844,9 +993,8 @@ namespace smartcard_service_api
 			result = e.getErrorCode();
 		}
 
-		if (response == NULL) {
-			response = GDBusHelper::convertByteArrayToVariant(ByteArray::EMPTY);
-		}
+		response = GDBusHelper::convertByteArrayToVariant(resp);
+
 		/* response to client */
 		smartcard_service_session_complete_open_channel(object,
 			invocation, result, channelID, response);
@@ -880,30 +1028,49 @@ namespace smartcard_service_api
 
 		__process_open_channel(object, invocation, service_id,
 			session_id, type, aid, user_data);
+
+		g_object_unref(object);
+		g_object_unref(invocation);
+		g_object_unref(aid);
 	}
 
 	static gboolean _handle_open_channel(SmartcardServiceSession *object,
-		GDBusMethodInvocation *invocation, guint service_id,
+		GDBusMethodInvocation *invocation,
+		GVariant *privilege,
+		guint service_id,
 		guint session_id, guint type, GVariant *aid, void *user_data)
 	{
 		vector<void *> params;
 
-		g_object_ref(object);
-		params.push_back((void *)object);
+		/* apply user space smack */
+		if (_is_authorized_request(privilege, "rw") == true) {
+			g_object_ref(object);
+			params.push_back((void *)object);
 
-		g_object_ref(invocation);
-		params.push_back((void *)invocation);
+			g_object_ref(invocation);
+			params.push_back((void *)invocation);
 
-		params.push_back((void *)service_id);
-		params.push_back((void *)session_id);
-		params.push_back((void *)type);
+			params.push_back((void *)service_id);
+			params.push_back((void *)session_id);
+			params.push_back((void *)type);
 
-		g_object_ref(aid);
-		params.push_back((void *)aid);
-		params.push_back(user_data);
+			g_object_ref(aid);
+			params.push_back((void *)aid);
+			params.push_back(user_data);
 
-		GDBusDispatcher::getInstance().push(_process_open_channel,
-			params);
+			GDBusDispatcher::push(_process_open_channel, params);
+		} else {
+			ByteArray resp;
+
+			_ERR("access denied");
+
+			/* response to client */
+			smartcard_service_session_complete_open_channel(object,
+				invocation,
+				SCARD_ERROR_SECURITY_NOT_ALLOWED,
+				IntegerHandle::INVALID_HANDLE,
+				GDBusHelper::convertByteArrayToVariant(resp));
+		}
 
 		return true;
 	}
@@ -964,19 +1131,17 @@ namespace smartcard_service_api
 		guint channel_id, void *user_data)
 	{
 		int result;
+		const char *name;
 
 		_INFO("[MSG_REQUEST_CLOSE_CHANNEL]");
 
 		ServerResource &resource = ServerResource::getInstance();
 
-		const char *name = g_dbus_method_invocation_get_sender(invocation);
+		name = g_dbus_method_invocation_get_sender(invocation);
+
+		resource.removeChannel(name, service_id, channel_id);
 
 		result = SCARD_ERROR_OK;
-
-		if (resource.getChannel(name, service_id, channel_id) != NULL)
-		{
-			resource.removeChannel(name, service_id, channel_id);
-		}
 
 		/* response to client */
 		smartcard_service_channel_complete_close_channel(object,
@@ -993,7 +1158,7 @@ namespace smartcard_service_api
 		guint channel_id;
 		void *user_data;
 
-		if (params.size() != 7) {
+		if (params.size() != 5) {
 			_ERR("invalid parameter");
 
 			return;
@@ -1007,71 +1172,85 @@ namespace smartcard_service_api
 
 		__process_close_channel(object, invocation, service_id,
 			channel_id, user_data);
+
+		g_object_unref(object);
+		g_object_unref(invocation);
 	}
 
 	static gboolean _handle_close_channel(SmartcardServiceChannel *object,
-		GDBusMethodInvocation *invocation, guint service_id,
-		guint channel_id, void *user_data)
+		GDBusMethodInvocation *invocation,
+		GVariant *privilege,
+		guint service_id, guint channel_id, void *user_data)
 	{
 		vector<void *> params;
 
-		g_object_ref(object);
-		params.push_back((void *)object);
+		/* apply user space smack */
+		if (_is_authorized_request(privilege, "r") == true) {
+			g_object_ref(object);
+			params.push_back((void *)object);
 
-		g_object_ref(invocation);
-		params.push_back((void *)invocation);
+			g_object_ref(invocation);
+			params.push_back((void *)invocation);
 
-		params.push_back((void *)service_id);
-		params.push_back((void *)channel_id);
-		params.push_back(user_data);
+			params.push_back((void *)service_id);
+			params.push_back((void *)channel_id);
+			params.push_back(user_data);
 
-		GDBusDispatcher::getInstance().push(_process_close_channel,
-			params);
+			GDBusDispatcher::push(_process_close_channel, params);
+		} else {
+			_ERR("access denied");
+
+			/* response to client */
+			smartcard_service_channel_complete_close_channel(
+				object,
+				invocation,
+				SCARD_ERROR_SECURITY_NOT_ALLOWED);
+		}
 
 		return true;
 	}
 
 	static gboolean __process_transmit(SmartcardServiceChannel *object,
-		GDBusMethodInvocation *invocation, guint service_id,
-		guint channel_id, GVariant *command, void *user_data)
+		GDBusMethodInvocation *invocation,
+		guint service_id,
+		guint channel_id,
+		GVariant *command,
+		void *user_data)
 	{
 		int result;
 		Channel *channel = NULL;
+		ByteArray resp;
 		GVariant *response = NULL;
+		const char *name;
 
 		_INFO("[MSG_REQUEST_TRANSMIT]");
 
 		ServerResource &resource = ServerResource::getInstance();
 
-		const char *name = g_dbus_method_invocation_get_sender(invocation);
+		name = g_dbus_method_invocation_get_sender(invocation);
 
-		if ((channel = resource.getChannel(name, service_id, channel_id)) != NULL)
-		{
+		channel = resource.getChannel(name, service_id, channel_id);
+		if (channel != NULL) {
 			int rv;
-			ByteArray cmd, resp;
+			ByteArray cmd;
 
 			GDBusHelper::convertVariantToByteArray(command, cmd);
 
-			if ((rv = channel->transmitSync(cmd, resp)) == 0)
-			{
-				response = GDBusHelper::convertByteArrayToVariant(resp);
+			rv = channel->transmitSync(cmd, resp);
+			if (rv == 0) {
 				result = SCARD_ERROR_OK;
-			}
-			else
-			{
+			} else {
 				_ERR("transmit failed [%d]", rv);
+
 				result = rv;
 			}
-		}
-		else
-		{
+		} else {
 			_ERR("invalid handle : name [%s], service_id [%d], channel_id [%d]", name, service_id, channel_id);
+
 			result = SCARD_ERROR_UNAVAILABLE;
 		}
 
-		if (response == NULL) {
-			response = GDBusHelper::convertByteArrayToVariant(ByteArray::EMPTY);
-		}
+		response = GDBusHelper::convertByteArrayToVariant(resp);
 
 		/* response to client */
 		smartcard_service_channel_complete_transmit(object, invocation,
@@ -1089,7 +1268,7 @@ namespace smartcard_service_api
 		GVariant *command;
 		void *user_data;
 
-		if (params.size() != 7) {
+		if (params.size() != 6) {
 			_ERR("invalid parameter");
 
 			return;
@@ -1104,30 +1283,51 @@ namespace smartcard_service_api
 
 		__process_transmit(object, invocation, service_id,
 			channel_id, command, user_data);
+
+		g_object_unref(object);
+		g_object_unref(invocation);
+		g_object_unref(command);
 	}
 
 	static gboolean _handle_transmit(SmartcardServiceChannel *object,
-		GDBusMethodInvocation *invocation, guint service_id,
-		guint channel_id, GVariant *command, void *user_data)
+		GDBusMethodInvocation *invocation,
+		GVariant *privilege,
+		guint service_id,
+		guint channel_id,
+		GVariant *command,
+		void *user_data)
 	{
 		vector<void *> params;
 
-		g_object_ref(object);
-		params.push_back((void *)object);
+		/* apply user space smack */
+		if (_is_authorized_request(privilege, "r") == true) {
+			/* enqueue message */
+			g_object_ref(object);
+			params.push_back((void *)object);
 
-		g_object_ref(invocation);
-		params.push_back((void *)invocation);
+			g_object_ref(invocation);
+			params.push_back((void *)invocation);
 
-		params.push_back((void *)service_id);
-		params.push_back((void *)channel_id);
+			params.push_back((void *)service_id);
+			params.push_back((void *)channel_id);
 
-		g_object_ref(command);
-		params.push_back((void *)command);
+			g_object_ref(command);
+			params.push_back((void *)command);
 
-		params.push_back(user_data);
+			params.push_back(user_data);
 
-		GDBusDispatcher::getInstance().push(_process_transmit,
-			params);
+			GDBusDispatcher::push(_process_transmit, params);
+		} else {
+			ByteArray resp;
+
+			_ERR("access denied");
+
+			/* response to client */
+			smartcard_service_channel_complete_transmit(object,
+				invocation,
+				SCARD_ERROR_SECURITY_NOT_ALLOWED,
+				GDBusHelper::convertByteArrayToVariant(resp));
+		}
 
 		return true;
 	}

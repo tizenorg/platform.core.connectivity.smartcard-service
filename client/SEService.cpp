@@ -27,7 +27,7 @@
 #include "SEService.h"
 #include "Reader.h"
 #ifdef USE_GDBUS
-#include "smartcard-service-gdbus.h"
+#include "ClientGDBus.h"
 #else
 #include "Message.h"
 #include "ClientIPC.h"
@@ -88,13 +88,15 @@ namespace smartcard_service_api
 		readers.clear();
 	}
 
-	SEService *SEService::createInstance(void *user_data, SEServiceListener *listener)
+	SEService *SEService::createInstance(void *user_data,
+		SEServiceListener *listener)
 		throw(ErrorIO &, ErrorIllegalParameter &)
 	{
 		return new SEService(user_data, listener);
 	}
 
-	SEService *SEService::createInstance(void *user_data, serviceConnected handler)
+	SEService *SEService::createInstance(void *user_data,
+		serviceConnected handler)
 		throw(ErrorIO &, ErrorIllegalParameter &)
 	{
 		return new SEService(user_data, handler);
@@ -234,8 +236,12 @@ namespace smartcard_service_api
 			}
 #ifdef USE_GDBUS
 			smartcard_service_se_service_call_shutdown(
-				(SmartcardServiceSeService *)proxy, handle,
-				NULL, &SEService::se_service_shutdown_cb, this);
+				(SmartcardServiceSeService *)proxy,
+				ClientGDBus::getCookie(),
+				handle,
+				NULL,
+				&SEService::se_service_shutdown_cb,
+				this);
 #else
 			Message msg;
 
@@ -269,7 +275,11 @@ namespace smartcard_service_api
 
 			if (smartcard_service_se_service_call_shutdown_sync(
 				(SmartcardServiceSeService *)proxy,
-				handle, &result, NULL, &error) == false) {
+				ClientGDBus::getCookie(),
+				handle,
+				&result,
+				NULL,
+				&error) == false) {
 				_ERR("smartcard_service_se_service_call_shutdown_sync failed, [%s]", error->message);
 
 				g_error_free(error);
@@ -355,8 +365,11 @@ namespace smartcard_service_api
 
 		/* request reader */
 		smartcard_service_se_service_call_se_service(
-			(SmartcardServiceSeService *)proxy, NULL,
-			&SEService::se_service_cb, this);
+			(SmartcardServiceSeService *)proxy,
+			ClientGDBus::getCookie(),
+			NULL,
+			&SEService::se_service_cb,
+			this);
 #else
 		clientDispatcher = &ClientDispatcher::getInstance();
 		clientIPC = &ClientIPC::getInstance();
@@ -457,7 +470,8 @@ namespace smartcard_service_api
 		return true;
 	}
 #endif
-	bool SEService::parseReaderInformation(unsigned int count, const ByteArray &data)
+	bool SEService::parseReaderInformation(unsigned int count,
+		const ByteArray &data)
 	{
 		size_t i;
 		unsigned int offset = 0;

@@ -40,7 +40,7 @@ namespace smartcard_service_api
 		static GDBusDispatcher &getInstance();
 
 		/* push to queue */
-		void push(dispatcher_cb_t cb, const vector<void *> &params);
+		static void push(dispatcher_cb_t cb, const vector<void *> &params);
 
 	private :
 		std::queue<pair<dispatcher_cb_t, vector<void *> > > q;
@@ -48,6 +48,7 @@ namespace smartcard_service_api
 		GDBusDispatcher();
 		~GDBusDispatcher();
 
+		void _push(dispatcher_cb_t cb, const vector<void *> &params);
 		static gboolean dispatch(gpointer user_data);
 	};
 
@@ -81,10 +82,6 @@ namespace smartcard_service_api
 
 		ServerGDBus();
 		~ServerGDBus();
-
-		static void name_owner_changed(GDBusProxy *proxy,
-			const gchar *name, const gchar *old_owner,
-			const gchar *new_owner, void *user_data);
 
 		bool initSEService();
 		void deinitSEService();
