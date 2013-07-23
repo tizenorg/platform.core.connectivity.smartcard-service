@@ -236,10 +236,10 @@ namespace smartcard_service_api
 
 	void ServerGDBus::deinit()
 	{
-		deinitSEService();
-		deinitReader();
-		deinitSession();
 		deinitChannel();
+		deinitSession();
+		deinitReader();
+		deinitSEService();
 
 		_deinit();
 

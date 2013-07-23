@@ -20,6 +20,7 @@
 /* standard library header */
 #include <map>
 #include <vector>
+#include <string>
 #ifndef USE_GDBUS
 #include <glib.h>
 #endif

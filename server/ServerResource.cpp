@@ -849,9 +849,9 @@ namespace smartcard_service_api
 	}
 
 	bool ServerResource::_isAuthorizedAccess(ServerChannel *channel,
-		const ByteArray aid, const vector<ByteArray> &hashes)
+		const ByteArray &aid, const vector<ByteArray> &hashes)
 	{
-		bool result = true;
+		bool result = false;
 		AccessControlList *acList = NULL;
 
 		/* request open channel sequence */

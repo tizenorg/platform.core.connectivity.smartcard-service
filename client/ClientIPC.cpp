@@ -48,7 +48,7 @@ namespace smartcard_service_api
 			{
 				int error;
 
-				if ((error = security_server_request_cookie(buffer, length))
+				if ((error = security_server_request_cookie((char *)buffer, length))
 					== SECURITY_SERVER_API_SUCCESS)
 				{
 					cookie.assign(buffer, length);

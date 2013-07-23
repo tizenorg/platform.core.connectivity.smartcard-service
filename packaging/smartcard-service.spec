@@ -5,7 +5,7 @@
 
 Name:       smartcard-service
 Summary:    Smartcard Service FW
-Version:    0.1.20
+Version:    0.1.22
 Release:    0
 Group:      libs
 License:    Apache-2.0

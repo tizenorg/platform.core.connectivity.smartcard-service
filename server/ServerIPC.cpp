@@ -65,7 +65,7 @@ namespace smartcard_service_api
 		_BEGIN();
 
 		buffer = IPCHelper::retrieveBuffer(socket);
-		if (buffer.getLength() > 0)
+		if (buffer.size() > 0)
 		{
 #ifdef SECURITY_SERVER
 			ByteArray cookie;
@@ -77,7 +77,7 @@ namespace smartcard_service_api
 			cookie.assign(buffer.getBuffer(), 20);
 
 			gid = security_server_get_gid("smartcard-daemon");
-			if ((result = security_server_check_privilege(cookie.getBuffer(), gid)) != SECURITY_SERVER_API_SUCCESS)
+			if ((result = security_server_check_privilege((char *)cookie.getBuffer(), gid)) != SECURITY_SERVER_API_SUCCESS)
 			{
 				_ERR("security_server_check_privilege failed [%d]", result);
 				return msg;

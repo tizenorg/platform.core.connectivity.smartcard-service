@@ -380,7 +380,7 @@ namespace smartcard_service_api
 #ifdef USE_AUTOSTART
 			if (resource->getClientCount() == 0)
 			{
-				_DBG("There is no client. shutting down service");
+				_INFO("There is no client. shutting down service");
 				g_main_loop_quit((GMainLoop *)resource->getMainLoopInstance());
 			}
 #endif

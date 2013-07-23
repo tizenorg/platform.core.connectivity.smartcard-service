@@ -54,6 +54,7 @@ SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES VERSION ${VERSION})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_common_LDFLAGS})
 
 SET(EXPORT_HEADER 
+	include/smartcard-types.h
 	include/Debug.h
 	include/Exception.h
 	include/ByteArray.h
