@@ -35,7 +35,7 @@ namespace smartcard_service_api
 {
 	class Reader;
 
-	class Session: public SessionHelper
+	class Session : public SessionHelper
 	{
 	private:
 		void *context;
@@ -77,7 +77,6 @@ namespace smartcard_service_api
 		int openBasicChannel(const unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
 		int openLogicalChannel(const ByteArray &aid, openChannelCallback callback, void *userData);
 		int openLogicalChannel(const unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
-		int getChannelCount(getChannelCountCallback callback, void * userData);
 
 		const ByteArray getATRSync()
 			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
@@ -103,7 +102,7 @@ namespace smartcard_service_api
 			throw(ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
-		unsigned int getChannelCountSync();
+		size_t getChannelCount() const;
 
 #ifndef USE_GDBUS
 		friend class ClientDispatcher;
@@ -131,14 +130,14 @@ int session_open_basic_channel(session_h handle, unsigned char *aid,
 	unsigned int length, session_open_channel_cb callback, void *userData);
 int session_open_logical_channel(session_h handle, unsigned char *aid,
 	unsigned int length, session_open_channel_cb callback, void *userData);
-int session_get_channel_count(session_h handle, session_get_channel_count_cb callback, void * userData);
 
 int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length);
 void session_close_sync(session_h handle);
 
 channel_h session_open_basic_channel_sync(session_h handle, unsigned char *aid, unsigned int length);
 channel_h session_open_logical_channel_sync(session_h handle, unsigned char *aid, unsigned int length);
-unsigned int session_get_channel_count_sync(session_h handle);
+
+size_t session_get_channel_count(session_h handle);
 
 #ifdef __cplusplus
 }

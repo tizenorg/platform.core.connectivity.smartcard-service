@@ -506,52 +506,13 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	unsigned int Session::getChannelCountSync()
+	size_t Session::getChannelCount() const
 	{
-		unsigned int count = 0;
+		size_t count = 0;
 
 		if (getReader()->isSecureElementPresent() == true)
 		{
-#ifdef USE_GDBUS
 			count = channels.size();
-#else
-			Message msg;
-			int rv;
-
-			channelCount = -1;
-#ifdef CLIENT_IPC_THREAD
-			/* request channel handle from server */
-			msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
-			msg.param1 = (unsigned long)handle;
-			msg.error = (unsigned long)context; /* using error to context */
-			msg.caller = (void *)this;
-			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
-
-			syncLock();
-			if (ClientIPC::getInstance().sendMessage(msg) == true)
-			{
-				rv = waitTimedCondition(0);
-				if (rv != 0)
-				{
-					_ERR("time over");
-					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
-				}
-
-				count = channelCount;
-			}
-			else
-			{
-				_ERR("sendMessage failed");
-				this->error = SCARD_ERROR_IPC_FAILED;
-			}
-			syncUnlock();
-
-			if (this->error != SCARD_ERROR_OK)
-			{
-				ThrowError::throwError(this->error);
-			}
-#endif
-#endif
 		}
 		else
 		{
@@ -560,43 +521,6 @@ namespace smartcard_service_api
 		}
 
 		return count;
-	}
-
-	int Session::getChannelCount(getChannelCountCallback callback, void *userData)
-	{
-		int result;
-
-		if (getReader()->isSecureElementPresent() == true)
-		{
-#ifdef USE_GDBUS
-#else
-			Message msg;
-
-			msg.message = Message::MSG_REQUEST_GET_CHANNEL_COUNT;
-			msg.param1 = (unsigned long)handle;
-			msg.error = (unsigned long)context; /* using error to context */
-			msg.caller = (void *)this;
-			msg.callback = (void *)callback;
-			msg.userParam = userData;
-
-			if (ClientIPC::getInstance().sendMessage(msg) == true)
-			{
-				result = SCARD_ERROR_OK;
-			}
-			else
-			{
-				_ERR("sendMessage failed");
-				result = SCARD_ERROR_IPC_FAILED;
-			}
-#endif
-		}
-		else
-		{
-			_ERR("unavailable session");
-			result = SCARD_ERROR_ILLEGAL_STATE;
-		}
-
-		return result;
 	}
 
 	Channel *Session::openChannelSync(int id, const ByteArray &aid)
@@ -1052,17 +976,6 @@ EXTERN_API int session_open_logical_channel(session_h handle, unsigned char *aid
 	return result;
 }
 
-EXTERN_API int session_get_channel_count(session_h handle, session_get_channel_count_cb callback, void * userData)
-{
-	int result = -1;
-
-	SESSION_EXTERN_BEGIN;
-		result = session->getChannelCount((getChannelCountCallback)callback, userData);
-	SESSION_EXTERN_END;
-
-	return result;
-}
-
 EXTERN_API void session_destroy_instance(session_h handle)
 {
 }
@@ -1127,13 +1040,13 @@ EXTERN_API channel_h session_open_logical_channel_sync(session_h handle, unsigne
 	return result;
 }
 
-EXTERN_API unsigned int session_get_channel_count_sync(session_h handle)
+EXTERN_API size_t session_get_channel_count(session_h handle)
 {
-	unsigned int result = 0;
+	size_t result = 0;
 
 #ifdef CLIENT_IPC_THREAD
 	SESSION_EXTERN_BEGIN;
-		result = session->getChannelCountSync();
+		result = session->getChannelCount();
 	SESSION_EXTERN_END;
 #endif
 
