@@ -200,7 +200,7 @@ namespace smartcard_service_api
 			{
 				Session *session = NULL;
 
-				_DBG("MSG_REQUEST_OPEN_SESSION");
+				_INFO("MSG_REQUEST_OPEN_SESSION");
 
 				if (msg->param1 != 0)
 				{

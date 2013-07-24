@@ -136,7 +136,7 @@ namespace smartcard_service_api
 			goto ERROR;
 		}
 
-		_DBG("client socket is bond with g_io_channel");
+		_INFO("client socket is bond with g_io_channel");
 
 		if (ServerResource::getInstance().createClient(client_channel, client_sock_fd, client_src_id, 0, -1) == false)
 		{
@@ -192,7 +192,7 @@ ERROR :
 
 		if(channel == ioChannel)
 		{
-			_DBG("server socket is closed");
+			_INFO("server socket is closed");
 			restartServerIPC();
 		}
 		else
@@ -200,7 +200,7 @@ ERROR :
 			DispatcherMsg dispMsg;
 			int peerSocket = g_io_channel_unix_get_fd((GIOChannel *)channel);
 
-			_DBG("client socket is closed, socket [%d]", peerSocket);
+			_INFO("client socket is closed, socket [%d]", peerSocket);
 
 			/* push message to dispatcher */
 			dispMsg.message = Message::MSG_OPERATION_RELEASE_CLIENT;
@@ -233,7 +233,7 @@ ERROR :
 		if(channel == ioChannel)
 		{
 			/* connect state. should accept */
-			_DBG("new client connected");
+			_INFO("new client connected");
 
 			result = acceptClient();
 		}

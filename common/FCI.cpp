@@ -90,9 +90,9 @@ namespace smartcard_service_api
 			{
 				switch (tlv.getTag())
 				{
-				case 0x80 : /* file length without sturctural inforamtion */
+				case 0x80 : /* file length without structural information */
 					{
-						_DBG("0x%02X : file length without sturctural inforamtion : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : file length without structural information : %s", tlv.getTag(), tlv.getValue().toString());
 						if (tlv.getLength() > 0)
 						{
 							fileSize = NumberStream::getBigEndianNumber(tlv.getValue());
@@ -100,9 +100,9 @@ namespace smartcard_service_api
 					}
 					break;
 
-				case 0x81 : /* file length with sturctural inforamtion */
+				case 0x81 : /* file length with structural information */
 					{
-						_DBG("0x%02X : file length with sturctural inforamtion : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : file length with structural information : %s", tlv.getTag(), tlv.getValue().toString());
 						if (tlv.getLength() > 0)
 						{
 							maxRecordSize = NumberStream::getBigEndianNumber(tlv.getValue());

@@ -39,7 +39,7 @@
 #include "IPCHelper.h"
 
 #ifdef USE_UNIX_DOMAIN
-#define SCARD_SERVER_DOMAIN "/tmp/omapi-server-domain"
+#define SCARD_SERVER_DOMAIN "/tmp/smartcard-server-domain"
 #endif /* USE_UNIX_DOMAIN */
 
 static void setNonBlockSocket(int socket)
@@ -128,7 +128,7 @@ namespace smartcard_service_api
 
 		if (bind(ipcSocket, (struct sockaddr *)&saddrun_rv, sizeof(saddrun_rv)) < 0)
 		{
-			_ERR("bind is failed \n");
+			_ERR("bind is failed");
 			goto ERROR;
 		}
 
@@ -140,7 +140,7 @@ namespace smartcard_service_api
 
 		if (listen(ipcSocket, IPC_SERVER_MAX_CLIENT) < 0)
 		{
-			_ERR("listen is failed \n");
+			_ERR("listen is failed");
 			goto ERROR;
 		}
 
@@ -148,13 +148,13 @@ namespace smartcard_service_api
 		{
 			if ((watchId = g_io_add_watch(ioChannel, condition, &IPCHelper::channelCallbackFunc, this)) < 1)
 			{
-				_ERR(" g_io_add_watch is failed \n");
+				_ERR(" g_io_add_watch is failed");
 				goto ERROR;
 			}
 		}
 		else
 		{
-			_ERR(" g_io_channel_unix_new is failed \n");
+			_ERR(" g_io_channel_unix_new is failed");
 			goto ERROR;
 		}
 
@@ -178,7 +178,7 @@ namespace smartcard_service_api
 		}
 #endif
 
-		_DBG("server ipc is initialized");
+		_INFO("server ipc is initialized");
 
 		return true;
 ERROR :
@@ -312,7 +312,7 @@ ERROR :
 			}
 		}
 
-		_DBG("threadRead is terminated");
+		_INFO("threadRead is terminated");
 
 		return (void *)NULL;
 	}
@@ -421,7 +421,7 @@ ERROR :
 #endif
 		pthread_mutex_unlock(&ipcLock);
 
-		_DBG("connecting success");
+		_INFO("connecting success");
 
 		_END();
 

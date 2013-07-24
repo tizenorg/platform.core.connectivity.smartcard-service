@@ -77,7 +77,7 @@ namespace smartcard_service_api
 		/* handle message */
 		case Message::MSG_REQUEST_READERS :
 			{
-				SCARD_DEBUG("[MSG_REQUEST_READERS]");
+				_INFO("[MSG_REQUEST_READERS]");
 
 				int count = 0;
 				Message response(*msg);
@@ -96,7 +96,7 @@ namespace smartcard_service_api
 					if (instance->getPID() == -1)
 					{
 						instance->setPID(msg->error);
-						_ERR("update PID [%d]", msg->error);
+						_INFO("update PID [%d]", msg->error);
 
 						/* generate certification hashes */
 						instance->generateCertificationHashes();
@@ -114,7 +114,7 @@ namespace smartcard_service_api
 						}
 						else
 						{
-							_DBG("no secure elements");
+							_INFO("no secure elements");
 						}
 					}
 					else
@@ -126,7 +126,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					_DBG("client doesn't exist, socket [%d]", socket);
+					_ERR("client doesn't exist, socket [%d]", socket);
 
 					response.error = SCARD_ERROR_UNAVAILABLE;
 				}
@@ -140,7 +140,7 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				_DBG("[MSG_REQUEST_SHUTDOWN]");
+				_INFO("[MSG_REQUEST_SHUTDOWN]");
 
 				response.error = SCARD_ERROR_OK;
 
@@ -156,7 +156,7 @@ namespace smartcard_service_api
 				Message response(*msg);
 				unsigned int handle = IntegerHandle::INVALID_HANDLE;
 
-				_DBG("[MSG_REQUEST_OPEN_SESSION]");
+				_INFO("[MSG_REQUEST_OPEN_SESSION]");
 
 				if (resource->isValidReaderHandle(msg->param1))
 				{
@@ -190,7 +190,7 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				_DBG("[MSG_REQUEST_CLOSE_SESSION]");
+				_INFO("[MSG_REQUEST_CLOSE_SESSION]");
 
 				response.param1 = 0;
 				response.error = SCARD_ERROR_OK;
@@ -209,7 +209,7 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				_DBG("[MSG_REQUEST_OPEN_CHANNEL]");
+				_INFO("[MSG_REQUEST_OPEN_CHANNEL]");
 
 				response.param1 = IntegerHandle::INVALID_HANDLE;
 				response.param2 = 0;
@@ -260,7 +260,7 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				_DBG("[MSG_REQUEST_GET_CHANNEL_COUNT]");
+				_INFO("[MSG_REQUEST_GET_CHANNEL_COUNT]");
 
 				response.error = SCARD_ERROR_OK;
 				response.param1 = resource->getChannelCount(socket, msg->error/* service context */, msg->param1);
@@ -274,7 +274,7 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				_DBG("[MSG_REQUEST_CLOSE_CHANNEL]");
+				_INFO("[MSG_REQUEST_CLOSE_CHANNEL]");
 
 				response.error = SCARD_ERROR_OK;
 
@@ -295,7 +295,7 @@ namespace smartcard_service_api
 				ByteArray result;
 				ServiceInstance *client = NULL;
 
-				_DBG("[MSG_REQUEST_GET_ATR]");
+				_INFO("[MSG_REQUEST_GET_ATR]");
 
 				if ((client = resource->getService(socket, msg->error/* service context */)) != NULL)
 				{
@@ -339,7 +339,7 @@ namespace smartcard_service_api
 				ByteArray result;
 				Channel *channel = NULL;
 
-				_DBG("[MSG_REQUEST_TRANSMIT]");
+				_INFO("[MSG_REQUEST_TRANSMIT]");
 
 				if ((channel = resource->getChannel(socket, msg->error/* service context */, msg->param1)) != NULL)
 				{
@@ -368,22 +368,22 @@ namespace smartcard_service_api
 
 		case Message::MSG_OPERATION_RELEASE_CLIENT :
 			{
-				SCARD_DEBUG("[MSG_OPERATION_RELEASE_CLIENT]");
+				_INFO("[MSG_OPERATION_RELEASE_CLIENT]");
 
 				resource->removeClient(msg->param1);
-				SCARD_DEBUG("remain client [%d]", resource->getClientCount());
+				_DBG("remain client [%d]", resource->getClientCount());
 			}
 #ifdef USE_AUTOSTART
 			if (resource->getClientCount() == 0)
 			{
-				SCARD_DEBUG("There is no client. shutting down service");
+				_DBG("There is no client. shutting down service");
 				g_main_loop_quit((GMainLoop *)resource->getMainLoopInstance());
 			}
 #endif
 			break;
 
 		default :
-			SCARD_DEBUG("unknown message [%s], socket [%d]", msg->toString(), socket);
+			_DBG("unknown message [%s], socket [%d]", msg->toString(), socket);
 			break;
 		}
 

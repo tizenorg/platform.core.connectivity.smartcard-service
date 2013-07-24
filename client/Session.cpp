@@ -156,6 +156,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
+					_ERR("sendMessage failed");
 					result = SCARD_ERROR_IPC_FAILED;
 				}
 			}
@@ -242,6 +243,7 @@ namespace smartcard_service_api
 
 			if (ClientIPC::getInstance().sendMessage(&msg) == false)
 			{
+				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
@@ -323,6 +325,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
+				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
@@ -411,6 +414,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
+				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
@@ -489,7 +493,7 @@ namespace smartcard_service_api
 			{
 				Channel *channel = NULL;
 
-				_DBG("MSG_REQUEST_OPEN_CHANNEL");
+				_INFO("MSG_REQUEST_OPEN_CHANNEL");
 
 				if (msg->param1 != 0)
 				{
@@ -532,7 +536,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_REQUEST_GET_ATR :
 			{
-				_DBG("MSG_REQUEST_GET_ATR");
+				_INFO("MSG_REQUEST_GET_ATR");
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
@@ -557,7 +561,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_REQUEST_CLOSE_SESSION :
 			{
-				_DBG("MSG_REQUEST_CLOSE_SESSION");
+				_INFO("MSG_REQUEST_CLOSE_SESSION");
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
@@ -581,7 +585,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_REQUEST_GET_CHANNEL_COUNT :
 			{
-				_DBG("MSG_REQUEST_GET_CHANNEL_COUNT");
+				_INFO("MSG_REQUEST_GET_CHANNEL_COUNT");
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{

@@ -250,7 +250,7 @@ certiHash *__signature_helper_vector_to_linked_list(vector<ByteArray> &certHashe
 	return head;
 
 ERROR :
-	_ERR("mem alloc fail");
+	_ERR("alloc fail");
 
 	while (head)
 	{

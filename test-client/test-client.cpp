@@ -63,7 +63,7 @@ class TestEventHandler : public SEServiceListener
 
 		_BEGIN();
 
-		_DBG("event occured service [%p], seName[%s], event [%d], userData [%p]", service, seName, event, userData);
+		_INFO("event occurred service [%p], seName[%s], event [%d], userData [%p]", service, seName, event, userData);
 
 		readers = service->getReaders();
 
@@ -84,7 +84,7 @@ class TestEventHandler : public SEServiceListener
 	{
 		_BEGIN();
 
-		_DBG("error occured service [%p], error [%d]", service, error);
+		_ERR("error occurred service [%p], error [%d]", service, error);
 
 		_END();
 	}
@@ -126,7 +126,7 @@ void testOpenChannelCallback(Channel *channel, int error, void *userData)
 
 		response = channel->getSelectResponse();
 
-		_DBG("response : %s", response.toString());
+		_INFO("response : %s", response.toString());
 
 		_DBG("isBasicChannel() = %s", channel->isBasicChannel() ? "Basic" : "Logical");
 		_DBG("isClosed() = %s", channel->isClosed() ? "Closed" : "Opened");

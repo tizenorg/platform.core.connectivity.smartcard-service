@@ -60,7 +60,7 @@ class TestEventHandler : public SEServiceListener
 	{
 		_BEGIN();
 
-		_DBG("event occured service [%p], seName[%p], event [%d]", service, seName, event);
+		_INFO("event occurred service [%p], seName[%p], event [%d]", service, seName, event);
 
 		_END();
 	}
@@ -69,7 +69,7 @@ class TestEventHandler : public SEServiceListener
 	{
 		_BEGIN();
 
-		_DBG("error occured service [%p], error [%d]", service, error);
+		_ERR("error occurred service [%p], error [%d]", service, error);
 
 		_END();
 	}
@@ -122,7 +122,7 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 					int fid = 0x00003150;
 
 					response = channel->getSelectResponse();
-					_DBG("response : %s", response.toString());
+					_INFO("response : %s", response.toString());
 
 					_DBG("isBasicChannel() = %s", channel->isBasicChannel() ? "Basic" : "Logical");
 					_DBG("isClosed() = %s", channel->isClosed() ? "Closed" : "Opened");
@@ -131,7 +131,7 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 					command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_ID, 0, data);
 					int error = channel->transmitSync(command, response);
 
-					_DBG("error : %d, response : %s", error, response.toString());
+					_INFO("error : %d, response : %s", error, response.toString());
 
 					channel->closeSync();
 				}

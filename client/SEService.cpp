@@ -151,7 +151,6 @@ namespace smartcard_service_api
 				int rv;
 
 				rv = waitTimedCondition(0);
-
 				if (rv == 0)
 				{
 					ClientDispatcher::getInstance().removeSEService(context);
@@ -309,7 +308,7 @@ namespace smartcard_service_api
 		switch (msg->message)
 		{
 		case Message::MSG_REQUEST_READERS :
-			_DBG("[MSG_REQUEST_READERS]");
+			_INFO("[MSG_REQUEST_READERS]");
 
 			service->connected = true;
 
@@ -328,7 +327,7 @@ namespace smartcard_service_api
 			break;
 
 		case Message::MSG_REQUEST_SHUTDOWN :
-			_DBG("[MSG_REQUEST_SHUTDOWN]");
+			_INFO("[MSG_REQUEST_SHUTDOWN]");
 
 			if (msg->isSynchronousCall() == true) /* synchronized call */
 			{
@@ -350,7 +349,7 @@ namespace smartcard_service_api
 			{
 				Reader *reader = NULL;
 
-				_DBG("[MSG_NOTIFY_SE_INSERTED]");
+				_INFO("[MSG_NOTIFY_SE_INSERTED]");
 
 				/* add readers */
 				reader = new Reader(service->context,
@@ -380,7 +379,7 @@ namespace smartcard_service_api
 			{
 				size_t i;
 
-				_DBG("[MSG_NOTIFY_SE_REMOVED]");
+				_INFO("[MSG_NOTIFY_SE_REMOVED]");
 
 				for (i = 0; i < service->readers.size(); i++)
 				{
@@ -404,7 +403,7 @@ namespace smartcard_service_api
 			break;
 
 		case Message::MSG_OPERATION_RELEASE_CLIENT :
-			_DBG("[MSG_OPERATION_RELEASE_CLIENT]");
+			_INFO("[MSG_OPERATION_RELEASE_CLIENT]");
 
 			if (service->listener != NULL)
 			{

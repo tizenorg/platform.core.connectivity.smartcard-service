@@ -196,7 +196,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					_DBG("access granted for all applications, aid : %s", aid.toString());
+					_INFO("access granted for all applications, aid : %s", aid.toString());
 
 					permission = true;
 					break;
@@ -205,7 +205,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_DBG("access denied for all applications, aid : %s", aid.toString());
+			_INFO("access denied for all applications, aid : %s", aid.toString());
 
 			permission = false;
 		}

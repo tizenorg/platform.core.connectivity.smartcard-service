@@ -923,7 +923,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_DBG("no secure element");
+			_INFO("no secure element");
 		}
 
 		return result;
@@ -955,7 +955,7 @@ namespace smartcard_service_api
 				unsigned int terminalID = IntegerHandle::INVALID_HANDLE;
 				Message msg;
 
-				_DBG("[NOTIFY_SE_AVAILABLE]");
+				_INFO("[NOTIFY_SE_AVAILABLE]");
 
 				terminalID = instance.getTerminalID((char *)terminal);
 				if (terminalID != IntegerHandle::INVALID_HANDLE)
@@ -976,7 +976,7 @@ namespace smartcard_service_api
 				unsigned int readerID = IntegerHandle::INVALID_HANDLE;
 				Message msg;
 
-				_DBG("[NOTIFY_SE_NOT_AVAILABLE]");
+				_INFO("[NOTIFY_SE_NOT_AVAILABLE]");
 
 				readerID = instance.getReaderID((char *)terminal);
 

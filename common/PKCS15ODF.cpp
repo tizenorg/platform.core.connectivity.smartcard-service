@@ -128,7 +128,7 @@ namespace smartcard_service_api
 
 		}
 
-		_DBG("dataList.size() = %d", dataList.size());
+		_INFO("dataList.size() = %d", dataList.size());
 
 		return result;
 	}

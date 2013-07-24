@@ -86,7 +86,7 @@ namespace smartcard_service_api
 					rv = waitTimedCondition(0);
 					if (rv < 0)
 					{
-						_ERR("closeSync failed [%d]", rv);
+						_ERR("timeout [%d]", rv);
 						this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 					}
 				}
@@ -106,8 +106,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				/* FIXME */
-				_DBG("unavailable channel");
+				_INFO("unavailable channel");
 			}
 		}
 #endif
@@ -134,6 +133,7 @@ namespace smartcard_service_api
 
 				if (ClientIPC::getInstance().sendMessage(&msg) == false)
 				{
+					_ERR("sendMessage failed");
 					result = SCARD_ERROR_IPC_FAILED;
 				}
 			}
@@ -173,13 +173,11 @@ namespace smartcard_service_api
 				if (rv >= 0)
 				{
 					result = response;
-
 					rv = SCARD_ERROR_OK;
 				}
 				else
 				{
-					_ERR("timeout");
-
+					_ERR("timeout [%d]", rv);
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
@@ -228,6 +226,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
+				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
@@ -259,7 +258,7 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_TRANSMIT :
 			{
 				/* transmit result */
-				_DBG("MSG_REQUEST_TRANSMIT");
+				_INFO("MSG_REQUEST_TRANSMIT");
 
 				if (msg->error == 0 &&
 					ResponseHelper::getStatus(msg->data) == 0)
@@ -293,7 +292,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_REQUEST_CLOSE_CHANNEL :
 			{
-				_DBG("MSG_REQUEST_CLOSE_CHANNEL");
+				_INFO("MSG_REQUEST_CLOSE_CHANNEL");
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{

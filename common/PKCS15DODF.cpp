@@ -114,7 +114,7 @@ namespace smartcard_service_api
 			}
 		}
 
-		_DBG("dataList.size() = %d", mapOID.size());
+		_INFO("dataList.size() = %d", mapOID.size());
 
 		return result;
 	}

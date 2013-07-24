@@ -162,8 +162,6 @@ namespace smartcard_service_api
 	{
 		bool result = true;
 
-//		_DBG("current [%p], parent [%p]", currentTLV, currentTLV->getParentTLV());
-
 		if (currentTLV->getParentTLV() != NULL)
 		{
 			currentTLV = currentTLV->getParentTLV();

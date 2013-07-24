@@ -110,7 +110,7 @@ namespace smartcard_service_api
 			if (count > 4)
 				return -1;
 
-			count++; /* increse count and increase i value, too */
+			count++;
 
 			for (i = 1; i < count; i++)
 			{

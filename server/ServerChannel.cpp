@@ -104,7 +104,6 @@ namespace smartcard_service_api
 
 		/* TODO : insert channel ID using atr information */
 		helper.setChannel(APDUCommand::CLA_CHANNEL_STANDARD, channelNum);
-
 		helper.getBuffer(command);
 
 		_DBG("command [%d] : %s", command.getLength(), command.toString());
