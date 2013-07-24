@@ -35,11 +35,11 @@ namespace smartcard_service_api
 		ByteArray parseRecord(Record &record, ByteArray &aid);
 
 	public:
-		static const unsigned int EFDIR_FID = 0x002f;
-
 		EFDIR(Channel *channel);
 		EFDIR(Channel *channel, ByteArray selectResponse);
 		~EFDIR();
+
+		int select();
 
 		ByteArray getPathByAID(ByteArray &aid);
 	};

@@ -25,12 +25,8 @@
 
 namespace smartcard_service_api
 {
-//	PKCS15DODF::PKCS15DODF():PKCS15Object()
-//	{
-//
-//	}
-
-	PKCS15DODF::PKCS15DODF(unsigned int fid, Channel *channel):PKCS15Object(channel)
+	PKCS15DODF::PKCS15DODF(unsigned int fid, Channel *channel) :
+		PKCS15Object(channel)
 	{
 		int ret = 0;
 
@@ -57,7 +53,8 @@ namespace smartcard_service_api
 		}
 	}
 
-	PKCS15DODF::PKCS15DODF(ByteArray path, Channel *channel):PKCS15Object(channel)
+	PKCS15DODF::PKCS15DODF(ByteArray path, Channel *channel) :
+		PKCS15Object(channel)
 	{
 		int ret = 0;
 

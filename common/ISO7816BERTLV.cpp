@@ -25,13 +25,15 @@
 
 namespace smartcard_service_api
 {
-	ISO7816BERTLV::ISO7816BERTLV():TLVHelper()
+	ISO7816BERTLV::ISO7816BERTLV()
+		: TLVHelper()
 	{
 		tagClass = 0;
 		encoding = 0;
 	}
 
-	ISO7816BERTLV::ISO7816BERTLV(TLVHelper *parent):TLVHelper(parent)
+	ISO7816BERTLV::ISO7816BERTLV(TLVHelper *parent)
+		: TLVHelper(parent)
 	{
 		parentTLV = parent;
 
@@ -39,13 +41,15 @@ namespace smartcard_service_api
 		encoding = 0;
 	}
 
-	ISO7816BERTLV::ISO7816BERTLV(const ByteArray &array):TLVHelper(array)
+	ISO7816BERTLV::ISO7816BERTLV(const ByteArray &array)
+		: TLVHelper(array)
 	{
 		tagClass = 0;
 		encoding = 0;
 	}
 
-	ISO7816BERTLV::ISO7816BERTLV(const ByteArray &array, TLVHelper *parent):TLVHelper(array, parent)
+	ISO7816BERTLV::ISO7816BERTLV(const ByteArray &array, TLVHelper *parent)
+		: TLVHelper(array, parent)
 	{
 		parentTLV = parent;
 
@@ -71,7 +75,7 @@ namespace smartcard_service_api
 		}
 
 		/* first byte */
-		tagClass = (buffer[0] & 0xE0) >> 6;
+		tagClass = (buffer[0] & 0xC0) >> 6;
 		encoding = (buffer[0] & 0x20) >> 5;
 
 		currentT = buffer[0];

@@ -26,8 +26,8 @@
 
 namespace smartcard_service_api
 {
-	PKCS15ODF::PKCS15ODF(Channel *channel)
-		: PKCS15Object(channel), dodf(NULL)
+	PKCS15ODF::PKCS15ODF(Channel *channel) :
+		PKCS15Object(channel), dodf(NULL)
 	{
 		int ret = 0;
 
@@ -54,8 +54,8 @@ namespace smartcard_service_api
 		}
 	}
 
-	PKCS15ODF::PKCS15ODF(Channel *channel, ByteArray selectResponse)
-		: PKCS15Object(channel, selectResponse), dodf(NULL)
+	PKCS15ODF::PKCS15ODF(Channel *channel, ByteArray selectResponse) :
+		PKCS15Object(channel, selectResponse), dodf(NULL)
 	{
 		int ret = 0;
 		ByteArray odfData;

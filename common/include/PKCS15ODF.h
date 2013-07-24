@@ -30,7 +30,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class PKCS15ODF: public PKCS15Object
+	class PKCS15ODF : public PKCS15Object
 	{
 	private:
 		bool parseData(ByteArray data);

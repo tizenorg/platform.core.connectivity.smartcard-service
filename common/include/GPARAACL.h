@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef GPSEACL_H_
-#define GPSEACL_H_
+#ifndef GPARAACL_H_
+#define GPARAACL_H_
 
 /* standard library header */
 
@@ -25,51 +25,45 @@
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "AccessControlList.h"
-#include "PKCS15.h"
+#include "GPARAM.h"
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
 namespace smartcard_service_api
 {
-	class GPSEACL: public AccessControlList
+	class GPARAACL : public AccessControlList
 	{
 	private:
 		ByteArray refreshTag;
 
-		static ByteArray OID_GLOBALPLATFORM;
+		void addCondition(const ByteArray &aid, const ByteArray &hash,
+			const vector<ByteArray> &apduRule, const ByteArray &nfcRule);
 
-		int loadAccessControl(Channel *channel, PKCS15DODF *dodf);
-		int loadRules(Channel *channel, ByteArray path);
-		int loadAccessConditions(Channel *channel, ByteArray aid, ByteArray path);
+		int updateRule(ByteArray &data);
 
 	public:
-		GPSEACL();
-		~GPSEACL();
+		GPARAACL();
+		~GPARAACL();
 
 		int loadACL(Channel *channel);
+		int loadACL(GPARAM &aram);
 
+		bool isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
+			ByteArray &certHash);
+		bool isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
+			ByteArray &certHash, ByteArray &command);
+		bool isAuthorizedAccess(GPARAM &aram, unsigned char *aidBuffer,
+			unsigned int aidLength, unsigned char *certHashBuffer,
+			unsigned int certHashLength);
+		bool isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
+			vector<ByteArray> &certHashes);
+		bool isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
+			vector<ByteArray> &certHashes, ByteArray &command);
+		bool isAuthorizedNFCAccess(GPARAM &aram, ByteArray &aid,
+			vector<ByteArray> &certHashes);
 	};
 
 } /* namespace smartcard_service_api */
 #endif /* __cplusplus */
 
-/* export C API */
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
-
-typedef void *gp_se_acl_h;
-
-gp_se_acl_h gp_se_acl_create_instance();
-int gp_se_acl_load_acl(gp_se_acl_h handle, channel_h channel);
-int gp_se_acl_update_acl(gp_se_acl_h handle, channel_h channel);
-void gp_se_acl_release_acl(gp_se_acl_h handle);
-bool gp_se_acl_is_authorized_access(gp_se_acl_h handle, unsigned char *aidBuffer, unsigned int aidLength, unsigned char *certHashBuffer, unsigned int certHashLength);
-void gp_se_acl_destroy_instance(gp_se_acl_h handle);
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
-#endif /* GPSEACL_H_ */
+#endif /* GPARAACL_H_ */

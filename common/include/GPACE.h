@@ -14,48 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef ACCESSCONTROLLIST_H_
-#define ACCESSCONTROLLIST_H_
+#ifndef GPACE_H_
+#define GPACE_H_
 
 /* standard library header */
-#include <vector>
-#include <map>
 
 /* SLP library header */
 
 /* local header */
-#include "ByteArray.h"
-#include "Channel.h"
-#include "AccessCondition.h"
+#include "smartcard-types.h"
+#ifdef __cplusplus
+#include "AccessControlList.h"
+#endif /* __cplusplus */
 
-using namespace std;
-
+#ifdef __cplusplus
 namespace smartcard_service_api
 {
-	class AccessControlList
+	class GPACE : public AccessControlList
 	{
-	protected:
-		map<ByteArray, AccessCondition> mapConditions;
-		bool allGranted;
+	private :
+		AccessControlList *acl;
 
-		AccessRule *findAccessRule(const ByteArray &aid,
-			const ByteArray &hash);
-		AccessCondition &getAccessCondition(const ByteArray &aid);
+	public :
+		GPACE();
+		~GPACE();
 
-		void printAccessControlList();
-
-	public:
-		static ByteArray ALL_SE_APPS;
-		static ByteArray DEFAULT_SE_APP;
-		static ByteArray ALL_DEVICE_APPS;
-
-		AccessControlList();
-		virtual ~AccessControlList();
-
-		virtual int loadACL(Channel *channel) = 0;
-
-		int updateACL(Channel *channel) { return loadACL(channel); }
-		void releaseACL();
+		int loadACL(Channel *channel);
 
 		bool isAuthorizedAccess(ByteArray &aid,
 			ByteArray &certHash);
@@ -71,4 +55,5 @@ namespace smartcard_service_api
 	};
 
 } /* namespace smartcard_service_api */
-#endif /* ACCESSCONTROLLIST_H_ */
+#endif /* __cplusplus */
+#endif /* GPACE_H_ */

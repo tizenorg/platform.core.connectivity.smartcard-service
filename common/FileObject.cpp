@@ -32,7 +32,7 @@ namespace smartcard_service_api
 		opened = false;
 	}
 
-	FileObject::FileObject(Channel *channel, ByteArray selectResponse)
+	FileObject::FileObject(Channel *channel, const ByteArray &selectResponse)
 		: ProviderHelper(channel)
 	{
 		opened = false;
@@ -50,7 +50,7 @@ namespace smartcard_service_api
 		selectResponse.releaseBuffer();
 	}
 
-	bool FileObject::setSelectResponse(ByteArray response)
+	bool FileObject::setSelectResponse(const ByteArray &response)
 	{
 		bool result = false;
 
@@ -78,13 +78,13 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_ERR("invalid response : %s", response.toString());
+			_ERR("invalid response");
 		}
 
 		return result;
 	}
 
-	int FileObject::_select(ByteArray command)
+	int FileObject::_select(const ByteArray &command)
 	{
 		int ret = ERROR_ILLEGAL_STATE;
 		ByteArray result;
@@ -121,7 +121,7 @@ namespace smartcard_service_api
 		return ret;
 	}
 
-	int FileObject::select(ByteArray aid)
+	int FileObject::select(const ByteArray &aid)
 	{
 		int ret = ERROR_ILLEGAL_STATE;
 		ByteArray command;
@@ -134,7 +134,7 @@ namespace smartcard_service_api
 		return ret;
 	}
 
-	int FileObject::select(ByteArray path, bool fromCurrentDF)
+	int FileObject::select(const ByteArray &path, bool fromCurrentDF)
 	{
 		int ret = ERROR_ILLEGAL_STATE;
 		ByteArray command;
@@ -232,12 +232,12 @@ namespace smartcard_service_api
 		return ret;
 	}
 
-	int FileObject::writeRecord(unsigned int sfi, Record record)
+	int FileObject::writeRecord(unsigned int sfi, const Record &record)
 	{
 		return 0;
 	}
 
-	int FileObject::searchRecord(unsigned int sfi, ByteArray searchParam, vector<int> &result)
+	int FileObject::searchRecord(unsigned int sfi, const ByteArray &searchParam, vector<int> &result)
 	{
 		return 0;
 	}
@@ -277,7 +277,7 @@ namespace smartcard_service_api
 		return ret;
 	}
 
-	int FileObject::writeBinary(unsigned int sfi, ByteArray data, unsigned int offset, unsigned int length)
+	int FileObject::writeBinary(unsigned int sfi, const ByteArray &data, unsigned int offset, unsigned int length)
 	{
 		ByteArray command, response;
 		APDUCommand apdu;

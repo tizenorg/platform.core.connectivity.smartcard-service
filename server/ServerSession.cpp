@@ -26,7 +26,7 @@
 #include "ServerReader.h"
 #include "ServerChannel.h"
 #include "APDUHelper.h"
-#include "GPSEACL.h"
+#include "GPACE.h"
 
 namespace smartcard_service_api
 {

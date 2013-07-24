@@ -26,7 +26,7 @@
 #include "Debug.h"
 #include "ServerSEService.h"
 #include "ServerReader.h"
-#include "GPSEACL.h"
+#include "GPACE.h"
 
 namespace smartcard_service_api
 {
@@ -95,7 +95,7 @@ namespace smartcard_service_api
 		if (acList == NULL)
 		{
 			/* load access control */
-			acList = new GPSEACL();
+			acList = new GPACE();
 			if (acList != NULL)
 			{
 				acList->loadACL(adminChannel);

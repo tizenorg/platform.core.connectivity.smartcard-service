@@ -66,7 +66,6 @@ SET(EXPORT_HEADER
 	include/TerminalInterface.h
 	include/Terminal.h
 	include/SignatureHelper.h
-	include/GPSEACL.h
 )
 
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)

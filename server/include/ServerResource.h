@@ -138,10 +138,15 @@ namespace smartcard_service_api
 		Channel *getChannel(int socket, unsigned int context, unsigned int channelID);
 		void removeChannel(int socket, unsigned int context, unsigned int channelID);
 
+		void addAccessControlList(Terminal *terminal, AccessControlList *acl);
+		void addAccessControlList(ServerChannel *channel, AccessControlList *acl);
 		AccessControlList *getAccessControlList(Terminal *terminal);
 		AccessControlList *getAccessControlList(ServerChannel *channel);
 
 		bool sendMessageToAllClients(Message &msg);
+
+		bool isAuthorizedNFCAccess(Terminal *terminal, ByteArray &aid,
+			vector<ByteArray> &hashes);
 
 		friend void terminalCallback(void *terminal, int event, int error, void *user_param);
 	};

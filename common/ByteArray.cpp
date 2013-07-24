@@ -156,6 +156,22 @@ namespace smartcard_service_api
 		return min_len;
 	}
 
+	ByteArray ByteArray::sub(uint32_t offset, uint32_t size) const
+	{
+		ByteArray newArray;
+
+		if (length == 0 || offset >= length || (offset + size) > length)
+		{
+			_DBG("length is zero");
+
+			return newArray;
+		}
+
+		newArray.setBuffer(buffer + offset, size);
+
+		return newArray;
+	}
+
 	void ByteArray::releaseBuffer()
 	{
 		if (buffer != NULL)

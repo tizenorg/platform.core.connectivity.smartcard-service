@@ -29,7 +29,8 @@
 #include "TerminalInterface.h"
 #include "APDUHelper.h"
 #include "SignatureHelper.h"
-#include "GPSEACL.h"
+#include "GPACE.h"
+#include "PKCS15.h"
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -396,19 +397,40 @@ namespace smartcard_service_api
 		AccessControlList *acList = NULL;
 
 		/* request open channel sequence */
-		if ((acList = getAccessControlList(channel)) != NULL)
+		if ((acList = getAccessControlList(channel)) == NULL)
 		{
-			PKCS15 pkcs15(channel);
+			/* load access control defined by Global Platform */
+			GPACE *acl = new GPACE();
+			if (acl != NULL)
+			{
+				int ret;
 
-			channel->setSelectResponse(pkcs15.getSelectResponse());
-
-			acList->loadACL(channel);
-			result = acList->isAuthorizedAccess(aid, hashes);
+				ret = acl->loadACL(channel);
+				if (ret >= SCARD_ERROR_OK)
+				{
+					acList = acl;
+					addAccessControlList(channel, acList);
+				}
+				else
+				{
+					_ERR("unknown error, 0x%x", -ret);
+					delete acl;
+				}
+			}
+			else
+			{
+				_ERR("alloc failed");
+			}
 		}
 		else
 		{
 			_ERR("acList is null");
 			result = false;
+		}
+
+		if (acList != NULL)
+		{
+			result = acList->isAuthorizedAccess(aid, hashes);
 		}
 
 		return result;
@@ -526,7 +548,8 @@ namespace smartcard_service_api
 			{
 				PKCS15 pkcs15(channel);
 
-				if (pkcs15.isClosed() == false)
+				rv = pkcs15.select();
+				if (rv >= SCARD_ERROR_OK)
 				{
 					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
@@ -534,7 +557,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					_ERR("select failed");
+					_ERR("select failed, [%x]", -rv);
 
 					service->closeChannel(result);
 					throw ExceptionBase(SCARD_ERROR_IO_FAILED);
@@ -553,7 +576,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					_ERR("select failed [%d]", rv);
+					_ERR("select failed [%x]", -rv);
 
 					service->closeChannel(result);
 					throw ExceptionBase(SCARD_ERROR_IO_FAILED);
@@ -646,25 +669,40 @@ namespace smartcard_service_api
 		}
 	}
 
+	void ServerResource::addAccessControlList(Terminal *terminal, AccessControlList *acl)
+	{
+		map<Terminal *, AccessControlList *>::iterator item;
+
+		if ((item = mapACL.find(terminal)) == mapACL.end())
+		{
+			mapACL.insert(make_pair(terminal, acl));
+		}
+		else
+		{
+			item->second = acl;
+		}
+	}
+
+	void ServerResource::addAccessControlList(ServerChannel *channel, AccessControlList *acl)
+	{
+		map<Terminal *, AccessControlList *>::iterator item;
+
+		if ((item = mapACL.find(channel->getTerminal())) == mapACL.end())
+		{
+			mapACL.insert(make_pair(channel->getTerminal(), acl));
+		}
+		else
+		{
+			item->second = acl;
+		}
+	}
+
 	AccessControlList *ServerResource::getAccessControlList(Terminal *terminal)
 	{
 		AccessControlList *result = NULL;
 		map<Terminal *, AccessControlList *>::iterator item;
 
-		if ((item = mapACL.find(terminal)) == mapACL.end())
-		{
-			/* load access control */
-			result = new GPSEACL();
-			if (result != NULL)
-			{
-				mapACL.insert(make_pair(terminal, result));
-			}
-			else
-			{
-				_ERR("alloc failed");
-			}
-		}
-		else
+		if ((item = mapACL.find(terminal)) != mapACL.end())
 		{
 			result = item->second;
 		}
@@ -677,20 +715,7 @@ namespace smartcard_service_api
 		AccessControlList *result = NULL;
 		map<Terminal *, AccessControlList *>::iterator item;
 
-		if ((item = mapACL.find(channel->getTerminal())) == mapACL.end())
-		{
-			/* load access control */
-			result = new GPSEACL();
-			if (result != NULL)
-			{
-				mapACL.insert(make_pair(channel->getTerminal(), result));
-			}
-			else
-			{
-				_ERR("alloc failed");
-			}
-		}
-		else
+		if ((item = mapACL.find(channel->getTerminal())) != mapACL.end())
 		{
 			result = item->second;
 		}
@@ -1037,6 +1062,51 @@ namespace smartcard_service_api
 		}
 	}
 
+	bool ServerResource::isAuthorizedNFCAccess(Terminal *terminal, ByteArray &aid, vector<ByteArray> &hashes)
+	{
+		bool result = false;
+
+		if (terminal == NULL) {
+			return result;
+		}
+
+		int num = _openLogicalChannel(terminal);
+		if (num > 0) {
+			/* create channel instance */
+			ServerChannel *channel = new ServerChannel(NULL, NULL, num, terminal);
+			if (channel != NULL) {
+				AccessControlList *acl = getAccessControlList(channel);
+				if (acl == NULL) {
+
+					/* load access control defined by Global Platform */
+					GPACE *acl = new GPACE();
+					if (acl != NULL) {
+						int ret;
+
+						ret = acl->loadACL(channel);
+						if (ret >= SCARD_ERROR_OK) {
+							addAccessControlList(channel, acl);
+						} else {
+							_ERR("unknown error, 0x%x", -ret);
+							delete acl;
+						}
+					} else {
+						_ERR("alloc failed");
+					}
+				} else {
+					acl->updateACL(channel);
+				}
+
+				delete channel;
+
+				if (acl != NULL) {
+					result = acl->isAuthorizedNFCAccess(aid, hashes);
+				}
+			}
+		}
+
+		return result;
+	}
 } /* namespace smartcard_service_api */
 
 using namespace smartcard_service_api;

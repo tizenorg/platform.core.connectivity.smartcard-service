@@ -30,37 +30,13 @@ namespace smartcard_service_api
 		0x4B, 0x43, 0x53, 0x2D, 0x31, 0x35 };
 	ByteArray PKCS15::PKCS15_AID(ARRAY_AND_SIZE(aid));
 
-	PKCS15::PKCS15(Channel *channel)
-		: PKCS15Object(channel), odf(NULL)
+	PKCS15::PKCS15(Channel *channel) :
+		PKCS15Object(channel), odf(NULL)
 	{
-		int ret;
-
-		ret = select(PKCS15::PKCS15_AID);
-		if (ret >= SCARD_ERROR_OK)
-		{
-			_DBG("response : %s", selectResponse.toString());
-		}
-		else if (ret == ResponseHelper::ERROR_FILE_NOT_FOUND)
-		{
-			_ERR("PKCS15 AID not found, search in EF DIR");
-
-			if (selectFromEFDIR() == true)
-			{
-				_DBG("response : %s", selectResponse.toString());
-			}
-			else
-			{
-				_ERR("PKCS15 select failed, [%d]", ret);
-			}
-		}
-		else
-		{
-			_ERR("PKCS15 select failed, [%d]", ret);
-		}
 	}
 
-	PKCS15::PKCS15(Channel *channel, ByteArray selectResponse)
-		: PKCS15Object(channel, selectResponse), odf(NULL)
+	PKCS15::PKCS15(Channel *channel, const ByteArray &selectResponse) :
+		PKCS15Object(channel, selectResponse), odf(NULL)
 	{
 	}
 
@@ -73,33 +49,67 @@ namespace smartcard_service_api
 		}
 	}
 
-	bool PKCS15::selectFromEFDIR()
+	int PKCS15::select()
 	{
-		bool result = false;
-		ByteArray path;
-		EFDIR dir(channel);
+		int ret;
 
-		path = dir.getPathByAID(PKCS15_AID);
-		if (path.getLength() > 0)
+		ret = PKCS15Object::select(PKCS15::PKCS15_AID);
+		if (ret >= SCARD_ERROR_OK)
 		{
-			int ret;
+			_DBG("response : %s", selectResponse.toString());
+		}
+		else if (ret == ResponseHelper::ERROR_FILE_NOT_FOUND)
+		{
+			_ERR("PKCS15 AID not found, search in EF DIR");
 
-			ret = select(path, false);
+			ret = selectFromEFDIR();
 			if (ret >= SCARD_ERROR_OK)
 			{
-				result = true;
+				_DBG("response : %s", selectResponse.toString());
 			}
 			else
 			{
-				_ERR("path select failed, [%d]", ret);
+				_ERR("PKCS15 select failed, [%d]", ret);
 			}
 		}
 		else
 		{
-			_ERR("PKCS15 not found");
+			_ERR("PKCS15 select failed, [%d]", ret);
 		}
 
-		return result;
+		return ret;
+	}
+
+	int PKCS15::selectFromEFDIR()
+	{
+		int ret;
+		ByteArray path;
+		EFDIR dir(channel);
+
+		ret = dir.select();
+		if (ret >= SCARD_ERROR_OK)
+		{
+			path = dir.getPathByAID(PKCS15_AID);
+			if (path.getLength() > 0)
+			{
+				ret = PKCS15Object::select(path, false);
+				if (ret < SCARD_ERROR_OK)
+				{
+					_ERR("PKCS15 select failed, [%d]", ret);
+				}
+			}
+			else
+			{
+				_ERR("PKCS15 path is not found");
+				ret = SCARD_ERROR_NOT_SUPPORTED;
+			}
+		}
+		else
+		{
+			_ERR("select EFDIR failed, [%x]", -ret);
+		}
+
+		return ret;
 	}
 
 	PKCS15ODF *PKCS15::getODF()

@@ -26,13 +26,11 @@
 namespace smartcard_service_api
 {
 	ServerChannel::ServerChannel(ServerSession *session, void *caller,
-		int channelNum, Terminal *terminal)
-		: Channel(session)
+		int channelNum, Terminal *terminal) :
+		Channel(session), terminal(terminal), caller(caller),
+		privilege(true)
 	{
-		this->terminal = terminal;
-		this->caller = caller;
 		this->channelNum = channelNum;
-		this->privilege = true;
 	}
 
 	ServerChannel::~ServerChannel()

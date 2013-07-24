@@ -21,6 +21,7 @@
 /* SLP library header */
 
 /* local header */
+#include "smartcard-types.h"
 #include "Debug.h"
 #include "APDUHelper.h"
 
@@ -44,7 +45,7 @@ namespace smartcard_service_api
 	bool ResponseHelper::setResponse(const ByteArray &response)
 	{
 		bool result = false;
-		status = 0;
+		status = SCARD_ERROR_UNKNOWN;
 		dataField.releaseBuffer();
 
 		this->response = response;

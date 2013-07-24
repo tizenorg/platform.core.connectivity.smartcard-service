@@ -27,30 +27,33 @@
 
 namespace smartcard_service_api
 {
+	static unsigned char path_efdir[] = { 0x2f, 0x00 };
+	static ByteArray PATH_EFDIR(ARRAY_AND_SIZE(path_efdir));
+
 	EFDIR::EFDIR(Channel *channel) : FileObject(channel)
 	{
-		unsigned char path[] = { 0x2f, 0x00 };
-		ByteArray dirPath(ARRAY_AND_SIZE(path));
-		int ret;
-
-		ret = select(dirPath, false);
-		if (ret >= SCARD_ERROR_OK)
-		{
-			_DBG("response : %s", selectResponse.toString());
-		}
-		else
-		{
-			_ERR("EFDIR select failed, [%d]", ret);
-		}
 	}
 
-	EFDIR::EFDIR(Channel *channel, ByteArray selectResponse)
-		: FileObject(channel, selectResponse)
+	EFDIR::EFDIR(Channel *channel, ByteArray selectResponse) :
+		FileObject(channel, selectResponse)
 	{
 	}
 
 	EFDIR::~EFDIR()
 	{
+	}
+
+	int EFDIR::select()
+	{
+		int ret;
+
+		ret = FileObject::select(PATH_EFDIR, false);
+		if (ret < SCARD_ERROR_OK)
+		{
+			_ERR("EFDIR select failed, [%d]", ret);
+		}
+
+		return ret;
 	}
 
 	ByteArray EFDIR::parseRecord(Record &record, ByteArray &aid)

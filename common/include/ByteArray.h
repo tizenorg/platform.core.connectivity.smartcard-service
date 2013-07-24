@@ -62,6 +62,8 @@ namespace smartcard_service_api
 
 		uint32_t copyFromArray(uint8_t *array, uint32_t bufferLen) const;
 
+		ByteArray sub(uint32_t offset, uint32_t size) const;
+
 		/* operator overloading */
 		ByteArray &operator =(const ByteArray &T);
 		ByteArray operator +(const ByteArray &T);
@@ -72,7 +74,7 @@ namespace smartcard_service_api
 		bool operator >(const ByteArray &T) const;
 		uint8_t &operator [](uint32_t index) const;
 
-		inline bool isEmpty() { return (buffer == (void *)0 || length == 0); }
+		inline bool isEmpty() const { return (buffer == (void *)0 || length == 0); }
 		const char *toString();
 	};
 

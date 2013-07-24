@@ -39,11 +39,11 @@ namespace smartcard_service_api
 		FCP fcp;
 		bool opened;
 
-		int _select(ByteArray command);
+		int _select(const ByteArray &command);
 
 	protected:
 		ByteArray selectResponse;
-		bool setSelectResponse(ByteArray response);
+		bool setSelectResponse(const ByteArray &response);
 
 	public:
 		static const int SUCCESS = 0;
@@ -58,13 +58,13 @@ namespace smartcard_service_api
 		static const unsigned int MF_FID = 0x003F;
 
 		FileObject(Channel *channel);
-		FileObject(Channel *channel, ByteArray selectResponse);
+		FileObject(Channel *channel, const ByteArray &selectResponse);
 		~FileObject();
 
 		void close();
 		inline bool isClosed() { return (opened == false); }
-		int select(ByteArray aid);
-		int select(ByteArray path, bool fromCurrentDF);
+		int select(const ByteArray &aid);
+		int select(const ByteArray &path, bool fromCurrentDF);
 		int select(unsigned int fid);
 		int selectParent();
 
@@ -74,12 +74,12 @@ namespace smartcard_service_api
 		FCP *getFCP();
 
 		int readRecord(unsigned int sfi, unsigned int recordId, Record &result);
-		int writeRecord(unsigned int sfi, Record record);
+		int writeRecord(unsigned int sfi, const Record &record);
 
-		int searchRecord(unsigned int sfi, ByteArray searchParam, vector<int> &result);
+		int searchRecord(unsigned int sfi, const ByteArray &searchParam, vector<int> &result);
 
 		int readBinary(unsigned int sfi, unsigned int offset, unsigned int length, ByteArray &result);
-		int writeBinary(unsigned int sfi, ByteArray data, unsigned int offset, unsigned int length);
+		int writeBinary(unsigned int sfi, const ByteArray &data, unsigned int offset, unsigned int length);
 	};
 
 } /* namespace smartcard_service_api */

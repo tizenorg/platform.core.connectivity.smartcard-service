@@ -22,206 +22,38 @@
 /* local header */
 #include "Debug.h"
 #include "SimpleTLV.h"
+#include "AccessControlList.h"
 #include "AccessCondition.h"
 
 namespace smartcard_service_api
 {
-	void APDUAccessRule::loadAPDUAccessRule(const ByteArray &data)
+	void AccessRule::addAPDUAccessRule(const ByteArray &apdu,
+		const ByteArray &mask)
 	{
-		SimpleTLV tlv(data);
+		pair<ByteArray, ByteArray> item(apdu, mask);
 
-		if (tlv.decodeTLV() == true)
-		{
-			switch (tlv.getTag())
-			{
-			case 0xA0 : /* CHOICE 0 : APDUPermission */
-				permission = SimpleTLV::getBoolean(tlv.getValue());
-				break;
-
-			case 0xA1 : /* CHOICE 1 : APDUFilters */
-				tlv.enterToValueTLV();
-				while (tlv.decodeTLV() == true)
-				{
-					if (tlv.getTag() == 0x04) /* OCTET STRING */
-					{
-						ByteArray apdu, mask, value;
-
-						value = tlv.getValue();
-
-						_DBG("APDU rule : %s", value.toString());
-
-						if (value.getLength() == 8) /* apdu 4 bytes + mask 4 bytes */
-						{
-							apdu.setBuffer(value.getBuffer(), 4);
-							mask.setBuffer(value.getBuffer(4), 4);
-
-							pair<ByteArray, ByteArray> newItem(apdu, mask);
-
-							mapApduFilters.insert(newItem);
-						}
-						else
-						{
-							_ERR("Invalid APDU rule : %s", value.toString());
-						}
-					}
-					else
-					{
-						_ERR("Unknown tag : 0x%02X", tlv.getTag());
-					}
-				}
-				tlv.returnToParentTLV();
-				break;
-
-			default :
-				_ERR("Unknown tag : 0x%02X", tlv.getTag());
-				break;
-			}
-		}
+		listFilters.push_back(item);
 	}
 
-	bool APDUAccessRule::isAuthorizedAccess(const ByteArray &command)
+	bool AccessRule::isAuthorizedAPDUAccess(const ByteArray &command)
 	{
 		bool result = false;
 
-		if (mapApduFilters.size() > 0)
+		if (command.getLength() < 4) /* apdu header size */
+			return false;
+
+		if (listFilters.size() > 0)
 		{
-			/* TODO : search command and check validity */
-		}
-		else
-		{
-			/* no filter entry. if permission is true, all access will be granted, if not, all access will be denied */
-			result = permission;
-		}
+			unsigned int cmd, mask, rule;
+			vector<pair<ByteArray, ByteArray> >::iterator item;
 
-		return result;
-	}
-
-	void APDUAccessRule::printAPDUAccessRules()
-	{
-		_DBG("  +-- APDU Access Rule");
-
-		if (mapApduFilters.size() > 0)
-		{
-			map<ByteArray, ByteArray>::iterator iterMap;
-
-			for (iterMap = mapApduFilters.begin(); iterMap != mapApduFilters.end(); iterMap++)
+			cmd = *(unsigned int *)command.getBuffer();
+			for (item = listFilters.begin(); item != listFilters.end(); item++)
 			{
-				_DBG("  +--- APDU : %s, Mask : %s", ((ByteArray)(iterMap->first)).toString(), iterMap->second.toString());
-			}
-		}
-		else
-		{
-			_DBG("  +--- permission : %s", permission ? "granted all" : "denied all");
-		}
-	}
+				mask = *(unsigned int *)item->second.getBuffer();
+				rule = *(unsigned int *)item->first.getBuffer();
 
-	void NFCAccessRule::loadNFCAccessRule(const ByteArray &data)
-	{
-		permission = SimpleTLV::getBoolean(data);
-	}
-
-	bool NFCAccessRule::isAuthorizedAccess(void)
-	{
-		bool result = false;
-
-		result = permission;
-
-		return result;
-	}
-
-	void NFCAccessRule::printNFCAccessRules()
-	{
-		_DBG("   +-- NFC Access Rule");
-		_DBG("   +--- permission : %s", permission ? "granted all" : "denied all");
-	}
-
-	void AccessCondition::loadAccessCondition(ByteArray &aid, ByteArray &data)
-	{
-		if (data.getLength() > 0)
-		{
-			SimpleTLV tlv(data);
-
-			while (tlv.decodeTLV() == true && tlv.getTag() == 0x30) /* SEQUENCE */
-			{
-				if (tlv.getLength() > 0)
-				{
-					/* access granted for specific applications */
-					tlv.enterToValueTLV();
-					if (tlv.decodeTLV())
-					{
-						switch (tlv.getTag())
-						{
-						case 0x04 : /* OCTET STRING : CertHash */
-							_DBG("aid : %s, hash : %s", aid.toString(), tlv.getValue().toString());
-
-							hashes.push_back(tlv.getValue());
-							break;
-
-						case 0xA0 : /* CHOICE 0 : AccessRules */
-							tlv.enterToValueTLV();
-							if (tlv.decodeTLV())
-							{
-								switch (tlv.getTag())
-								{
-								case 0xA0 : /* CHOICE 0 : APDUAccessRule */
-									apduRule.loadAPDUAccessRule(tlv.getValue());
-									break;
-
-								case 0xA1 : /* CHOICE 1 : NFCAccessRule */
-									nfcRule.loadNFCAccessRule(tlv.getValue());
-									break;
-
-								default :
-									_ERR("Unknown tag : 0x%02X", tlv.getTag());
-									break;
-								}
-							}
-							else
-							{
-								_ERR("tlv.decodeTLV failed");
-							}
-							tlv.returnToParentTLV();
-							break;
-
-						default :
-							_ERR("Unknown tag : 0x%02X", tlv.getTag());
-							break;
-						}
-					}
-					else
-					{
-						_ERR("tlv.decodeTLV failed");
-					}
-					tlv.returnToParentTLV();
-				}
-				else
-				{
-					_INFO("access granted for all applications, aid : %s", aid.toString());
-
-					permission = true;
-					break;
-				}
-			}
-		}
-		else
-		{
-			_INFO("access denied for all applications, aid : %s", aid.toString());
-
-			permission = false;
-		}
-	}
-
-	bool AccessCondition::isAuthorizedAccess(ByteArray &certHash)
-	{
-		bool result = false;
-
-		if (hashes.size() > 0)
-		{
-			size_t i;
-
-			for (i = 0; i < hashes.size(); i++)
-			{
-				if (certHash == hashes[i])
+				if ((cmd & mask) == rule)
 				{
 					result = true;
 					break;
@@ -230,46 +62,163 @@ namespace smartcard_service_api
 		}
 		else
 		{
+			/* no filter entry. if permission is true, all access will be granted, if not, all access will be denied */
+			result = apduRule;
+		}
+
+		return result;
+	}
+
+	void AccessRule::printAccessRules()
+	{
+		if (listFilters.size() > 0)
+		{
+			vector<pair<ByteArray, ByteArray> >::iterator item;
+
+			_DBG("        +---- Granted APDUs");
+
+			for (item = listFilters.begin(); item != listFilters.end(); item++)
+			{
+				_DBG("        +----- APDU : %s, Mask : %s", item->first.toString(), item->second.toString());
+			}
+		}
+		else
+		{
+			_DBG("        +---- APDU Access ALLOW : %s", apduRule ? "ALWAYS" : "NEVER");
+		}
+
+		_DBG("        +---- NFC  Access ALLOW : %s", nfcRule ? "ALWAYS" : "NEVER");
+	}
+
+	bool AccessRule::isAuthorizedNFCAccess(void)
+	{
+		return nfcRule;
+	}
+
+	AccessRule *AccessCondition::getAccessRule(const ByteArray &certHash)
+	{
+		AccessRule *result = NULL;
+		map<ByteArray, AccessRule>::iterator item;
+
+		item = mapRules.find(certHash);
+		if (item != mapRules.end()) {
+			result = &item->second;
+		}
+
+		return result;
+	}
+
+	void AccessCondition::addAccessRule(const ByteArray &hash)
+	{
+		AccessRule rule;
+
+		pair<ByteArray, AccessRule> item(hash, rule);
+
+		mapRules.insert(item);
+	}
+
+	bool AccessCondition::isAuthorizedAccess(const ByteArray &certHash)
+	{
+		bool result = false;
+		map<ByteArray, AccessRule>::iterator item;
+
+		item = mapRules.find(certHash);
+		if (item != mapRules.end())
+		{
+			result = true;
+		}
+		else
+		{
+			/* TODO */
 			result = permission;
 		}
 
 		return result;
 	}
 
-	bool AccessCondition::isAuthorizedAPDUAccess(ByteArray &command)
-	{
-		bool result = false;
-
-		result = apduRule.isAuthorizedAccess(command);
-
-		return result;
-	}
-
-	bool AccessCondition::isAuthorizedNFCAccess()
-	{
-		bool result = false;
-
-		result = nfcRule.isAuthorizedAccess();
-
-		return result;
-	}
-
 	void AccessCondition::printAccessConditions()
 	{
-		_DBG(" +-- Access Condition");
+		_DBG("   +-- Access Condition");
 
-		if (hashes.size() > 0)
+		if (mapRules.size() > 0)
 		{
-			size_t i;
+			map<ByteArray, AccessRule>::iterator item;
 
-			for (i = 0; i < hashes.size(); i++)
+			for (item = mapRules.begin(); item != mapRules.end(); item++)
 			{
-				_DBG(" +--- hash : %s", hashes[i].toString());
+				ByteArray temp = item->first;
+
+				_DBG("   +--- hash : %s", (temp == AccessControlList::ALL_DEVICE_APPS) ? "All device applications" : temp.toString());
+				item->second.printAccessRules();
 			}
 		}
 		else
 		{
-			_DBG(" +--- permission : %s", permission ? "granted all" : "denied all");
+			_DBG("   +--- permission : %s", permission ? "granted all" : "denied all");
 		}
+	}
+
+	void AccessCondition::setAPDUAccessRule(const ByteArray &certHash,
+		bool rule)
+	{
+		AccessRule *access = getAccessRule(certHash);
+
+		if (access != NULL) {
+			access->setAPDUAccessRule(rule);
+		}
+	}
+
+	void AccessCondition::addAPDUAccessRule(const ByteArray &certHash,
+		const ByteArray &apdu, const ByteArray &mask)
+	{
+		AccessRule *access = getAccessRule(certHash);
+
+		if (access != NULL) {
+			access->addAPDUAccessRule(apdu, mask);
+		}
+	}
+
+	void AccessCondition::addAPDUAccessRule(const ByteArray &certHash,
+		const ByteArray &rule)
+	{
+		if (rule.getLength() != 8)
+			return;
+
+		addAPDUAccessRule(certHash, rule.sub(0, 4), rule.sub(4, 4));
+	}
+
+	void AccessCondition::setNFCAccessRule(const ByteArray &certHash,
+			bool rule)
+	{
+		AccessRule *access = getAccessRule(certHash);
+
+		if (access != NULL) {
+			access->setNFCAccessRule(rule);
+		}
+	}
+
+	bool AccessCondition::isAuthorizedAPDUAccess(const ByteArray &certHash,
+		const ByteArray &command)
+	{
+		bool result = false;
+		AccessRule *access = getAccessRule(certHash);
+
+		if (access != NULL) {
+			result = access->isAuthorizedAPDUAccess(command);
+		}
+
+		return result;
+	}
+
+	bool AccessCondition::isAuthorizedNFCAccess(const ByteArray &certHash)
+	{
+		bool result = false;
+		AccessRule *access = getAccessRule(certHash);
+
+		if (access != NULL) {
+			result = access->isAuthorizedNFCAccess();
+		}
+
+		return result;
 	}
 } /* namespace smartcard_service_api */

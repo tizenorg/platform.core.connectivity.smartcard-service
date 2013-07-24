@@ -14,33 +14,39 @@
  * limitations under the License.
  */
 
-#ifndef PKCS15DODF_H_
-#define PKCS15DODF_H_
+#ifndef GPARFACL_H_
+#define GPARFACL_H_
 
 /* standard library header */
 
 /* SLP library header */
 
 /* local header */
-#include "PKCS15Object.h"
-#include "PKCS15OID.h"
+#include "smartcard-types.h"
+#ifdef __cplusplus
+#include "AccessControlList.h"
+#include "PKCS15.h"
+#endif /* __cplusplus */
 
+#ifdef __cplusplus
 namespace smartcard_service_api
 {
-	class PKCS15DODF : public PKCS15Object
+	class GPARFACL : public AccessControlList
 	{
 	private:
-		map<ByteArray, PKCS15OID> mapOID;
+		ByteArray refreshTag;
 
-		bool parseData(ByteArray data);
+		int loadAccessControl(Channel *channel, PKCS15DODF *dodf);
+		int loadRules(Channel *channel, const ByteArray &path);
+		int loadAccessConditions(Channel *channel, const ByteArray &aid, const ByteArray &path);
 
 	public:
-		PKCS15DODF(unsigned int fid, Channel *channel);
-		PKCS15DODF(ByteArray path, Channel *channel);
-		~PKCS15DODF();
+		GPARFACL();
+		~GPARFACL();
 
-		int searchOID(ByteArray oid, ByteArray &data);
+		int loadACL(Channel *channel);
 	};
 
 } /* namespace smartcard_service_api */
-#endif /* PKCS15DODF_H_ */
+#endif /* __cplusplus */
+#endif /* GPARFACL_H_ */

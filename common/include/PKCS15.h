@@ -36,14 +36,16 @@ namespace smartcard_service_api
 		map<unsigned int, ByteArray> recordElement;
 		PKCS15ODF *odf;
 
-		bool selectFromEFDIR();
+		int selectFromEFDIR();
 
 	public:
 		static ByteArray PKCS15_AID;
 
 		PKCS15(Channel *channel);
-		PKCS15(Channel *channel, ByteArray selectResponse);
+		PKCS15(Channel *channel, const ByteArray &selectResponse);
 		~PKCS15();
+
+		int select();
 
 		PKCS15ODF *getODF();
 		int getTokenInfo(ByteArray &path);
