@@ -68,7 +68,7 @@ namespace smartcard_service_api
 		buffer = new uint8_t[bufferLen];
 		if (buffer == NULL)
 		{
-			SCARD_DEBUG_ERR("alloc failed");
+			_ERR("alloc failed");
 			return false;
 		}
 
@@ -110,7 +110,7 @@ namespace smartcard_service_api
 
 		if (offset >= length)
 		{
-			SCARD_DEBUG_ERR("buffer overflow, offset [%d], length [%d]", offset, length);
+			_ERR("buffer overflow, offset [%d], length [%d]", offset, length);
 			return NULL;
 		}
 
@@ -121,7 +121,7 @@ namespace smartcard_service_api
 	{
 		if (index >= length)
 		{
-			SCARD_DEBUG_ERR("buffer overflow, index [%d], length [%d]", index, length);
+			_ERR("buffer overflow, index [%d], length [%d]", index, length);
 			return buffer[length -1];
 		}
 
@@ -132,7 +132,7 @@ namespace smartcard_service_api
 	{
 		if (index >= length)
 		{
-			SCARD_DEBUG_ERR("buffer underflow, index [%d], length [%d]", index, length);
+			_ERR("buffer underflow, index [%d], length [%d]", index, length);
 			return buffer[0];
 		}
 
@@ -145,7 +145,7 @@ namespace smartcard_service_api
 
 		if (array == NULL || bufferLen == 0)
 		{
-			SCARD_DEBUG_ERR("invaild param");
+			_ERR("invaild param");
 			return false;
 		}
 
@@ -175,7 +175,7 @@ namespace smartcard_service_api
 
 		if (length == 0)
 		{
-			SCARD_DEBUG("length is zero");
+			_DBG("length is zero");
 
 			return T;
 		}
@@ -191,7 +191,7 @@ namespace smartcard_service_api
 		if (newBuffer == NULL)
 		{
 			/* assert.... */
-			SCARD_DEBUG_ERR("alloc failed");
+			_ERR("alloc failed");
 
 			return *this;
 		}
@@ -248,7 +248,7 @@ namespace smartcard_service_api
 	{
 		if (index >= length)
 		{
-			SCARD_DEBUG_ERR("buffer overflow, index [%d], length [%d]", index, length);
+			_ERR("buffer overflow, index [%d], length [%d]", index, length);
 			return buffer[length -1];
 		}
 
@@ -311,11 +311,10 @@ namespace smartcard_service_api
 			fflush(file);
 
 			fclose(file);
-			SCARD_DEBUG("file has written, file [%s], length[%d]", filePath, length);
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("file open failed, [%d]", errno);
+			_ERR("file open failed, [%d]", errno);
 		}
 	}
 

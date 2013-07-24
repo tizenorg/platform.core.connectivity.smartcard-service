@@ -38,11 +38,11 @@ namespace smartcard_service_api
 {
 	ServerIPC::ServerIPC():IPCHelper()
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		setDispatcher(ServerDispatcher::getInstance());
 
-		SCARD_END();
+		_END();
 	}
 
 	ServerIPC::~ServerIPC()
@@ -61,7 +61,7 @@ namespace smartcard_service_api
 		ByteArray buffer;
 		Message *msg = NULL;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		buffer = IPCHelper::retrieveBuffer(socket);
 		if (buffer.getLength() > 0)
@@ -78,7 +78,7 @@ namespace smartcard_service_api
 			gid = security_server_get_gid("smartcard-daemon");
 			if ((result = security_server_check_privilege(cookie.getBuffer(), gid)) != SECURITY_SERVER_API_SUCCESS)
 			{
-				SCARD_DEBUG_ERR("security_server_check_privilege failed [%d]", result);
+				_ERR("security_server_check_privilege failed [%d]", result);
 				return msg;
 			}
 #endif
@@ -89,15 +89,15 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("retrieveBuffer failed ");
+			_ERR("retrieveBuffer failed ");
 		}
 
-		SCARD_END();
+		_END();
 
 		return msg;
 	}
@@ -110,7 +110,7 @@ namespace smartcard_service_api
 		GIOChannel *client_channel = NULL;
 		int client_src_id;
 
-		SCARD_DEBUG("client is trying to connect to server");
+		_DBG("client is trying to connect to server");
 
 		pthread_mutex_lock(&ipcLock);
 		client_sock_fd = accept(ipcSocket, NULL, &addrlen);
@@ -118,29 +118,29 @@ namespace smartcard_service_api
 
 		if (client_sock_fd < 0)
 		{
-			SCARD_DEBUG_ERR("can not accept client");
+			_ERR("can not accept client");
 			goto ERROR;
 		}
 
-		SCARD_DEBUG("client is accepted by server");
+		_DBG("client is accepted by server");
 
 		if ((client_channel = g_io_channel_unix_new(client_sock_fd)) == NULL)
 		{
-			SCARD_DEBUG_ERR("create new g io channel is failed");
+			_ERR("create new g io channel is failed");
 			goto ERROR;
 		}
 
 		if ((client_src_id = g_io_add_watch(client_channel, condition, &IPCHelper::channelCallbackFunc, this)) < 1)
 		{
-			SCARD_DEBUG_ERR("add io callback is failed");
+			_ERR("add io callback is failed");
 			goto ERROR;
 		}
 
-		SCARD_DEBUG("client socket is bond with g_io_channel");
+		_DBG("client socket is bond with g_io_channel");
 
 		if (ServerResource::getInstance().createClient(client_channel, client_sock_fd, client_src_id, 0, -1) == false)
 		{
-			SCARD_DEBUG_ERR("failed to add client");
+			_ERR("failed to add client");
 		}
 
 		return true;
@@ -188,11 +188,11 @@ ERROR :
 
 	int ServerIPC::handleIOErrorCondition(void *channel, GIOCondition condition)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if(channel == ioChannel)
 		{
-			SCARD_DEBUG("server socket is closed");
+			_DBG("server socket is closed");
 			restartServerIPC();
 		}
 		else
@@ -200,9 +200,9 @@ ERROR :
 			DispatcherMsg dispMsg;
 			int peerSocket = g_io_channel_unix_get_fd((GIOChannel *)channel);
 
-			SCARD_DEBUG("client socket is closed, socket [%d]", peerSocket);
+			_DBG("client socket is closed, socket [%d]", peerSocket);
 
-			/* push messsage to dispatcher */
+			/* push message to dispatcher */
 			dispMsg.message = Message::MSG_OPERATION_RELEASE_CLIENT;
 			dispMsg.param1 = peerSocket;
 			dispMsg.setPeerSocket(peerSocket);
@@ -211,15 +211,15 @@ ERROR :
 			ServerDispatcher::getInstance()->pushMessage(&dispMsg);
 		}
 
-		SCARD_END();
+		_END();
 
 		return FALSE;
 	}
 
 	int ServerIPC::handleInvalidSocketCondition(void *channel, GIOCondition condition)
 	{
-		SCARD_BEGIN();
-		SCARD_END();
+		_BEGIN();
+		_END();
 
 		return FALSE;
 	}
@@ -228,12 +228,12 @@ ERROR :
 	{
 		int result = FALSE;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if(channel == ioChannel)
 		{
 			/* connect state. should accept */
-			SCARD_DEBUG("new client connected");
+			_DBG("new client connected");
 
 			result = acceptClient();
 		}
@@ -241,7 +241,7 @@ ERROR :
 		{
 			int peerSocket = g_io_channel_unix_get_fd((GIOChannel *)channel);
 
-			SCARD_DEBUG("data incomming from [%d]", peerSocket);
+			_DBG("data incoming from [%d]", peerSocket);
 
 			if (peerSocket >= 0)
 			{
@@ -262,16 +262,16 @@ ERROR :
 				else
 				{
 					/* clear client connection */
-					SCARD_DEBUG_ERR("retrieve message failed, socket [%d]", peerSocket);
+					_ERR("retrieve message failed, socket [%d]", peerSocket);
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("client context doesn't exist, socket [%d]", peerSocket);
+				_ERR("client context doesn't exist, socket [%d]", peerSocket);
 			}
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}

@@ -24,38 +24,56 @@
 
 /* local header */
 
-#define COLOR_RED 		"\033[0;31m"
-#define COLOR_GREEN 	"\033[0;32m"
-#define COLOR_BROWN 	"\033[0;33m"
-#define COLOR_BLUE 		"\033[0;34m"
-#define COLOR_PURPLE 	"\033[0;35m"
-#define COLOR_CYAN 		"\033[0;36m"
-#define COLOR_LIGHTBLUE "\033[0;37m"
-#define COLOR_END		"\033[0;m"
+#define COLOR_BLACK	"\033[0;30m"
+#define COLOR_RED	"\033[0;31m"
+#define COLOR_GREEN	"\033[0;32m"
+#define COLOR_BROWN	"\033[0;33m"
+#define COLOR_BLUE	"\033[0;34m"
+#define COLOR_PURPLE	"\033[0;35m"
+#define COLOR_CYAN	"\033[0;36m"
+#define COLOR_GRAY	"\033[0;37m"
+#define COLOR_END	"\033[0;m"
 
-#define SCARD_DEBUG(fmt, ...)\
-	do\
-	{\
-		LOGD(fmt, ##__VA_ARGS__);\
-	} while (0)
+#define _ERR(fmt, ...) \
+	do \
+	{ \
+		LOGE(COLOR_RED fmt COLOR_END, ##__VA_ARGS__); \
+	} \
+	while (0)
 
-#define SCARD_DEBUG_ERR(fmt, ...)\
-	do\
-	{\
-		LOGE(COLOR_RED fmt COLOR_END, ##__VA_ARGS__);\
-	}while (0)
+#define _INFO(fmt, ...) \
+	do \
+	{ \
+		LOGI(COLOR_GREEN fmt COLOR_END, ##__VA_ARGS__); \
+	} \
+	while (0)
 
-#define SCARD_BEGIN() \
-	do\
-    {\
-		LOGD(COLOR_BLUE "BEGIN >>>>" COLOR_END);\
-    } while( 0 )
+#define _WARN(fmt, ...) \
+	do \
+	{ \
+		LOGI(COLOR_BROWN fmt COLOR_END, ##__VA_ARGS__); \
+	} \
+	while (0)
 
-#define SCARD_END() \
-	do\
-    {\
-		LOGD(COLOR_BLUE "END <<<<" COLOR_END);\
-    } \
-    while( 0 )
+#define _DBG(fmt, ...) \
+	do \
+	{ \
+		LOGD(fmt, ##__VA_ARGS__); \
+	} \
+	while (0)
+
+#define _BEGIN() \
+	do \
+	{ \
+		LOGD(COLOR_BLUE"BEGIN >>>>"COLOR_END); \
+	} \
+	while (0)
+
+#define _END() \
+	do \
+	{ \
+		LOGD(COLOR_BLUE"END <<<<"COLOR_END); \
+	} \
+	while (0)
 
 #endif /* DEBUG_H_ */

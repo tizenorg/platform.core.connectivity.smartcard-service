@@ -65,20 +65,20 @@ namespace smartcard_service_api
 
 				fcp.setFCP(resp.getDataField());
 
-				SCARD_DEBUG("FCP : %s", fcp.toString());
+				_DBG("FCP : %s", fcp.toString());
 
 				opened = true;
 				result = true;
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]",
+				_ERR("status word [%d][ %02X %02X ]",
 					resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("invalid response : %s", response.toString());
+			_ERR("invalid response : %s", response.toString());
 		}
 
 		return result;
@@ -91,7 +91,7 @@ namespace smartcard_service_api
 
 		if (channel == NULL || channel->isClosed())
 		{
-			SCARD_DEBUG_ERR("channel is not open");
+			_ERR("channel is not open");
 
 			return ret;
 		}
@@ -122,7 +122,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]",
+			_ERR("select apdu is failed, rv [%d], length [%d]",
 				ret, result.getLength());
 
 			ret = ERROR_ILLEGAL_STATE;
@@ -225,18 +225,18 @@ namespace smartcard_service_api
 			ret = resp.getStatus();
 			if (ret == 0)
 			{
-				SCARD_DEBUG("response [%d] : %s", response.getLength(), response.toString());
+				_DBG("response [%d] : %s", response.getLength(), response.toString());
 
 				result = Record(recordId, resp.getDataField());
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", ret, response.getLength());
+			_ERR("select apdu is failed, rv [%d], length [%d]", ret, response.getLength());
 		}
 
 		return ret;
@@ -268,7 +268,7 @@ namespace smartcard_service_api
 
 			if (resp.getStatus() == 0)
 			{
-				SCARD_DEBUG("response [%d] : %s", response.getLength(), response.toString());
+				_DBG("response [%d] : %s", response.getLength(), response.toString());
 
 				result = resp.getDataField();
 
@@ -276,12 +276,12 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", ret, response.getLength());
+			_ERR("select apdu is failed, rv [%d], length [%d]", ret, response.getLength());
 		}
 
 		return ret;
@@ -303,18 +303,18 @@ namespace smartcard_service_api
 
 			if (resp.getStatus() == 0)
 			{
-				SCARD_DEBUG("response [%d] : %s", response.getLength(), response.toString());
+				_DBG("response [%d] : %s", response.getLength(), response.toString());
 
 				ret = SUCCESS;
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", ret, response.getLength());
+			_ERR("select apdu is failed, rv [%d], length [%d]", ret, response.getLength());
 		}
 
 		return ret;

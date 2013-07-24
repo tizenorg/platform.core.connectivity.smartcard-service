@@ -117,17 +117,17 @@ namespace smartcard_service_api
 
 			if ((ret = pthread_create(&dispatcherThread, &attr, &DispatcherHelper::_dispatcherThreadFunc, this)) != 0)
 			{
-				SCARD_DEBUG_ERR("pthread_create failed [%d]", ret);
+				_ERR("pthread_create failed [%d]", ret);
 			}
 			else
 			{
-				SCARD_DEBUG("pthread_create success");
+				_DBG("pthread_create success");
 				result = true;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG("thread already start");
+			_DBG("thread already start");
 			result = true;
 		}
 

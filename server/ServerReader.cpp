@@ -39,7 +39,7 @@ namespace smartcard_service_api
 
 		if (seService == NULL || name == NULL || strlen(name) == 0 || terminal == NULL)
 		{
-			SCARD_DEBUG_ERR("invalid param");
+			_ERR("invalid param");
 
 			return;
 		}
@@ -55,7 +55,7 @@ namespace smartcard_service_api
 		adminChannel = new ServerChannel(NULL, NULL, 0, terminal);
 		if (adminChannel == NULL)
 		{
-			SCARD_DEBUG_ERR("alloc failed");
+			_ERR("alloc failed");
 		}
 	}
 
@@ -102,7 +102,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 			}
 		}
 

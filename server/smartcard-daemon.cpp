@@ -114,26 +114,26 @@ G_STMT_END
 
 GQuark smartcard_service_error_quark(void)
 {
-	SCARD_DEBUG("smartcard_service_error_quark entered");
+	_DBG("smartcard_service_error_quark entered");
 
 	return g_quark_from_static_string("smartcard_service_error");
 }
 
 static void smartcard_service_init(Smartcard_Service *smartcard_service)
 {
-	SCARD_DEBUG("smartcard_service_init entered");
+	_DBG("smartcard_service_init entered");
 }
 
 static void smartcard_service_class_init(Smartcard_ServiceClass *smartcard_service_class)
 {
-	SCARD_DEBUG("smartcard_service_class_init entered");
+	_DBG("smartcard_service_class_init entered");
 
 	dbus_g_object_type_install_info(SMARTCARD_SERVICE_TYPE, &dbus_glib_smartcard_service_object_info);
 }
 
 gboolean smartcard_service_launch(Smartcard_Service *smartcard_service, guint *result_val, GError **error)
 {
-	SCARD_DEBUG("smartcard_service_launch entered");
+	_DBG("smartcard_service_launch entered");
 
 	return TRUE;
 }
@@ -144,7 +144,7 @@ static void _initialize_dbus()
 	DBusGProxy *proxy = NULL;
 	guint ret = 0;
 
-	SCARD_BEGIN();
+	_BEGIN();
 
 	g_type_init();
 
@@ -160,7 +160,7 @@ static void _initialize_dbus()
 		{
 			if (!org_freedesktop_DBus_request_name(proxy, SMARTCARD_SERVICE_NAME, 0, &ret, &error))
 			{
-				SCARD_DEBUG_ERR("Unable to register service: %s", error->message);
+				_ERR("Unable to register service: %s", error->message);
 				g_error_free(error);
 			}
 
@@ -168,32 +168,32 @@ static void _initialize_dbus()
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("dbus_g_proxy_new_for_name failed");
+			_ERR("dbus_g_proxy_new_for_name failed");
 		}
 	}
 	else
 	{
-		SCARD_DEBUG_ERR("ERROR: Can't get on system bus [%s]", error->message);
+		_ERR("ERROR: Can't get on system bus [%s]", error->message);
 		g_error_free(error);
 	}
 
-	SCARD_END();
+	_END();
 }
 
 static void _finalize_dbus()
 {
-	SCARD_BEGIN();
+	_BEGIN();
 
 	dbus_g_connection_unregister_g_object(connection, object);
 	g_object_unref(object);
 
-	SCARD_END();
+	_END();
 }
 #endif
 
 static void __sighandler(int sig)
 {
-	SCARD_DEBUG("signal!! [%d]", sig);
+	_DBG("signal!! [%d]", sig);
 
 #ifdef USE_AUTOSTART
 	_finalize_dbus();

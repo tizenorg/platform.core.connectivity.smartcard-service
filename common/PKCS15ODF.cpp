@@ -35,22 +35,22 @@ namespace smartcard_service_api
 		{
 			ByteArray odfData, extra;
 
-			SCARD_DEBUG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString());
 
 			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), odfData)) == 0)
 			{
-				SCARD_DEBUG("odfData : %s", odfData.toString());
+				_DBG("odfData : %s", odfData.toString());
 
 				parseData(odfData);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("readBinary failed, [%d]", ret);
+				_ERR("readBinary failed, [%d]", ret);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select failed, [%d]", ret);
+			_ERR("select failed, [%d]", ret);
 		}
 	}
 
@@ -62,13 +62,13 @@ namespace smartcard_service_api
 
 		if ((ret = readBinary(0, 0, 0, odfData)) == 0)
 		{
-			SCARD_DEBUG("odfData : %s", odfData.toString());
+			_DBG("odfData : %s", odfData.toString());
 
 			parseData(odfData);
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("readBinary failed, [%d]", ret);
+			_ERR("readBinary failed, [%d]", ret);
 		}
 	}
 
@@ -94,11 +94,11 @@ namespace smartcard_service_api
 				{
 					ByteArray dodf;
 
-					SCARD_DEBUG("TAG_DODF");
+					_DBG("TAG_DODF");
 
 					dodf = PKCS15Object::getOctetStream(tlv.getValue());
 
-					SCARD_DEBUG("path : %s", dodf.toString());
+					_DBG("path : %s", dodf.toString());
 
 					pair<unsigned int, ByteArray> newPair(tlv.getTag(), dodf);
 					dataList.insert(newPair);
@@ -109,11 +109,11 @@ namespace smartcard_service_api
 				{
 					ByteArray tokeninfo;
 
-					SCARD_DEBUG("TAG_TOKENINFO");
+					_DBG("TAG_TOKENINFO");
 
 					tokeninfo = PKCS15Object::getOctetStream(tlv.getValue());
 
-					SCARD_DEBUG("path : %s", tokeninfo.toString());
+					_DBG("path : %s", tokeninfo.toString());
 
 					pair<unsigned int, ByteArray> newPair(tlv.getTag(), tokeninfo);
 					dataList.insert(newPair);
@@ -121,14 +121,14 @@ namespace smartcard_service_api
 				break;
 
 			default :
-				SCARD_DEBUG("Unknown tlv : t [%X], l [%d], v %s",
+				_DBG("Unknown tlv : t [%X], l [%d], v %s",
 					tlv.getTag(), tlv.getLength(), tlv.getValue().toString());
 				break;
 			}
 
 		}
 
-		SCARD_DEBUG("dataList.size() = %d", dataList.size());
+		_DBG("dataList.size() = %d", dataList.size());
 
 		return result;
 	}
@@ -145,12 +145,12 @@ namespace smartcard_service_api
 				NumberStream num(item->second);
 				unsigned int fid = num.getLittleEndianNumber();
 
-				SCARD_DEBUG("fid [%X]", fid);
+				_DBG("fid [%X]", fid);
 
 				dodf = new PKCS15DODF(fid, channel);
 				if (dodf != NULL && dodf->isClosed() == true)
 				{
-					SCARD_DEBUG_ERR("failed to open DODF");
+					_ERR("failed to open DODF");
 
 					delete dodf;
 					dodf = NULL;
@@ -158,11 +158,11 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("[%02X] is not found. total [%d]", TAG_DODF, dataList.size());
+				_ERR("[%02X] is not found. total [%d]", TAG_DODF, dataList.size());
 			}
 		}
 
-		SCARD_DEBUG("dodf [%p]", dodf);
+		_DBG("dodf [%p]", dodf);
 
 		return dodf;
 	}

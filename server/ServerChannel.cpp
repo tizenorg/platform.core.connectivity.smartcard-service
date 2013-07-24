@@ -62,16 +62,16 @@ namespace smartcard_service_api
 
 				if (resp.getStatus() == 0)
 				{
-					SCARD_DEBUG("close success");
+					_DBG("close success");
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+					_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, result.getLength());
+				_ERR("select apdu is failed, rv [%d], length [%d]", rv, result.getLength());
 			}
 		}
 
@@ -107,7 +107,7 @@ namespace smartcard_service_api
 
 		helper.getBuffer(command);
 
-		SCARD_DEBUG("command [%d] : %s", command.getLength(), command.toString());
+		_DBG("command [%d] : %s", command.getLength(), command.toString());
 
 		ret = terminal->transmitSync(command, result);
 		if (ret == 0 && ResponseHelper::getStatus(result) == 0)

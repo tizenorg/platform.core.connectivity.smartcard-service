@@ -56,13 +56,13 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("TAG_OCTET_STREAM not found");
+				_ERR("TAG_OCTET_STREAM not found");
 			}
 			tlv.returnToParentTLV();
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("TAG_SEQUENCE not found");
+			_ERR("TAG_SEQUENCE not found");
 		}
 
 		return result;

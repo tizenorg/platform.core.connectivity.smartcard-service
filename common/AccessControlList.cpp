@@ -56,8 +56,8 @@ namespace smartcard_service_api
 
 		if (result == false)
 		{
-			SCARD_DEBUG("aid : %s", aid.toString());
-			SCARD_DEBUG("hash : %s", certHash.toString());
+			_DBG("aid : %s", aid.toString());
+			_DBG("hash : %s", certHash.toString());
 
 			/* null aid means default applet */
 			if (aid.isEmpty() == true)
@@ -115,16 +115,16 @@ namespace smartcard_service_api
 		/* release map and vector */
 		map<ByteArray, AccessCondition>::iterator iterMap;
 
-		SCARD_DEBUG("================ Certification Hashes ==================");
+		_DBG("================ Certification Hashes ==================");
 		for (iterMap = mapConditions.begin(); iterMap != mapConditions.end(); iterMap++)
 		{
 			temp = iterMap->first;
 
-			SCARD_DEBUG("+ aid : %s", (temp == AID_DEFAULT) ? "DEFAULT" : (temp == AID_ALL) ? "ALL" : temp.toString());
+			_DBG("+ aid : %s", (temp == AID_DEFAULT) ? "DEFAULT" : (temp == AID_ALL) ? "ALL" : temp.toString());
 
 			iterMap->second.printAccessConditions();
 		}
-		SCARD_DEBUG("========================================================");
+		_DBG("========================================================");
 	}
 
 } /* namespace smartcard_service_api */

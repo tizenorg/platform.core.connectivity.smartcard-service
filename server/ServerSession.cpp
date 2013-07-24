@@ -37,7 +37,7 @@ namespace smartcard_service_api
 
 		if (caller == NULL || terminal == NULL)
 		{
-			SCARD_DEBUG_ERR("invalid param");
+			_ERR("invalid param");
 
 			return;
 		}

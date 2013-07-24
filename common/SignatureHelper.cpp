@@ -49,14 +49,14 @@ namespace smartcard_service_api
 
 		if(pkgmgrinfo_appinfo_get_appinfo(packageName, &handle_appinfo) != PMINFO_R_OK)
 		{
-			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
+			_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
 			return result;
 		}
 
 		if(pkgmgrinfo_appinfo_get_pkgid(handle_appinfo, &pkgid) != PMINFO_R_OK)
 		{
 			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
-			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
+			_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
 			return result;
 		}
 		pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
@@ -80,7 +80,7 @@ namespace smartcard_service_api
 							OpensslHelper::decodeBase64String(value, result, false);
 							if (result.getLength() > 0)
 							{
-								SCARD_DEBUG("type [%d] hash [%d] : %s", type, result.getLength(), result.toString());
+								_DBG("type [%d] hash [%d] : %s", type, result.getLength(), result.toString());
 								break;
 							}
 						}
@@ -89,14 +89,14 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
+				_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
 			}
 
 			pkgmgr_pkginfo_destroy_certinfo(handle);
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("pkgmgr_pkginfo_create_certinfo failed [%d]", ret);
+			_ERR("pkgmgr_pkginfo_create_certinfo failed [%d]", ret);
 		}
 
 		return result;
@@ -114,7 +114,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("aul_app_get_pkgname_bypid failed [%d]", error);
+			_ERR("aul_app_get_pkgname_bypid failed [%d]", error);
 		}
 
 		return result;
@@ -132,7 +132,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("aul_app_get_pkgname_bypid failed [%d]", error);
+			_ERR("aul_app_get_pkgname_bypid failed [%d]", error);
 		}
 
 		return result;
@@ -148,14 +148,14 @@ namespace smartcard_service_api
 
 		if(pkgmgrinfo_appinfo_get_appinfo(packageName, &handle_appinfo) != PMINFO_R_OK)
 		{
-			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
+			_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
 			return result;
 		}
 
 		if(pkgmgrinfo_appinfo_get_pkgid(handle_appinfo, &pkgid) != PMINFO_R_OK)
 		{
 			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
-			SCARD_DEBUG_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
+			_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
 			return result;
 		}
 
@@ -183,7 +183,7 @@ namespace smartcard_service_api
 								OpensslHelper::digestBuffer("sha1", decodeValue.getBuffer(), decodeValue.getLength(), hash);
 								if(hash.getLength() > 0)
 								{
-									SCARD_DEBUG("type [%d] hash [%d] : %s", type, hash.getLength(), hash.toString());
+									_DBG("type [%d] hash [%d] : %s", type, hash.getLength(), hash.toString());
 									certHashes.push_back(hash);
 								}
 							}
@@ -195,7 +195,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
+				_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
 			}
 
 			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
@@ -204,7 +204,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("pkgmgr_pkginfo_create_certinfo failed [%d]", ret);
+			_ERR("pkgmgr_pkginfo_create_certinfo failed [%d]", ret);
 		}
 
 		return result;
@@ -250,7 +250,7 @@ certiHash *__signature_helper_vector_to_linked_list(vector<ByteArray> &certHashe
 	return head;
 
 ERROR :
-	SCARD_DEBUG_ERR("mem alloc fail");
+	_ERR("mem alloc fail");
 
 	while (head)
 	{

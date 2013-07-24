@@ -52,11 +52,11 @@ namespace smartcard_service_api
 				{
 					cookie.setBuffer(buffer, length);
 
-					SCARD_DEBUG("cookie : %s", cookie.toString());
+					_DBG("cookie : %s", cookie.toString());
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("security_server_request_cookie failed [%d]", error);
+					_ERR("security_server_request_cookie failed [%d]", error);
 				}
 
 				delete []buffer;
@@ -64,7 +64,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("security_server_get_cookie_size failed");
+			_ERR("security_server_get_cookie_size failed");
 		}
 #endif
 	}
@@ -86,7 +86,7 @@ namespace smartcard_service_api
 		DBusGConnection *connection;
 		GError *error = NULL;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		dbus_g_thread_init();
 
@@ -106,26 +106,26 @@ namespace smartcard_service_api
 				if (dbus_g_proxy_call(proxy, "launch", &error, G_TYPE_INVALID,
 					G_TYPE_INT, &result, G_TYPE_INVALID) == false)
 				{
-					SCARD_DEBUG_ERR("org_tizen_smartcard_service_launch failed");
+					_ERR("org_tizen_smartcard_service_launch failed");
 					if (error != NULL)
 					{
-						SCARD_DEBUG_ERR("message : [%s]", error->message);
+						_ERR("message : [%s]", error->message);
 						g_error_free(error);
 					}
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("ERROR: Can't make dbus proxy");
+				_ERR("ERROR: Can't make dbus proxy");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("ERROR: Can't get on system bus [%s]", error->message);
+			_ERR("ERROR: Can't get on system bus [%s]", error->message);
 			g_error_free(error);
 		}
 
-		SCARD_END();
+		_END();
 	}
 #endif
 
@@ -144,7 +144,7 @@ namespace smartcard_service_api
 #endif
 		length = stream.getLength();
 
-		SCARD_DEBUG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
+		_DBG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
 			ipcSocket, msg->message, stream.getLength());
 
 		return IPCHelper::sendMessage(ipcSocket, stream);
@@ -152,7 +152,7 @@ namespace smartcard_service_api
 
 	int ClientIPC::handleIOErrorCondition(void *channel, GIOCondition condition)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if (dispatcher != NULL)
 		{
@@ -169,19 +169,19 @@ namespace smartcard_service_api
 #endif
 		}
 
-		SCARD_END();
+		_END();
 
 		return FALSE;
 	}
 
 	int ClientIPC::handleInvalidSocketCondition(void *channel, GIOCondition condition)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		/* finalize context */
 		destroyConnectSocket();
 
-		SCARD_END();
+		_END();
 
 		return FALSE;
 	}
@@ -190,7 +190,7 @@ namespace smartcard_service_api
 	{
 		int result = FALSE;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 #ifndef CLIENT_IPC_THREAD
 		if (channel == ioChannel)
@@ -198,7 +198,7 @@ namespace smartcard_service_api
 #endif
 			Message *msg = NULL;
 
-			SCARD_DEBUG("message from server to client socket");
+			_DBG("message from server to client socket");
 
 			/* read message */
 			msg = retrieveMessage();
@@ -234,11 +234,11 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("Unknown channel event [%p]", channel);
+			_ERR("Unknown channel event [%p]", channel);
 		}
 #endif
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}

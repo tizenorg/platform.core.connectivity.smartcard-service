@@ -38,22 +38,22 @@ namespace smartcard_service_api
 		{
 			ByteArray dodfData, extra;
 
-			SCARD_DEBUG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString());
 
 			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), dodfData)) == 0)
 			{
-				SCARD_DEBUG("odfData : %s", dodfData.toString());
+				_DBG("odfData : %s", dodfData.toString());
 
 				parseData(dodfData);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("readBinary failed, [%d]", ret);
+				_ERR("readBinary failed, [%d]", ret);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select failed, [%d]", ret);
+			_ERR("select failed, [%d]", ret);
 		}
 	}
 
@@ -65,22 +65,22 @@ namespace smartcard_service_api
 		{
 			ByteArray dodfData, extra;
 
-			SCARD_DEBUG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString());
 
 			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), dodfData)) == 0)
 			{
-				SCARD_DEBUG("dodfData : %s", dodfData.toString());
+				_DBG("dodfData : %s", dodfData.toString());
 
 				parseData(dodfData);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("readBinary failed, [%d]", ret);
+				_ERR("readBinary failed, [%d]", ret);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select failed, [%d]", ret);
+			_ERR("select failed, [%d]", ret);
 		}
 	}
 
@@ -101,7 +101,7 @@ namespace smartcard_service_api
 				{
 					PKCS15OID oid(tlv.getValue());
 
-					SCARD_DEBUG("OID DataObject");
+					_DBG("OID DataObject");
 
 					pair<ByteArray, PKCS15OID> newPair(oid.getOID(), oid);
 					mapOID.insert(newPair);
@@ -109,12 +109,12 @@ namespace smartcard_service_api
 				break;
 
 			default :
-				SCARD_DEBUG("Unknown tlv : t [%X], l [%d], v %s", tlv.getTag(), tlv.getLength(), tlv.getValue().toString());
+				_DBG("Unknown tlv : t [%X], l [%d], v %s", tlv.getTag(), tlv.getLength(), tlv.getValue().toString());
 				break;
 			}
 		}
 
-		SCARD_DEBUG("dataList.size() = %d", mapOID.size());
+		_DBG("dataList.size() = %d", mapOID.size());
 
 		return result;
 	}

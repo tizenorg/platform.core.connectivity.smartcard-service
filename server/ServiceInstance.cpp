@@ -114,7 +114,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("alloc failed");
+			_ERR("alloc failed");
 		}
 
 		return handle;

@@ -34,7 +34,7 @@ namespace smartcard_service_api
 
 		if (channel == NULL)
 		{
-			SCARD_DEBUG_ERR("invalid channel");
+			_ERR("invalid channel");
 			return;
 		}
 

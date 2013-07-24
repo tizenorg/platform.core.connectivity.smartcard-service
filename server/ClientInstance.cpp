@@ -56,12 +56,12 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("service already exist [%d]", context);
+			_ERR("service already exist [%d]", context);
 		}
 
 		return result;

@@ -78,22 +78,22 @@ namespace smartcard_service_api
 						}
 						else
 						{
-							SCARD_DEBUG_ERR("loadAccessControl failed, every request will be accepted.");
+							_ERR("loadAccessControl failed, every request will be accepted.");
 						}
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("dodf null, every request will be accepted.");
+						_ERR("dodf null, every request will be accepted.");
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("odf null, every request will be accepted.");
+					_ERR("odf null, every request will be accepted.");
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("failed to open PKCS15, every request will be accepted.");
+				_ERR("failed to open PKCS15, every request will be accepted.");
 			}
 
 			delete pkcs15;
@@ -116,12 +116,12 @@ namespace smartcard_service_api
 			ByteArray data;
 			FileObject file(channel);
 
-			SCARD_DEBUG("oid path : %s", path.toString());
+			_DBG("oid path : %s", path.toString());
 
 			file.select(NumberStream::getLittleEndianNumber(path));
 			file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
 
-			SCARD_DEBUG("data : %s", data.toString());
+			_DBG("data : %s", data.toString());
 
 			/* PKCS #15 and DODF OID exists. apply access control rule!! */
 			allGranted = false;
@@ -136,7 +136,7 @@ namespace smartcard_service_api
 				ByteArray refreshTag;
 
 				refreshTag = SimpleTLV::getOctetString(tlv);
-				SCARD_DEBUG("current refresh tag : %s", refreshTag.toString());
+				_DBG("current refresh tag : %s", refreshTag.toString());
 
 				if (this->refreshTag != refreshTag) /* need to update access control list */
 				{
@@ -152,15 +152,15 @@ namespace smartcard_service_api
 
 						/* OCTET STRING */
 						path = SimpleTLV::getOctetString(tlv.getValue());
-						SCARD_DEBUG("access control rule path : %s", path.toString());
+						_DBG("access control rule path : %s", path.toString());
 
 						if (loadRules(channel, path) == 0)
 						{
-							SCARD_DEBUG("loadRules success");
+							_DBG("loadRules success");
 						}
 						else
 						{
-							SCARD_DEBUG_ERR("loadRules failed");
+							_ERR("loadRules failed");
 						}
 					}
 				}
@@ -168,12 +168,12 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("tlv.decodeTLV failed");
+				_ERR("tlv.decodeTLV failed");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("OID not found");
+			_ERR("OID not found");
 		}
 
 		return result;
@@ -187,7 +187,7 @@ namespace smartcard_service_api
 		file.select(NumberStream::getLittleEndianNumber(path));
 		file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
 
-		SCARD_DEBUG("data : %s", data.toString());
+		_DBG("data : %s", data.toString());
 
 		SimpleTLV tlv(data);
 
@@ -213,7 +213,7 @@ namespace smartcard_service_api
 					break;
 				}
 
-				SCARD_DEBUG("aid : %s", aid.toString());
+				_DBG("aid : %s", aid.toString());
 
 				/* access condition path */
 				if (tlv.decodeTLV() == true && tlv.getTag() == 0x30) /* SEQUENCE : Path */
@@ -222,25 +222,25 @@ namespace smartcard_service_api
 
 					/* OCTET STRING */
 					path = SimpleTLV::getOctetString(tlv.getValue());
-					SCARD_DEBUG("path : %s", path.toString());
+					_DBG("path : %s", path.toString());
 
 					if (loadAccessConditions(channel, aid, path) == 0)
 					{
-						SCARD_DEBUG("loadCertHashes success");
+						_DBG("loadCertHashes success");
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("loadCertHashes failed");
+						_ERR("loadCertHashes failed");
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("decodeTLV failed");
+					_ERR("decodeTLV failed");
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("decodeTLV failed");
+				_ERR("decodeTLV failed");
 			}
 			tlv.returnToParentTLV();
 		}
@@ -256,7 +256,7 @@ namespace smartcard_service_api
 		file.select(NumberStream::getLittleEndianNumber(path));
 		file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
 
-		SCARD_DEBUG("data : %s", data.toString());
+		_DBG("data : %s", data.toString());
 
 		AccessCondition condition;
 
@@ -281,7 +281,7 @@ namespace smartcard_service_api
 	} \
 	else \
 	{ \
-		SCARD_DEBUG_ERR("Invalid param"); \
+		_ERR("Invalid param"); \
 	}
 
 using namespace smartcard_service_api;

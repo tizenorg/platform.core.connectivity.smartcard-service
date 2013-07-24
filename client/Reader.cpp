@@ -39,14 +39,14 @@ namespace smartcard_service_api
 	{
 		unsigned int length = 0;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		this->context = NULL;
 		this->handle = NULL;
 
 		if (context == NULL || name == NULL || strlen(name) == 0 || handle == NULL)
 		{
-			SCARD_DEBUG_ERR("invalid param");
+			_ERR("invalid param");
 
 			return;
 		}
@@ -60,7 +60,7 @@ namespace smartcard_service_api
 
 		present = true;
 
-		SCARD_END();
+		_END();
 	}
 
 	Reader::~Reader()
@@ -113,13 +113,13 @@ namespace smartcard_service_api
 				rv = waitTimedCondition(0);
 				if (rv != 0)
 				{
-					SCARD_DEBUG_ERR("time over");
+					_ERR("time over");
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("sendMessage failed");
+				_ERR("sendMessage failed");
 				this->error = SCARD_ERROR_IPC_FAILED;
 			}
 			syncUnlock();
@@ -132,7 +132,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable reader");
+			_ERR("unavailable reader");
 			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
@@ -143,7 +143,7 @@ namespace smartcard_service_api
 	{
 		int result;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if (isSecureElementPresent() == true)
 		{
@@ -163,17 +163,17 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("sendMessage failed");
+				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable reader");
+			_ERR("unavailable reader");
 			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}
@@ -184,11 +184,11 @@ namespace smartcard_service_api
 		Reader *reader;
 		bool result = false;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if (msg == NULL)
 		{
-			SCARD_DEBUG_ERR("message is null");
+			_ERR("message is null");
 			return result;
 		}
 
@@ -200,7 +200,7 @@ namespace smartcard_service_api
 			{
 				Session *session = NULL;
 
-				SCARD_DEBUG("MSG_REQUEST_OPEN_SESSION");
+				_DBG("MSG_REQUEST_OPEN_SESSION");
 
 				if (msg->param1 != 0)
 				{
@@ -208,7 +208,7 @@ namespace smartcard_service_api
 					session = new Session(reader->context, reader, (void *)msg->param1);
 					if (session == NULL)
 					{
-						SCARD_DEBUG_ERR("Session creating instance failed");
+						_ERR("Session creating instance failed");
 
 						return session;
 					}
@@ -239,11 +239,11 @@ namespace smartcard_service_api
 			break;
 
 		default:
-			SCARD_DEBUG("unknown [%s]", msg->toString());
+			_DBG("unknown [%s]", msg->toString());
 			break;
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}
@@ -260,7 +260,7 @@ namespace smartcard_service_api
 	} \
 	else \
 	{ \
-		SCARD_DEBUG_ERR("Invalid param"); \
+		_ERR("Invalid param"); \
 	}
 
 using namespace smartcard_service_api;

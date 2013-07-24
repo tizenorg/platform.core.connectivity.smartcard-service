@@ -109,7 +109,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("alloc failed");
+			_ERR("alloc failed");
 		}
 
 		return ret;
@@ -144,7 +144,7 @@ namespace smartcard_service_api
 			{
 				if (EVP_DigestUpdate(&mdCtx, buffer.getBuffer(), buffer.getLength()) == 0)
 				{
-					SCARD_DEBUG_ERR("EVP_DigestUpdate failed");
+					_ERR("EVP_DigestUpdate failed");
 				}
 
 				if (EVP_DigestFinal(&mdCtx, temp, &resultLen) > 0 &&
@@ -157,7 +157,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("EVP_get_digestbyname(\"%s\") returns NULL", algorithm);
+			_ERR("EVP_get_digestbyname(\"%s\") returns NULL", algorithm);
 		}
 
 		return ret;

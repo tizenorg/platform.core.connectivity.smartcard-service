@@ -38,24 +38,24 @@ namespace smartcard_service_api
 		ret = select(PKCS15::PKCS15_AID);
 		if (ret == FileObject::SUCCESS)
 		{
-			SCARD_DEBUG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString());
 		}
 		else if (ret == ResponseHelper::ERROR_FILE_NOT_FOUND)
 		{
-			SCARD_DEBUG_ERR("PKCS15 AID not found, search in EF DIR");
+			_ERR("PKCS15 AID not found, search in EF DIR");
 
 			if (selectFromEFDIR() == true)
 			{
-				SCARD_DEBUG("response : %s", selectResponse.toString());
+				_DBG("response : %s", selectResponse.toString());
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("PKCS15 select failed, [%d]", ret);
+				_ERR("PKCS15 select failed, [%d]", ret);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("PKCS15 select failed, [%d]", ret);
+			_ERR("PKCS15 select failed, [%d]", ret);
 		}
 	}
 
@@ -91,12 +91,12 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("path select failed, [%d]", ret);
+				_ERR("path select failed, [%d]", ret);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("PKCS15 not found");
+			_ERR("PKCS15 not found");
 		}
 
 		return result;
@@ -110,14 +110,14 @@ namespace smartcard_service_api
 
 			if (odf != NULL && odf->isClosed() == true)
 			{
-				SCARD_DEBUG_ERR("failed to open ODF");
+				_ERR("failed to open ODF");
 
 				delete odf;
 				odf = NULL;
 			}
 		}
 
-		SCARD_DEBUG("odf [%p]", odf);
+		_DBG("odf [%p]", odf);
 
 		return odf;
 	}

@@ -193,7 +193,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getOctetString failed (0x%02X)", tlv.getTag());
+			_ERR("getOctetString failed (0x%02X)", tlv.getTag());
 		}
 
 		return result;
@@ -219,7 +219,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getBoolean failed (0x%02X)", tlv.getTag());
+			_ERR("getBoolean failed (0x%02X)", tlv.getTag());
 		}
 
 		return result;
@@ -241,7 +241,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getInteger failed (0x%02X)", tlv.getTag());
+			_ERR("getInteger failed (0x%02X)", tlv.getTag());
 		}
 
 		return result;

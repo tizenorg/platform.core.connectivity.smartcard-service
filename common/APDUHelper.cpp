@@ -230,7 +230,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("command stream is not correct, command.getLength() [%d], offset [%d]", command.getLength(), offset);
+			_ERR("command stream is not correct, command.getLength() [%d], offset [%d]", command.getLength(), offset);
 		}
 
 		return result;

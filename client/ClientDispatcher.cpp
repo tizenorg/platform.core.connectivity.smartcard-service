@@ -50,7 +50,7 @@ namespace smartcard_service_api
 		bool result = true;
 		map<void *, SEService *>::iterator item;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if ((item = mapSESerivces.find(context)) == mapSESerivces.end())
 		{
@@ -58,10 +58,10 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG("SEService [%p] exists", context);
+			_DBG("SEService [%p] exists", context);
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}
@@ -70,7 +70,7 @@ namespace smartcard_service_api
 	{
 		map<void *, SEService *>::iterator item;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if ((item = mapSESerivces.find(context)) != mapSESerivces.end())
 		{
@@ -78,15 +78,15 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG("SEService doesn't exist");
+			_DBG("SEService doesn't exist");
 		}
 
-		SCARD_END();
+		_END();
 	}
 
 	void *ClientDispatcher::dispatcherThreadFunc(DispatcherMsg *msg, void *data)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if (msg == NULL)
 			return NULL;
@@ -209,7 +209,7 @@ namespace smartcard_service_api
 			break;
 		}
 
-		SCARD_END();
+		_END();
 
 		return NULL;
 	}

@@ -64,7 +64,7 @@ namespace smartcard_service_api
 		bool result = false;
 		SimpleTLV tlv;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		releaseFCP();
 
@@ -75,7 +75,7 @@ namespace smartcard_service_api
 
 		if (fcpBuffer[0] != 0x62)
 		{
-			SCARD_DEBUG_ERR("it is not FCP response [%02X]", fcpBuffer[0]);
+			_ERR("it is not FCP response [%02X]", fcpBuffer[0]);
 			return false;
 		}
 
@@ -92,7 +92,7 @@ namespace smartcard_service_api
 				{
 				case 0x80 : /* file length without sturctural inforamtion */
 					{
-						SCARD_DEBUG("0x%02X : file length without sturctural inforamtion : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : file length without sturctural inforamtion : %s", tlv.getTag(), tlv.getValue().toString());
 						if (tlv.getLength() > 0)
 						{
 							fileSize = NumberStream::getBigEndianNumber(tlv.getValue());
@@ -102,7 +102,7 @@ namespace smartcard_service_api
 
 				case 0x81 : /* file length with sturctural inforamtion */
 					{
-						SCARD_DEBUG("0x%02X : file length with sturctural inforamtion : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : file length with sturctural inforamtion : %s", tlv.getTag(), tlv.getValue().toString());
 						if (tlv.getLength() > 0)
 						{
 							maxRecordSize = NumberStream::getBigEndianNumber(tlv.getValue());
@@ -112,14 +112,14 @@ namespace smartcard_service_api
 
 				case 0x82 : /* file descriptor bytes */
 					{
-						SCARD_DEBUG("0x%02X : file descriptor bytes : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : file descriptor bytes : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x83 : /* file identifier */
 					{
-						SCARD_DEBUG("0x%02X : file identifier : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : file identifier : %s", tlv.getTag(), tlv.getValue().toString());
 						if (tlv.getLength() > 0)
 						{
 							ByteArray value = tlv.getValue();
@@ -140,7 +140,7 @@ namespace smartcard_service_api
 
 				case 0x85 : /* proprietary information not encoded in BER-TLV */
 					{
-						SCARD_DEBUG("0x%02X : proprietary information not encoded in BER-TLV : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : proprietary information not encoded in BER-TLV : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
@@ -154,14 +154,14 @@ namespace smartcard_service_api
 
 				case 0x87 : /* Identifier of an EF containing an extension of the file control information */
 					{
-						SCARD_DEBUG("0x%02X : Identifier of an EF containing an extension of the file control information : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : Identifier of an EF containing an extension of the file control information : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x88 : /* Short EF identifier */
 					{
-						SCARD_DEBUG("0x%02X : Short EF identifier : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : Short EF identifier : %s", tlv.getTag(), tlv.getValue().toString());
 
 						if (tlv.getLength() > 0)
 						{
@@ -176,7 +176,7 @@ namespace smartcard_service_api
 
 				case 0x8A : /* life cycle status byte */
 					{
-						SCARD_DEBUG("0x%02X : life cycle status byte : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : life cycle status byte : %s", tlv.getTag(), tlv.getValue().toString());
 						if (tlv.getLength() > 0)
 						{
 							ByteArray value = tlv.getValue();
@@ -232,14 +232,14 @@ namespace smartcard_service_api
 
 				case 0xA2 : /* Template consisting of one or more pairs of data objects */
 					{
-						SCARD_DEBUG("0x%02X : Template consisting of one or more pairs of data objects : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : Template consisting of one or more pairs of data objects : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xA5 : /* proprietary information encoded in BER-TLV */
 					{
-						SCARD_DEBUG("0x%02X : proprietary information encoded in BER-TLV : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : proprietary information encoded in BER-TLV : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
@@ -253,7 +253,7 @@ namespace smartcard_service_api
 
 				case 0xAC : /* Cryptographic mechanism identifier template */
 					{
-						SCARD_DEBUG("0x%02X : Cryptographic mechanism identifier template : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : Cryptographic mechanism identifier template : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
@@ -267,7 +267,7 @@ namespace smartcard_service_api
 
 				default :
 					{
-						SCARD_DEBUG("0x%02X : unknown : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : unknown : %s", tlv.getTag(), tlv.getValue().toString());
 					}
 					break;
 				}
@@ -276,10 +276,10 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("tlv.decodeTLV failed");
+			_ERR("tlv.decodeTLV failed");
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}

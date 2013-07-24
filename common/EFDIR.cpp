@@ -36,11 +36,11 @@ namespace smartcard_service_api
 		ret = select(dirPath, false);
 		if (ret == FileObject::SUCCESS)
 		{
-			SCARD_DEBUG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString());
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("EFDIR select failed, [%d]", ret);
+			_ERR("EFDIR select failed, [%d]", ret);
 		}
 	}
 
@@ -83,7 +83,7 @@ namespace smartcard_service_api
 
 			if (matched == true)
 			{
-				SCARD_DEBUG("Found!! : path %s", result.toString());
+				_DBG("Found!! : path %s", result.toString());
 			}
 			else
 			{

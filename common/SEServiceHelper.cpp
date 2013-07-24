@@ -27,8 +27,8 @@ namespace smartcard_service_api
 {
 	SEServiceHelper::~SEServiceHelper()
 	{
-		SCARD_BEGIN();
-		SCARD_END();
+		_BEGIN();
+		_END();
 	}
 
 } /* namespace smartcard_service_api */

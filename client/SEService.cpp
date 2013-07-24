@@ -74,11 +74,11 @@ namespace smartcard_service_api
 		}
 		catch(ExceptionBase &e)
 		{
-			SCARD_DEBUG_ERR("EXCEPTION : %s", e.what());
+			_ERR("EXCEPTION : %s", e.what());
 		}
 		catch(...)
 		{
-			SCARD_DEBUG_ERR("EXCEPTION!!!");
+			_ERR("EXCEPTION!!!");
 		}
 
 		for (i = 0; i < readers.size(); i++)
@@ -120,7 +120,7 @@ namespace smartcard_service_api
 
 			if (ClientIPC::getInstance().sendMessage(&msg) == false)
 			{
-				SCARD_DEBUG_ERR("time over");
+				_ERR("time over");
 			}
 		}
 	}
@@ -160,12 +160,12 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("time over");
+					_ERR("time over");
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("sendMessage failed");
+				_ERR("sendMessage failed");
 			}
 			syncUnlock();
 		}
@@ -178,7 +178,7 @@ namespace smartcard_service_api
 		ClientIPC *clientIPC;
 		ClientDispatcher *clientDispatcher;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		/* initialize client */
 		if (!g_thread_supported())
@@ -194,7 +194,7 @@ namespace smartcard_service_api
 #ifndef CLIENT_IPC_THREAD
 		if (clientDispatcher->runDispatcherThread() == false)
 		{
-			SCARD_DEBUG_ERR("clientDispatcher->runDispatcherThread() failed");
+			_ERR("clientDispatcher->runDispatcherThread() failed");
 
 			return result;
 		}
@@ -202,7 +202,7 @@ namespace smartcard_service_api
 
 		if (clientIPC->createConnectSocket() == false)
 		{
-			SCARD_DEBUG_ERR("clientIPC->createConnectSocket() failed");
+			_ERR("clientIPC->createConnectSocket() failed");
 
 			return result;
 		}
@@ -221,7 +221,7 @@ namespace smartcard_service_api
 			result = clientIPC->sendMessage(&msg);
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}
@@ -276,13 +276,11 @@ namespace smartcard_service_api
 			memcpy(&handle, data.getBuffer(offset), sizeof(handle));
 			offset += sizeof(handle);
 
-			SCARD_DEBUG("Reader [%d] : name [%s], handle [%p]", i, name, handle);
-
 			/* add readers */
 			reader = new Reader(context, name, handle);
 			if (reader == NULL)
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 				continue;
 			}
 
@@ -298,11 +296,11 @@ namespace smartcard_service_api
 		SEService *service = NULL;
 		bool result = false;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if (msg == NULL)
 		{
-			SCARD_DEBUG_ERR("message is null");
+			_ERR("message is null");
 			return result;
 		}
 
@@ -311,7 +309,7 @@ namespace smartcard_service_api
 		switch (msg->message)
 		{
 		case Message::MSG_REQUEST_READERS :
-			SCARD_DEBUG("[MSG_REQUEST_READERS]");
+			_DBG("[MSG_REQUEST_READERS]");
 
 			service->connected = true;
 
@@ -330,7 +328,7 @@ namespace smartcard_service_api
 			break;
 
 		case Message::MSG_REQUEST_SHUTDOWN :
-			SCARD_DEBUG("[MSG_REQUEST_SHUTDOWN]");
+			_DBG("[MSG_REQUEST_SHUTDOWN]");
 
 			if (msg->isSynchronousCall() == true) /* synchronized call */
 			{
@@ -352,7 +350,7 @@ namespace smartcard_service_api
 			{
 				Reader *reader = NULL;
 
-				SCARD_DEBUG("[MSG_NOTIFY_SE_INSERTED]");
+				_DBG("[MSG_NOTIFY_SE_INSERTED]");
 
 				/* add readers */
 				reader = new Reader(service->context,
@@ -363,7 +361,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("alloc failed");
+					_ERR("alloc failed");
 				}
 
 				if (service->listener != NULL)
@@ -373,7 +371,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					SCARD_DEBUG("listener is null");
+					_DBG("listener is null");
 				}
 			}
 			break;
@@ -382,7 +380,7 @@ namespace smartcard_service_api
 			{
 				size_t i;
 
-				SCARD_DEBUG("[MSG_NOTIFY_SE_REMOVED]");
+				_DBG("[MSG_NOTIFY_SE_REMOVED]");
 
 				for (i = 0; i < service->readers.size(); i++)
 				{
@@ -400,13 +398,13 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					SCARD_DEBUG("listener is null");
+					_DBG("listener is null");
 				}
 			}
 			break;
 
 		case Message::MSG_OPERATION_RELEASE_CLIENT :
-			SCARD_DEBUG("[MSG_OPERATION_RELEASE_CLIENT]");
+			_DBG("[MSG_OPERATION_RELEASE_CLIENT]");
 
 			if (service->listener != NULL)
 			{
@@ -417,16 +415,16 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("service->listener is null");
+				_ERR("service->listener is null");
 			}
 			break;
 
 		default :
-			SCARD_DEBUG("unknown message [%s]", msg->toString());
+			_DBG("unknown message [%s]", msg->toString());
 			break;
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}
@@ -443,7 +441,7 @@ namespace smartcard_service_api
 	} \
 	else \
 	{ \
-		SCARD_DEBUG_ERR("Invalid param"); \
+		_ERR("Invalid param"); \
 	}
 
 using namespace smartcard_service_api;

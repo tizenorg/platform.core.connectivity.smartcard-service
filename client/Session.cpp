@@ -42,7 +42,7 @@ namespace smartcard_service_api
 
 		if (context == NULL || handle == NULL)
 		{
-			SCARD_DEBUG_ERR("handle is null");
+			_ERR("handle is null");
 
 			return;
 		}
@@ -102,13 +102,13 @@ namespace smartcard_service_api
 					rv = waitTimedCondition(0);
 					if (rv != 0)
 					{
-						SCARD_DEBUG_ERR("time over");
+						_ERR("time over");
 						this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("sendMessage failed");
+					_ERR("sendMessage failed");
 					this->error = SCARD_ERROR_IPC_FAILED;
 				}
 				syncUnlock();
@@ -124,7 +124,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable session");
+			_ERR("unavailable session");
 			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
@@ -169,7 +169,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable session");
+			_ERR("unavailable session");
 			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
@@ -203,13 +203,13 @@ namespace smartcard_service_api
 
 				if (rv != 0)
 				{
-					SCARD_DEBUG_ERR("time over");
+					_ERR("time over");
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("sendMessage failed");
+				_ERR("sendMessage failed");
 				this->error = SCARD_ERROR_IPC_FAILED;
 			}
 			syncUnlock();
@@ -275,13 +275,13 @@ namespace smartcard_service_api
 				rv = waitTimedCondition(0);
 				if (rv != 0)
 				{
-					SCARD_DEBUG_ERR("time over");
+					_ERR("time over");
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("sendMessage failed");
+				_ERR("sendMessage failed");
 				this->error = SCARD_ERROR_IPC_FAILED;
 			}
 			syncUnlock();
@@ -294,7 +294,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable session");
+			_ERR("unavailable session");
 			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
@@ -328,7 +328,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable session");
+			_ERR("unavailable session");
 			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
@@ -362,13 +362,13 @@ namespace smartcard_service_api
 				rv = waitTimedCondition(0);
 				if (rv != 0)
 				{
-					SCARD_DEBUG_ERR("time over");
+					_ERR("time over");
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("sendMessage failed");
+				_ERR("sendMessage failed");
 				this->error = SCARD_ERROR_IPC_FAILED;
 			}
 			syncUnlock();
@@ -380,7 +380,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable session");
+			_ERR("unavailable session");
 			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
@@ -416,7 +416,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable session");
+			_ERR("unavailable session");
 			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
@@ -477,7 +477,7 @@ namespace smartcard_service_api
 
 		if (msg == NULL)
 		{
-			SCARD_DEBUG_ERR("message is null");
+			_ERR("message is null");
 			return result;
 		}
 
@@ -489,7 +489,7 @@ namespace smartcard_service_api
 			{
 				Channel *channel = NULL;
 
-				SCARD_DEBUG("MSG_REQUEST_OPEN_CHANNEL");
+				_DBG("MSG_REQUEST_OPEN_CHANNEL");
 
 				if (msg->param1 != 0)
 				{
@@ -502,7 +502,7 @@ namespace smartcard_service_api
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("alloc failed");
+						_ERR("alloc failed");
 
 						msg->error = SCARD_ERROR_OUT_OF_MEMORY;
 					}
@@ -532,7 +532,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_REQUEST_GET_ATR :
 			{
-				SCARD_DEBUG("MSG_REQUEST_GET_ATR");
+				_DBG("MSG_REQUEST_GET_ATR");
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
@@ -557,7 +557,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_REQUEST_CLOSE_SESSION :
 			{
-				SCARD_DEBUG("MSG_REQUEST_CLOSE_SESSION");
+				_DBG("MSG_REQUEST_CLOSE_SESSION");
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
@@ -581,7 +581,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_REQUEST_GET_CHANNEL_COUNT :
 			{
-				SCARD_DEBUG("MSG_REQUEST_GET_CHANNEL_COUNT");
+				_DBG("MSG_REQUEST_GET_CHANNEL_COUNT");
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
@@ -605,7 +605,7 @@ namespace smartcard_service_api
 			break;
 
 		default :
-			SCARD_DEBUG("unknown message : %s", msg->toString());
+			_DBG("unknown message : %s", msg->toString());
 			break;
 		}
 
@@ -623,7 +623,7 @@ namespace smartcard_service_api
 	} \
 	else \
 	{ \
-		SCARD_DEBUG_ERR("Invalid param"); \
+		_ERR("Invalid param"); \
 	}
 
 using namespace smartcard_service_api;

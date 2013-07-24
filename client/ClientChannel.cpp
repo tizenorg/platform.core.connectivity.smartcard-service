@@ -45,7 +45,7 @@ namespace smartcard_service_api
 
 		if (handle == NULL)
 		{
-			SCARD_DEBUG_ERR("ClientIPC::getInstance() failed");
+			_ERR("ClientIPC::getInstance() failed");
 
 			return;
 		}
@@ -86,13 +86,13 @@ namespace smartcard_service_api
 					rv = waitTimedCondition(0);
 					if (rv < 0)
 					{
-						SCARD_DEBUG_ERR("closeSync failed [%d]", rv);
+						_ERR("closeSync failed [%d]", rv);
 						this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("sendMessage failed");
+					_ERR("sendMessage failed");
 					this->error = SCARD_ERROR_IPC_FAILED;
 				}
 				syncUnlock();
@@ -107,7 +107,7 @@ namespace smartcard_service_api
 			else
 			{
 				/* FIXME */
-				SCARD_DEBUG("unavailable channel");
+				_DBG("unavailable channel");
 			}
 		}
 #endif
@@ -139,7 +139,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("unavailable channel");
+				_ERR("unavailable channel");
 				result = SCARD_ERROR_ILLEGAL_STATE;
 			}
 		}
@@ -178,14 +178,14 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("timeout");
+					_ERR("timeout");
 
 					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("sendMessage failed");
+				_ERR("sendMessage failed");
 			}
 			syncUnlock();
 
@@ -197,7 +197,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable channel");
+			_ERR("unavailable channel");
 			throw ErrorIllegalState(SCARD_ERROR_UNAVAILABLE);
 		}
 
@@ -233,7 +233,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unavailable channel");
+			_ERR("unavailable channel");
 			result = SCARD_ERROR_ILLEGAL_STATE;
 		}
 
@@ -248,7 +248,7 @@ namespace smartcard_service_api
 
 		if (msg == NULL)
 		{
-			SCARD_DEBUG_ERR("message is null");
+			_ERR("message is null");
 			return result;
 		}
 
@@ -259,7 +259,7 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_TRANSMIT :
 			{
 				/* transmit result */
-				SCARD_DEBUG("MSG_REQUEST_TRANSMIT");
+				_DBG("MSG_REQUEST_TRANSMIT");
 
 				if (msg->error == 0 &&
 					ResponseHelper::getStatus(msg->data) == 0)
@@ -293,7 +293,7 @@ namespace smartcard_service_api
 
 		case Message::MSG_REQUEST_CLOSE_CHANNEL :
 			{
-				SCARD_DEBUG("MSG_REQUEST_CLOSE_CHANNEL");
+				_DBG("MSG_REQUEST_CLOSE_CHANNEL");
 
 				if (msg->isSynchronousCall() == true) /* synchronized call */
 				{
@@ -316,7 +316,7 @@ namespace smartcard_service_api
 			break;
 
 		default:
-			SCARD_DEBUG("unknwon message : %s", msg->toString());
+			_DBG("Unknown message : %s", msg->toString());
 			break;
 		}
 
@@ -334,7 +334,7 @@ namespace smartcard_service_api
 	} \
 	else \
 	{ \
-		SCARD_DEBUG_ERR("Invalid param"); \
+		_ERR("Invalid param"); \
 	}
 
 using namespace smartcard_service_api;

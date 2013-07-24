@@ -98,7 +98,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("allocation failed");
+			_ERR("allocation failed");
 		}
 
 		return result;
@@ -114,22 +114,22 @@ namespace smartcard_service_api
 		unsigned int current = 0;
 		unsigned int dataLength = 0;
 
-//		SCARD_DEBUG("buffer [%p], length [%d]", buffer, length);
+//		_DBG("buffer [%p], length [%d]", buffer, length);
 
 		memcpy(&message, buffer + current, sizeof(message));
 		current += sizeof(message);
 
-//		SCARD_DEBUG("message [%d]", message);
+//		_DBG("message [%d]", message);
 
 		memcpy(&param1, buffer + current, sizeof(param1));
 		current += sizeof(param1);
 
-//		SCARD_DEBUG("param1 [%d]", param1);
+//		_DBG("param1 [%d]", param1);
 
 		memcpy(&param2, buffer + current, sizeof(param2));
 		current += sizeof(param2);
 
-//		SCARD_DEBUG("param2 [%d]", param2);
+//		_DBG("param2 [%d]", param2);
 
 		memcpy(&error, buffer + current, sizeof(error));
 		current += sizeof(error);
@@ -143,14 +143,14 @@ namespace smartcard_service_api
 		memcpy(&userParam, buffer + current, sizeof(userParam));
 		current += sizeof(userParam);
 
-//		SCARD_DEBUG("userContext [%p]", userContext);
+//		_DBG("userContext [%p]", userContext);
 
 		if (current + sizeof(dataLength) < length)
 		{
 			memcpy(&dataLength, buffer + current, sizeof(dataLength));
 			current += sizeof(dataLength);
 
-//			SCARD_DEBUG("dataLength [%d]", dataLength);
+//			_DBG("dataLength [%d]", dataLength);
 
 			data.setBuffer(buffer + current, dataLength);
 			current += dataLength;

@@ -62,16 +62,16 @@ namespace smartcard_service_api
 			terminal = (Terminal *)createInstance();
 			if (terminal != NULL)
 			{
-				SCARD_DEBUG("terminal [%p]", terminal);
+				_DBG("terminal [%p]", terminal);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("terminal is null");
+				_ERR("terminal is null");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("create_instance is null [%d]", errno);
+			_ERR("create_instance is null [%d]", errno);
 		}
 
 		return terminal;
@@ -90,7 +90,7 @@ namespace smartcard_service_api
 			terminal = createInstance(libHandle);
 			if (terminal != NULL)
 			{
-				SCARD_DEBUG("SE info : [%s] [%s]", library, terminal->getName());
+				_DBG("SE info : [%s] [%s]", library, terminal->getName());
 
 				libraries.push_back(libHandle);
 
@@ -102,33 +102,33 @@ namespace smartcard_service_api
 					ServerReader *reader = new ServerReader(this, terminal->getName(), terminal);
 					if (reader != NULL)
 					{
-						SCARD_DEBUG("register success [%s]", terminal->getName());
+						_DBG("register success [%s]", terminal->getName());
 
 						readers.push_back(reader);
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("ServerReader alloc failed [%s]", terminal->getName());
+						_ERR("ServerReader alloc failed [%s]", terminal->getName());
 						/* throw exception */
 					}
 				}
 				else
 				{
-					SCARD_DEBUG("SE is not ready [%s]", terminal->getName());
+					_DBG("SE is not ready [%s]", terminal->getName());
 				}
 
 				result = true;
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("createInstance failed [%s]", library);
+				_ERR("createInstance failed [%s]", library);
 
 				dlclose(libHandle);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("it is not se file [%s] [%d]", library, errno);
+			_ERR("it is not se file [%s] [%d]", library, errno);
 		}
 
 		return result;
@@ -197,7 +197,7 @@ namespace smartcard_service_api
 
 		if (resource.createService(socket, msg->error) != NULL)
 		{
-			SCARD_DEBUG_ERR("client added : pid [%d]", msg->error);
+			_ERR("client added : pid [%d]", msg->error);
 
 			response.error = SCARD_ERROR_OK;
 
@@ -208,13 +208,13 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG("no secure elements");
+				_DBG("no secure elements");
 				response.param1 = 0;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("createClient failed");
+			_ERR("createClient failed");
 
 			response.error = SCARD_ERROR_OUT_OF_MEMORY;
 		}

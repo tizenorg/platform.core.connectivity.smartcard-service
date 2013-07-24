@@ -48,7 +48,7 @@ namespace smartcard_service_api
 
 						value = tlv.getValue();
 
-						SCARD_DEBUG("APDU rule : %s", value.toString());
+						_DBG("APDU rule : %s", value.toString());
 
 						if (value.getLength() == 8) /* apdu 4 bytes + mask 4 bytes */
 						{
@@ -61,19 +61,19 @@ namespace smartcard_service_api
 						}
 						else
 						{
-							SCARD_DEBUG_ERR("Invalid APDU rule : %s", value.toString());
+							_ERR("Invalid APDU rule : %s", value.toString());
 						}
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("Unknown tag : 0x%02X", tlv.getTag());
+						_ERR("Unknown tag : 0x%02X", tlv.getTag());
 					}
 				}
 				tlv.returnToParentTLV();
 				break;
 
 			default :
-				SCARD_DEBUG_ERR("Unknown tag : 0x%02X", tlv.getTag());
+				_ERR("Unknown tag : 0x%02X", tlv.getTag());
 				break;
 			}
 		}
@@ -98,7 +98,7 @@ namespace smartcard_service_api
 
 	void APDUAccessRule::printAPDUAccessRules()
 	{
-		SCARD_DEBUG("  +-- APDU Access Rule");
+		_DBG("  +-- APDU Access Rule");
 
 		if (mapApduFilters.size() > 0)
 		{
@@ -106,12 +106,12 @@ namespace smartcard_service_api
 
 			for (iterMap = mapApduFilters.begin(); iterMap != mapApduFilters.end(); iterMap++)
 			{
-				SCARD_DEBUG("  +--- APDU : %s, Mask : %s", ((ByteArray)(iterMap->first)).toString(), iterMap->second.toString());
+				_DBG("  +--- APDU : %s, Mask : %s", ((ByteArray)(iterMap->first)).toString(), iterMap->second.toString());
 			}
 		}
 		else
 		{
-			SCARD_DEBUG("  +--- permission : %s", permission ? "granted all" : "denied all");
+			_DBG("  +--- permission : %s", permission ? "granted all" : "denied all");
 		}
 	}
 
@@ -131,8 +131,8 @@ namespace smartcard_service_api
 
 	void NFCAccessRule::printNFCAccessRules()
 	{
-		SCARD_DEBUG("   +-- NFC Access Rule");
-		SCARD_DEBUG("   +--- permission : %s", permission ? "granted all" : "denied all");
+		_DBG("   +-- NFC Access Rule");
+		_DBG("   +--- permission : %s", permission ? "granted all" : "denied all");
 	}
 
 	void AccessCondition::loadAccessCondition(ByteArray &aid, ByteArray &data)
@@ -152,7 +152,7 @@ namespace smartcard_service_api
 						switch (tlv.getTag())
 						{
 						case 0x04 : /* OCTET STRING : CertHash */
-							SCARD_DEBUG("aid : %s, hash : %s", aid.toString(), tlv.getValue().toString());
+							_DBG("aid : %s, hash : %s", aid.toString(), tlv.getValue().toString());
 
 							hashes.push_back(tlv.getValue());
 							break;
@@ -172,31 +172,31 @@ namespace smartcard_service_api
 									break;
 
 								default :
-									SCARD_DEBUG_ERR("Unknown tag : 0x%02X", tlv.getTag());
+									_ERR("Unknown tag : 0x%02X", tlv.getTag());
 									break;
 								}
 							}
 							else
 							{
-								SCARD_DEBUG_ERR("tlv.decodeTLV failed");
+								_ERR("tlv.decodeTLV failed");
 							}
 							tlv.returnToParentTLV();
 							break;
 
 						default :
-							SCARD_DEBUG_ERR("Unknown tag : 0x%02X", tlv.getTag());
+							_ERR("Unknown tag : 0x%02X", tlv.getTag());
 							break;
 						}
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("tlv.decodeTLV failed");
+						_ERR("tlv.decodeTLV failed");
 					}
 					tlv.returnToParentTLV();
 				}
 				else
 				{
-					SCARD_DEBUG("access granted for all applications, aid : %s", aid.toString());
+					_DBG("access granted for all applications, aid : %s", aid.toString());
 
 					permission = true;
 					break;
@@ -205,7 +205,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG("access denied for all applications, aid : %s", aid.toString());
+			_DBG("access denied for all applications, aid : %s", aid.toString());
 
 			permission = false;
 		}
@@ -256,7 +256,7 @@ namespace smartcard_service_api
 
 	void AccessCondition::printAccessConditions()
 	{
-		SCARD_DEBUG(" +-- Access Condition");
+		_DBG(" +-- Access Condition");
 
 		if (hashes.size() > 0)
 		{
@@ -264,12 +264,12 @@ namespace smartcard_service_api
 
 			for (i = 0; i < hashes.size(); i++)
 			{
-				SCARD_DEBUG(" +--- hash : %s", hashes[i].toString());
+				_DBG(" +--- hash : %s", hashes[i].toString());
 			}
 		}
 		else
 		{
-			SCARD_DEBUG(" +--- permission : %s", permission ? "granted all" : "denied all");
+			_DBG(" +--- permission : %s", permission ? "granted all" : "denied all");
 		}
 	}
 } /* namespace smartcard_service_api */

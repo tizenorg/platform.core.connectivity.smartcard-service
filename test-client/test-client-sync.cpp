@@ -51,27 +51,27 @@ class TestEventHandler : public SEServiceListener
 {
 	void serviceConnected(SEServiceHelper *service, void *userData)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 		testConnectedCallback(service, userData);
-		SCARD_END();
+		_END();
 	}
 
 	void eventHandler(SEServiceHelper *service, char *seName, int event, void *userData)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
-		SCARD_DEBUG("event occured service [%p], seName[%p], event [%d]", service, seName, event);
+		_DBG("event occured service [%p], seName[%p], event [%d]", service, seName, event);
 
-		SCARD_END();
+		_END();
 	}
 
 	void errorHandler(SEServiceHelper *service, int error, void *userData)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
-		SCARD_DEBUG("error occured service [%p], error [%d]", service, error);
+		_DBG("error occured service [%p], error [%d]", service, error);
 
-		SCARD_END();
+		_END();
 	}
 };
 
@@ -82,11 +82,11 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 	vector<ReaderHelper *> readers;
 	user_context_t *context = (user_context_t *)userData;
 
-	SCARD_BEGIN();
+	_BEGIN();
 
 	if (service != NULL)
 	{
-		SCARD_DEBUG("callback called, service [%p]", service);
+		_DBG("callback called, service [%p]", service);
 
 		context->clientService = service;
 
@@ -98,16 +98,16 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 
 			reader = (Reader *)readers[0];
 
-			SCARD_DEBUG("reader [%p]", reader);
+			_DBG("reader [%p]", reader);
 
 			Session *session = (Session *)reader->openSessionSync();
 			if (session != NULL)
 			{
-				SCARD_DEBUG("session [%p]", session);
+				_DBG("session [%p]", session);
 
 				ByteArray temp;
 				temp = session->getATRSync();
-				SCARD_DEBUG("atr[%d] : %s", temp.getLength(), temp.toString());
+				_DBG("atr[%d] : %s", temp.getLength(), temp.toString());
 
 				unsigned char MF[] = { 0xA0, 0x00, 0x00, 0x00, 0x63, 0x50, 0x4B, 0x43, 0x53, 0x2D, 0x31, 0x35 };
 				ByteArray aid;
@@ -116,52 +116,52 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 				ClientChannel *channel = (ClientChannel *)session->openLogicalChannelSync(aid);
 				if (channel != NULL)
 				{
-					SCARD_DEBUG("channel [%p]", channel);
+					_DBG("channel [%p]", channel);
 					ByteArray response;
 					ByteArray data, command;
 					int fid = 0x00003150;
 
 					response = channel->getSelectResponse();
-					SCARD_DEBUG("response : %s", response.toString());
+					_DBG("response : %s", response.toString());
 
-					SCARD_DEBUG("isBasicChannel() = %s", channel->isBasicChannel() ? "Basic" : "Logical");
-					SCARD_DEBUG("isClosed() = %s", channel->isClosed() ? "Closed" : "Opened");
+					_DBG("isBasicChannel() = %s", channel->isBasicChannel() ? "Basic" : "Logical");
+					_DBG("isClosed() = %s", channel->isClosed() ? "Closed" : "Opened");
 
 					data.setBuffer((unsigned char *)&fid, 2);
 					command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_ID, 0, data);
 					int error = channel->transmitSync(command, response);
 
-					SCARD_DEBUG("error : %d, response : %s", error, response.toString());
+					_DBG("error : %d, response : %s", error, response.toString());
 
 					channel->closeSync();
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("openLogicalChannelSync failed");
+					_ERR("openLogicalChannelSync failed");
 				}
 
 				session->closeSync();
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("openSessionSync failed");
+				_ERR("openSessionSync failed");
 			}
 
 			service->shutdown();
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("reader is empty");
+			_ERR("reader is empty");
 		}
 	}
 	else
 	{
-		SCARD_DEBUG_ERR("service is NULL");
+		_ERR("service is NULL");
 	}
 
 	g_main_loop_quit(loop);
 
-	SCARD_END();
+	_END();
 }
 
 int main(int argv, char *args[])

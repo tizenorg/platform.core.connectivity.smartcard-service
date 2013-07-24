@@ -61,14 +61,14 @@ namespace smartcard_service_api
 			while (!result.second);
 		}
 
-		SCARD_DEBUG("assign handle : newHandle [%d]", newHandle);
+		_DBG("assign handle : newHandle [%d]", newHandle);
 
 		return newHandle;
 	}
 
 	void IntegerHandle::releaseHandle(unsigned int handle)
 	{
-		SCARD_DEBUG("will be released : Handle [%d]", handle);
+		_DBG("will be released : Handle [%d]", handle);
 
 		SCOPE_LOCK(mutexLock)
 		{
@@ -81,12 +81,12 @@ namespace smartcard_service_api
 	ServerResource::ServerResource()
 		: mainLoop(NULL), seLoaded(false)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		serverIPC = ServerIPC::getInstance();
 		serverDispatcher = ServerDispatcher::getInstance();
 
-		SCARD_END();
+		_END();
 	}
 
 	ServerResource::~ServerResource()
@@ -114,12 +114,12 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("client already exist [%d]", socket);
+			_ERR("client already exist [%d]", socket);
 		}
 
 		return result;
@@ -167,7 +167,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG("client removed already [%d]", socket);
+			_DBG("client removed already [%d]", socket);
 		}
 	}
 
@@ -196,13 +196,13 @@ namespace smartcard_service_api
 			{
 				if ((result = instance->createService(context)) == NULL)
 				{
-					SCARD_DEBUG_ERR("ClientInstance::createService failed [%d] [%d]", socket, context);
+					_ERR("ClientInstance::createService failed [%d] [%d]", socket, context);
 				}
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("client doesn't exist [%d]", socket);
+			_ERR("client doesn't exist [%d]", socket);
 		}
 
 		return result;
@@ -219,7 +219,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("client doesn't exist [%d]", socket);
+			_ERR("client doesn't exist [%d]", socket);
 		}
 
 		return result;
@@ -235,7 +235,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("client doesn't exist [%d]", socket);
+			_ERR("client doesn't exist [%d]", socket);
 		}
 	}
 
@@ -249,7 +249,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("client doesn't exist [%d]", socket);
+			_ERR("client doesn't exist [%d]", socket);
 		}
 	}
 
@@ -264,7 +264,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("Terminal doesn't exist [%d]", terminalID);
+			_ERR("Terminal doesn't exist [%d]", terminalID);
 		}
 
 		return result;
@@ -298,7 +298,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("Terminal doesn't exist, reader ID [%d]", readerID);
+			_ERR("Terminal doesn't exist, reader ID [%d]", readerID);
 		}
 
 		return result;
@@ -336,7 +336,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
+			_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
 		}
 
 		return result;
@@ -353,7 +353,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("Session doesn't exist : socket [%d], context [%d], handle [%d]", socket, context, sessionID);
+			_ERR("Session doesn't exist : socket [%d], context [%d], handle [%d]", socket, context, sessionID);
 		}
 
 		return result;
@@ -370,7 +370,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
+			_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
 		}
 
 		return result;
@@ -386,7 +386,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
+			_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
 		}
 	}
 
@@ -405,7 +405,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("acList is null");
+			_ERR("acList is null");
 			result = false;
 		}
 
@@ -432,18 +432,18 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 				if (0)
 				{
 					/* TODO : if there is no more channel, return error code */
-					SCARD_DEBUG_ERR("no more logical channel");
+					_ERR("no more logical channel");
 					result = -2;
 				}
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+			_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
 		}
 
 		return result;
@@ -465,17 +465,17 @@ namespace smartcard_service_api
 
 			if (resp.getStatus() == 0)
 			{
-				SCARD_DEBUG("channel closed [%d]", channelNum);
+				_DBG("channel closed [%d]", channelNum);
 				result = 0;
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
+				_ERR("status word [%d][ %02X %02X ]", resp.getStatus(), resp.getSW1(), resp.getSW2());
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+			_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
 		}
 
 		return result;
@@ -494,11 +494,11 @@ namespace smartcard_service_api
 			channelNum = _openLogicalChannel(terminal);
 			if (channelNum > 0)
 			{
-				SCARD_DEBUG("channelNum [%d]", channelNum);
+				_DBG("channelNum [%d]", channelNum);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("_openLogicalChannel failed [%d]", channelNum);
+				_ERR("_openLogicalChannel failed [%d]", channelNum);
 				throw ExceptionBase(SCARD_ERROR_NOT_ENOUGH_RESOURCE);
 			}
 		}
@@ -507,7 +507,7 @@ namespace smartcard_service_api
 		result = service->openChannel(sessionID, channelNum, ByteArray::EMPTY);
 		if (result == IntegerHandle::INVALID_HANDLE)
 		{
-			SCARD_DEBUG_ERR("channel is null.");
+			_ERR("channel is null.");
 
 			/* close logical channel */
 			if (channelNum > 0)
@@ -537,7 +537,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("select failed");
+					_ERR("select failed");
 
 					service->closeChannel(result);
 					throw ExceptionBase(SCARD_ERROR_IO_FAILED);
@@ -555,7 +555,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("select failed [%d]", rv);
+					_ERR("select failed [%d]", rv);
 
 					service->closeChannel(result);
 					throw ExceptionBase(SCARD_ERROR_IO_FAILED);
@@ -564,7 +564,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("unauthorized access");
+			_ERR("unauthorized access");
 
 			service->closeChannel(result);
 			throw ExceptionBase(SCARD_ERROR_SECURITY_NOT_ALLOWED);
@@ -593,24 +593,24 @@ namespace smartcard_service_api
 					result = _createChannel(terminal, service, channelType, sessionID, aid);
 					if (result == IntegerHandle::INVALID_HANDLE)
 					{
-						SCARD_DEBUG_ERR("create channel failed [%d]", sessionID);
+						_ERR("create channel failed [%d]", sessionID);
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("session is invalid [%d]", sessionID);
+					_ERR("session is invalid [%d]", sessionID);
 					throw ExceptionBase(SCARD_ERROR_UNAVAILABLE);
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("session is invalid [%d]", sessionID);
+				_ERR("session is invalid [%d]", sessionID);
 				throw ExceptionBase(SCARD_ERROR_ILLEGAL_PARAM);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getService is failed [%d] [%d]", socket, context);
+			_ERR("getService is failed [%d] [%d]", socket, context);
 			throw ExceptionBase(SCARD_ERROR_UNAVAILABLE);
 		}
 
@@ -628,7 +628,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("Channel doesn't exist : socket [%d], context [%d], handle [%d]", socket, context, channelID);
+			_ERR("Channel doesn't exist : socket [%d], context [%d], handle [%d]", socket, context, channelID);
 		}
 
 		return result;
@@ -644,7 +644,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
+			_ERR("getService doesn't exist : socket [%d], context [%d]", socket, context);
 		}
 	}
 
@@ -663,7 +663,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 			}
 		}
 		else
@@ -689,7 +689,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 			}
 		}
 		else
@@ -712,16 +712,16 @@ namespace smartcard_service_api
 			terminal = (Terminal *)createInstance();
 			if (terminal != NULL)
 			{
-				SCARD_DEBUG("terminal [%p]", terminal);
+				_DBG("terminal [%p]", terminal);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("terminal is null");
+				_ERR("terminal is null");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("create_instance is null [%d]", errno);
+			_ERR("create_instance is null [%d]", errno);
 		}
 
 		return terminal;
@@ -747,7 +747,7 @@ namespace smartcard_service_api
 
 				terminal->setStatusCallback(&ServerResource::terminalCallback);
 
-				SCARD_DEBUG("register success [%s] [%p] [%s] [%p]", library, libHandle, terminal->getName(), terminal);
+				_DBG("register success [%s] [%p] [%s] [%p]", library, libHandle, terminal->getName(), terminal);
 
 				if (terminal->isSecureElementPresence() == true)
 				{
@@ -758,14 +758,14 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("terminal is null [%s]", library);
+				_ERR("terminal is null [%s]", library);
 
 				dlclose(libHandle);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("it is not se file [%s] [%d]", library, errno);
+			_ERR("it is not se file [%s] [%d]", library, errno);
 		}
 
 		return result;
@@ -917,13 +917,13 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 				result = -1;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG("no secure element");
+			_DBG("no secure element");
 		}
 
 		return result;
@@ -945,7 +945,7 @@ namespace smartcard_service_api
 
 	void ServerResource::terminalCallback(void *terminal, int event, int error, void *user_param)
 	{
-		SCARD_DEBUG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
+		_DBG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
 
 		switch (event)
 		{
@@ -955,7 +955,7 @@ namespace smartcard_service_api
 				unsigned int terminalID = IntegerHandle::INVALID_HANDLE;
 				Message msg;
 
-				SCARD_DEBUG("[NOTIFY_SE_AVAILABLE]");
+				_DBG("[NOTIFY_SE_AVAILABLE]");
 
 				terminalID = instance.getTerminalID((char *)terminal);
 				if (terminalID != IntegerHandle::INVALID_HANDLE)
@@ -976,7 +976,7 @@ namespace smartcard_service_api
 				unsigned int readerID = IntegerHandle::INVALID_HANDLE;
 				Message msg;
 
-				SCARD_DEBUG("[NOTIFY_SE_NOT_AVAILABLE]");
+				_DBG("[NOTIFY_SE_NOT_AVAILABLE]");
 
 				readerID = instance.getReaderID((char *)terminal);
 
@@ -991,7 +991,7 @@ namespace smartcard_service_api
 			break;
 
 		default :
-			SCARD_DEBUG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
+			_DBG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
 			break;
 		}
 	}
