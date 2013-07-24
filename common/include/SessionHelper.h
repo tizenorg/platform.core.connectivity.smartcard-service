@@ -74,16 +74,20 @@ namespace smartcard_service_api
 			ErrorIllegalState &, ErrorIllegalParameter &) = 0;
 
 		virtual Channel *openBasicChannelSync(const ByteArray &aid)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
 
 		virtual Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
 
 		virtual Channel *openLogicalChannelSync(const ByteArray &aid)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
 
 		virtual Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length)
-			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
 	};
 
 } /* namespace smartcard_service_api */

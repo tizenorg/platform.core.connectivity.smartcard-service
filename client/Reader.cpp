@@ -43,8 +43,7 @@ namespace smartcard_service_api
 	{
 		_BEGIN();
 
-		if (context == NULL || name == NULL ||
-			strlen(name) == 0 || handle == NULL)
+		if (context == NULL || handle == NULL)
 		{
 			_ERR("invalid param");
 

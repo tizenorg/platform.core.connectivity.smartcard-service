@@ -648,6 +648,8 @@ namespace smartcard_service_api
 				GPOINTER_TO_UINT(handle),
 				(guint)id, var_aid, NULL,
 				&Session::session_open_channel_cb, param);
+
+			result = SCARD_ERROR_OK;
 #else
 			Message msg;
 
@@ -682,13 +684,15 @@ namespace smartcard_service_api
 	}
 
 	Channel *Session::openBasicChannelSync(const ByteArray &aid)
-		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openChannelSync(0, aid);
 	}
 
 	Channel *Session::openBasicChannelSync(const unsigned char *aid, unsigned int length)
-		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ByteArray temp(aid, length);
 
@@ -709,13 +713,15 @@ namespace smartcard_service_api
 	}
 
 	Channel *Session::openLogicalChannelSync(const ByteArray &aid)
-		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openChannelSync(1, aid);
 	}
 
 	Channel *Session::openLogicalChannelSync(const unsigned char *aid, unsigned int length)
-		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ByteArray temp(aid, length);
 

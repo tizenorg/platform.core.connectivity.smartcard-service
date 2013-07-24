@@ -87,19 +87,19 @@ namespace smartcard_service_api
 				ErrorIllegalState &, ErrorIllegalParameter &);
 
 		Channel *openBasicChannelSync(const ByteArray &aid)
-			throw(ErrorIO &, ErrorIllegalState &,
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
 		Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length)
-			throw(ErrorIO &, ErrorIllegalState &,
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
 		Channel *openLogicalChannelSync(const ByteArray &aid)
-			throw(ErrorIO &, ErrorIllegalState &,
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
 		Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length)
-			throw(ErrorIO &, ErrorIllegalState &,
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
 		size_t getChannelCount() const;

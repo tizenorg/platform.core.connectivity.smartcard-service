@@ -255,6 +255,11 @@ namespace smartcard_service_api
 	{
 		SimpleTLV tlv(data);
 
+		if (rule == NULL) {
+			_ERR("invalid parameter");
+			return;
+		}
+
 		if (tlv.decodeTLV() == true)
 		{
 			switch (tlv.getTag())
@@ -304,6 +309,11 @@ namespace smartcard_service_api
 
 	static void loadNFCAccessRule(AccessRule *rule, const ByteArray &data)
 	{
+		if (rule == NULL) {
+			_ERR("invalid parameter");
+			return;
+		}
+
 		rule->setNFCAccessRule(SimpleTLV::getBoolean(data));
 	}
 

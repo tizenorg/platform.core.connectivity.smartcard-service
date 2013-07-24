@@ -1507,7 +1507,9 @@ namespace smartcard_service_api
 							addAccessControlList(channel, acl);
 						} else {
 							_ERR("unknown error, 0x%x", -ret);
+
 							delete acl;
+							acl = NULL;
 						}
 					} else {
 						_ERR("alloc failed");

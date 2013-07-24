@@ -133,6 +133,11 @@ namespace smartcard_service_api
 		const gchar *name, const gchar *old_owner,
 		const gchar *new_owner, void *user_data)
 	{
+		if (name == NULL || old_owner == NULL || new_owner == NULL) {
+			_ERR("invalid parameter");
+			return;
+		}
+
 		if (strlen(new_owner) == 0) {
 			ClientInstance *client;
 
@@ -363,9 +368,12 @@ namespace smartcard_service_api
 				resource.createClient(name, pid);
 
 				instance = resource.getClient(name);
-
-				/* generate certification hashes */
-				instance->generateCertificationHashes();
+				if (instance != NULL) {
+					/* generate certification hashes */
+					instance->generateCertificationHashes();
+				} else {
+					_ERR("createClient failed");
+				}
 			}
 
 			if (instance != NULL) {
