@@ -42,8 +42,6 @@ namespace smartcard_service_api
 	Reader::Reader(void *context, const char *name, void *handle) :
 		ReaderHelper(), context(context), handle(handle)
 	{
-		unsigned int length = 0;
-
 		_BEGIN();
 
 		if (context == NULL || name == NULL || strlen(name) == 0 || handle == NULL)
@@ -55,11 +53,7 @@ namespace smartcard_service_api
 
 		this->handle = handle;
 		this->context = context;
-
-		length = strlen(name);
-		length = (length < sizeof(this->name)) ? length : sizeof(this->name);
-		memcpy(this->name, name, length);
-
+		this->name = name;
 #ifdef USE_GDBUS
 		/* initialize client */
 		if (!g_thread_supported())
@@ -169,7 +163,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
 			syncLock();
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				rv = waitTimedCondition(0);
 				if (rv != 0)
@@ -289,7 +283,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)callback;
 			msg.userParam = userData;
 
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				result = SCARD_ERROR_OK;
 			}
@@ -373,7 +367,7 @@ namespace smartcard_service_api
 			break;
 
 		default:
-			_DBG("unknown [%s]", msg->toString());
+			_DBG("unknown [%s]", msg->toString().c_str());
 			break;
 		}
 

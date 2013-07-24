@@ -85,7 +85,7 @@ namespace smartcard_service_api
 		void removeService(unsigned int handle);
 		void removeServices();
 #ifndef USE_GDBUS
-		bool sendMessageToAllServices(int socket, Message &msg);
+		bool sendMessageToAllServices(int socket, const Message &msg);
 #endif
 		void generateCertificationHashes();
 

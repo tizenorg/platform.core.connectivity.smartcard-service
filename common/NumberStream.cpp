@@ -20,15 +20,15 @@ namespace smartcard_service_api
 {
 	NumberStream::NumberStream(const ByteArray &T)
 	{
-		setBuffer(T.getBuffer(), T.getLength());
+		assign(T.getBuffer(), T.size());
 	}
 
-	unsigned int NumberStream::getBigEndianNumber()
+	unsigned int NumberStream::getBigEndianNumber() const
 	{
 		return getBigEndianNumber(*this);
 	}
 
-	unsigned int NumberStream::getLittleEndianNumber()
+	unsigned int NumberStream::getLittleEndianNumber() const
 	{
 		return getLittleEndianNumber(*this);
 	}
@@ -37,7 +37,7 @@ namespace smartcard_service_api
 	{
 		if (this != &T)
 		{
-			setBuffer(T.getBuffer(), T.getLength());
+			assign(T.getBuffer(), T.size());
 		}
 
 		return *this;
@@ -47,7 +47,7 @@ namespace smartcard_service_api
 	{
 		if (this != &T)
 		{
-			setBuffer(T.getBuffer(), T.getLength());
+			assign(T.getBuffer(), T.size());
 		}
 
 		return *this;
@@ -58,11 +58,11 @@ namespace smartcard_service_api
 		int i, len;
 		unsigned int result = 0;
 
-		len = (T.getLength() < 4) ? T.getLength() : 4;
+		len = (T.size() < 4) ? T.size() : 4;
 
 		for (i = 0; i < len; i++)
 		{
-			result = (result << 8) | T.getAt(i);
+			result = (result << 8) | T.at(i);
 		}
 
 		return result;
@@ -73,11 +73,11 @@ namespace smartcard_service_api
 		int i, len;
 		unsigned int result = 0;
 
-		len = (T.getLength() < 4) ? T.getLength() : 4;
+		len = (T.size() < 4) ? T.size() : 4;
 
 		for (i = 0; i < len; i++)
 		{
-			result = result | (T.getAt(i) << (i * 8));
+			result = result | (T.at(i) << (i * 8));
 		}
 
 		return result;

@@ -39,7 +39,7 @@ namespace smartcard_service_api
 		void addCondition(const ByteArray &aid, const ByteArray &hash,
 			const vector<ByteArray> &apduRule, const ByteArray &nfcRule);
 
-		int updateRule(ByteArray &data);
+		int updateRule(const ByteArray &data);
 
 	public:
 		GPARAACL();
@@ -48,19 +48,23 @@ namespace smartcard_service_api
 		int loadACL(Channel *channel);
 		int loadACL(GPARAM &aram);
 
-		bool isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
-			ByteArray &certHash);
-		bool isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
-			ByteArray &certHash, ByteArray &command);
-		bool isAuthorizedAccess(GPARAM &aram, unsigned char *aidBuffer,
-			unsigned int aidLength, unsigned char *certHashBuffer,
-			unsigned int certHashLength);
-		bool isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
-			vector<ByteArray> &certHashes);
-		bool isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
-			vector<ByteArray> &certHashes, ByteArray &command);
-		bool isAuthorizedNFCAccess(GPARAM &aram, ByteArray &aid,
-			vector<ByteArray> &certHashes);
+		bool isAuthorizedAccess(GPARAM &aram, const ByteArray &aid,
+			const ByteArray &certHash) const;
+		bool isAuthorizedAccess(GPARAM &aram, const ByteArray &aid,
+			const ByteArray &certHash,
+			const ByteArray &command) const;
+		bool isAuthorizedAccess(GPARAM &aram,
+			const unsigned char *aidBuffer,
+			unsigned int aidLength,
+			const unsigned char *certHashBuffer,
+			unsigned int certHashLength) const;
+		bool isAuthorizedAccess(GPARAM &aram, const ByteArray &aid,
+			const vector<ByteArray> &certHashes) const;
+		bool isAuthorizedAccess(GPARAM &aram, const ByteArray &aid,
+			const vector<ByteArray> &certHashes,
+			const ByteArray &command) const;
+		bool isAuthorizedNFCAccess(GPARAM &aram, const ByteArray &aid,
+			const vector<ByteArray> &certHashes) const;
 	};
 
 } /* namespace smartcard_service_api */

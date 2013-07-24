@@ -18,6 +18,7 @@
 #define FCI_H_
 
 /* standard library header */
+#include <string>
 
 /* SLP library header */
 
@@ -31,40 +32,38 @@ namespace smartcard_service_api
 	private:
 		ByteArray fcpBuffer;
 
-		char strBuffer[400];
-
-		unsigned int fileSize;
-		unsigned int totalFileSize;
-		unsigned int fid;
-		unsigned int sfi;
-		unsigned int maxRecordSize;
-		unsigned int numberOfRecord;
-		unsigned int fileType;
-		unsigned int fileStructure;
-		unsigned int lcs;
+		int fileSize;
+		int totalFileSize;
+		int fid;
+		int sfi;
+		int maxRecordSize;
+		int numberOfRecord;
+		int fileType;
+		int fileStructure;
+		int lcs;
 
 		void resetMemberVar();
 
 	public:
 		FCP();
-		FCP(ByteArray &array);
+		FCP(const ByteArray &array);
 		~FCP();
 
-		bool setFCP(ByteArray array);
-		ByteArray getFCP();
+		bool setFCP(const ByteArray &array);
+		const ByteArray getFCP() const;
 		void releaseFCP();
 
-		unsigned int getFileSize();
-		unsigned int getTotalFileSize();
-		unsigned int getFID();
-		unsigned int getSFI();
-		unsigned int getMaxRecordSize();
-		unsigned int getNumberOfRecord();
-		unsigned int getFileType();
-		unsigned int getFileStructure();
-		unsigned int getLCS();
+		int getFileSize() const;
+		int getTotalFileSize() const;
+		int getFID() const;
+		int getSFI() const;
+		int getMaxRecordSize() const;
+		int getNumberOfRecord() const;
+		int getFileType() const;
+		int getFileStructure() const;
+		int getLCS() const;
 
-		const char *toString();
+		const string toString() const;
 	};
 
 	class FCM
@@ -106,7 +105,7 @@ namespace smartcard_service_api
 		FCI();
 		~FCI();
 
-		bool setFCIBuffer(ByteArray array);
+		bool setFCIBuffer(const ByteArray &array);
 	};
 
 } /* namespace smartcard_service_api */

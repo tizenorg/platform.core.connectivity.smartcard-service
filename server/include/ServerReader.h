@@ -39,10 +39,8 @@ namespace smartcard_service_api
 	{
 	private:
 		Terminal *terminal;
-		ServerChannel *adminChannel;
-		AccessControlList *acList;
 
-		ServerReader(ServerSEService *seService, char *name, Terminal *terminal);
+		ServerReader(ServerSEService *seService, const char *name, Terminal *terminal);
 		~ServerReader();
 
 		int openSession(openSessionCallback callback, void *userData) { return -1; }
@@ -52,11 +50,9 @@ namespace smartcard_service_api
 		void closeSessions()
 			throw(ErrorIO &, ErrorIllegalState &);
 
-		AccessControlList *getAccessControlList();
-
 		ServerSession *openSessionSync()
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		ServerSession *openSessionSync(vector<ByteArray> &certHashes, void *caller)
+		ServerSession *openSessionSync(const vector<ByteArray> &certHashes, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
 		friend class ServerSEService;

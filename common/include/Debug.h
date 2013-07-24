@@ -18,6 +18,7 @@
 #define DEBUG_H_
 
 /* standard library header */
+#include <iostream>
 
 /* SLP library header */
 #include "dlog.h"

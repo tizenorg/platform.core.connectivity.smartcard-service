@@ -35,11 +35,11 @@ namespace smartcard_service_api
 		{
 			ByteArray odfData, extra;
 
-			_DBG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString().c_str());
 
 			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), odfData)) == 0)
 			{
-				_DBG("odfData : %s", odfData.toString());
+				_DBG("odfData : %s", odfData.toString().c_str());
 
 				parseData(odfData);
 			}
@@ -54,7 +54,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	PKCS15ODF::PKCS15ODF(Channel *channel, ByteArray selectResponse) :
+	PKCS15ODF::PKCS15ODF(Channel *channel, const ByteArray &selectResponse) :
 		PKCS15Object(channel, selectResponse), dodf(NULL)
 	{
 		int ret = 0;
@@ -62,7 +62,7 @@ namespace smartcard_service_api
 
 		if ((ret = readBinary(0, 0, 0, odfData)) == 0)
 		{
-			_DBG("odfData : %s", odfData.toString());
+			_DBG("odfData : %s", odfData.toString().c_str());
 
 			parseData(odfData);
 		}
@@ -81,7 +81,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	bool PKCS15ODF::parseData(ByteArray data)
+	bool PKCS15ODF::parseData(const ByteArray &data)
 	{
 		bool result = false;
 		SimpleTLV tlv(data);
@@ -98,7 +98,7 @@ namespace smartcard_service_api
 
 					dodf = PKCS15Object::getOctetStream(tlv.getValue());
 
-					_DBG("path : %s", dodf.toString());
+					_DBG("path : %s", dodf.toString().c_str());
 
 					pair<unsigned int, ByteArray> newPair(tlv.getTag(), dodf);
 					dataList.insert(newPair);
@@ -113,7 +113,7 @@ namespace smartcard_service_api
 
 					tokeninfo = PKCS15Object::getOctetStream(tlv.getValue());
 
-					_DBG("path : %s", tokeninfo.toString());
+					_DBG("path : %s", tokeninfo.toString().c_str());
 
 					pair<unsigned int, ByteArray> newPair(tlv.getTag(), tokeninfo);
 					dataList.insert(newPair);
@@ -122,7 +122,7 @@ namespace smartcard_service_api
 
 			default :
 				_DBG("Unknown tlv : t [%X], l [%d], v %s",
-					tlv.getTag(), tlv.getLength(), tlv.getValue().toString());
+					tlv.getTag(), tlv.size(), tlv.getValue().toString().c_str());
 				break;
 			}
 

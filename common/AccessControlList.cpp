@@ -66,11 +66,11 @@ namespace smartcard_service_api
 		return item->second;
 	}
 
-	AccessRule *AccessControlList::findAccessRule(const ByteArray &aid,
-		const ByteArray &hash)
+	const AccessRule *AccessControlList::findAccessRule(const ByteArray &aid,
+		const ByteArray &hash) const
 	{
-		AccessRule *result = NULL;
-		map<ByteArray, AccessCondition>::iterator item;
+		const AccessRule *result = NULL;
+		map<ByteArray, AccessCondition>::const_iterator item;
 
 		item = mapConditions.find(aid);
 		if (item != mapConditions.end()) {
@@ -80,8 +80,8 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	bool AccessControlList::isAuthorizedAccess(ByteArray &aid,
-		ByteArray &certHash)
+	bool AccessControlList::isAuthorizedAccess(const ByteArray &aid,
+		const ByteArray &certHash) const
 	{
 		vector<ByteArray> hashes;
 
@@ -90,9 +90,9 @@ namespace smartcard_service_api
 		return isAuthorizedAccess(aid, hashes);
 	}
 
-	bool AccessControlList::isAuthorizedAccess(unsigned char *aidBuffer,
-		unsigned int aidLength, unsigned char *certHashBuffer,
-		unsigned int certHashLength)
+	bool AccessControlList::isAuthorizedAccess(const unsigned char *aidBuffer,
+		unsigned int aidLength, const unsigned char *certHashBuffer,
+		unsigned int certHashLength) const
 	{
 		ByteArray aid(aidBuffer, aidLength);
 		ByteArray certHash(certHashBuffer, certHashLength);
@@ -100,18 +100,18 @@ namespace smartcard_service_api
 		return isAuthorizedAccess(aid, certHash);
 	}
 
-	bool AccessControlList::isAuthorizedAccess(ByteArray &aid,
-		vector<ByteArray> &certHashes)
+	bool AccessControlList::isAuthorizedAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes) const
 	{
 		return isAuthorizedAccess(aid, certHashes, ByteArray::EMPTY);
 	}
 
-	bool AccessControlList::isAuthorizedAccess(ByteArray &aid,
-		vector<ByteArray> &certHashes, ByteArray &command)
+	bool AccessControlList::isAuthorizedAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes, const ByteArray &command) const
 	{
 		bool result = allGranted;
-		vector<ByteArray>::reverse_iterator item;
-		AccessRule *rule = NULL;
+		vector<ByteArray>::const_reverse_iterator item;
+		const AccessRule *rule = NULL;
 
 		if (result == true) {
 			goto END;
@@ -126,7 +126,7 @@ namespace smartcard_service_api
 				} else {
 					result = rule->isAuthorizedAPDUAccess(command);
 				}
-				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString(), (*item).toString());
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), (*item).toString().c_str());
 				goto END;
 			}
 		}
@@ -139,7 +139,7 @@ namespace smartcard_service_api
 			} else {
 				result = rule->isAuthorizedAPDUAccess(command);
 			}
-			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString(), ALL_DEVICE_APPS.toString());
+			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), ALL_DEVICE_APPS.toString().c_str());
 			goto END;
 		}
 
@@ -152,7 +152,7 @@ namespace smartcard_service_api
 				} else {
 					result = rule->isAuthorizedAPDUAccess(command);
 				}
-				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString());
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString().c_str());
 				goto END;
 			}
 		}
@@ -172,12 +172,12 @@ END :
 		return result;
 	}
 
-	bool AccessControlList::isAuthorizedNFCAccess(ByteArray &aid,
-		vector<ByteArray> &certHashes)
+	bool AccessControlList::isAuthorizedNFCAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes) const
 	{
 		bool result = allGranted;
-		vector<ByteArray>::reverse_iterator item;
-		AccessRule *rule = NULL;
+		vector<ByteArray>::const_reverse_iterator item;
+		const AccessRule *rule = NULL;
 
 		if (result == true) {
 			goto END;
@@ -188,7 +188,7 @@ END :
 			rule = findAccessRule(aid, *item);
 			if (rule != NULL) {
 				result = rule->isAuthorizedNFCAccess();
-				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString(), (*item).toString());
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), (*item).toString().c_str());
 				goto END;
 			}
 		}
@@ -197,7 +197,7 @@ END :
 		rule = findAccessRule(aid, ALL_DEVICE_APPS);
 		if (rule != NULL) {
 			result = rule->isAuthorizedNFCAccess();
-			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString(), "All device applications");
+			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), "All device applications");
 			goto END;
 		}
 
@@ -206,7 +206,7 @@ END :
 			rule = findAccessRule(ALL_SE_APPS, *item);
 			if (rule != NULL) {
 				result = rule->isAuthorizedNFCAccess();
-				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString());
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString().c_str());
 				goto END;
 			}
 		}
@@ -222,17 +222,17 @@ END :
 		return result;
 	}
 
-	void AccessControlList::printAccessControlList()
+	void AccessControlList::printAccessControlList() const
 	{
 		ByteArray temp;
-		map<ByteArray, AccessCondition>::iterator iterMap;
+		map<ByteArray, AccessCondition>::const_iterator iterMap;
 
 		_DBG("================ Access Control Rules ==================");
 		for (iterMap = mapConditions.begin(); iterMap != mapConditions.end(); iterMap++)
 		{
 			temp = iterMap->first;
 
-			_DBG("+ aid : %s", (temp == DEFAULT_SE_APP) ? "Default Application" : (temp == ALL_SE_APPS) ? "All SE Applications" : temp.toString());
+			_DBG("+ aid : %s", (temp == DEFAULT_SE_APP) ? "Default Application" : (temp == ALL_SE_APPS) ? "All SE Applications" : temp.toString().c_str());
 
 			iterMap->second.printAccessConditions();
 		}

@@ -33,27 +33,27 @@ namespace smartcard_service_api
 		SimpleTLV(TLVHelper *parent);
 		SimpleTLV(const ByteArray &array, TLVHelper *parent);
 
-		int decodeTag(unsigned char *buffer);
-		int decodeLength(unsigned char *buffer);
-		int decodeValue(unsigned char *buffer);
+		int decodeTag(const unsigned char *buffer);
+		int decodeLength(const unsigned char *buffer);
+		int decodeValue(const unsigned char *buffer);
 
-		TLVHelper *getChildTLV(ByteArray data);
+		TLVHelper *getChildTLV(const ByteArray &data);
 
 	public:
 		SimpleTLV();
 		SimpleTLV(const ByteArray &array);
 		~SimpleTLV();
 
-		static ByteArray getOctetString(const ByteArray &array);
+		static const ByteArray getOctetString(const ByteArray &array);
 		static bool getBoolean(const ByteArray &array);
 		static int getInteger(const ByteArray &array);
 
-		static ByteArray getOctetString(SimpleTLV &tlv);
+		static const ByteArray getOctetString(SimpleTLV &tlv);
 		static bool getBoolean(SimpleTLV &tlv);
 		static int getInteger(SimpleTLV &tlv);
 
-		static ByteArray encode(unsigned int tag, ByteArray buffer);
-		static ByteArray encode(unsigned int tag, unsigned char *buffer, unsigned int length);
+		static const ByteArray encode(unsigned int tag, const ByteArray &buffer);
+		static const ByteArray encode(unsigned int tag, unsigned char *buffer, unsigned int length);
 	};
 
 } /* namespace smartcard_service_api */

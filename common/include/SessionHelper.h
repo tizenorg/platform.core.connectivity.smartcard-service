@@ -47,7 +47,8 @@ namespace smartcard_service_api
 		bool closed;
 
 	public:
-		SessionHelper(ReaderHelper *reader);
+		SessionHelper(ReaderHelper *reader) :
+			reader(reader), closed(true) {}
 		virtual ~SessionHelper() {}
 
 		ReaderHelper *getReader() const throw() { return reader; }
@@ -59,12 +60,12 @@ namespace smartcard_service_api
 		virtual int getATR(getATRCallback callback, void *userData) = 0;
 		virtual int close(closeSessionCallback callback, void *userData) = 0;
 
-		virtual int openBasicChannel(ByteArray &aid, openChannelCallback callback, void *userData) = 0;
-		virtual int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
-		virtual int openLogicalChannel(ByteArray &aid, openChannelCallback callback, void *userData) = 0;
-		virtual int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
+		virtual int openBasicChannel(const ByteArray &aid, openChannelCallback callback, void *userData) = 0;
+		virtual int openBasicChannel(const unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
+		virtual int openLogicalChannel(const ByteArray &aid, openChannelCallback callback, void *userData) = 0;
+		virtual int openLogicalChannel(const unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData) = 0;
 
-		virtual ByteArray getATRSync()
+		virtual const ByteArray getATRSync()
 			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
 			ErrorIllegalState &, ErrorIllegalParameter &) = 0;
 
@@ -72,16 +73,16 @@ namespace smartcard_service_api
 			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
 			ErrorIllegalState &, ErrorIllegalParameter &) = 0;
 
-		virtual Channel *openBasicChannelSync(ByteArray &aid)
+		virtual Channel *openBasicChannelSync(const ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
 
-		virtual Channel *openBasicChannelSync(unsigned char *aid, unsigned int length)
+		virtual Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
 
-		virtual Channel *openLogicalChannelSync(ByteArray &aid)
+		virtual Channel *openLogicalChannelSync(const ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
 
-		virtual Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length)
+		virtual Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &) = 0;
 	};
 

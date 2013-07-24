@@ -16,8 +16,9 @@
 
 #ifndef USE_GDBUS
 /* standard library header */
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <sstream>
 
 /* SLP library header */
 
@@ -42,7 +43,7 @@ namespace smartcard_service_api
 	{
 	}
 
-	ByteArray Message::serialize()
+	const ByteArray Message::serialize() const
 	{
 		ByteArray result;
 		unsigned int length = 0;
@@ -50,10 +51,10 @@ namespace smartcard_service_api
 		unsigned char *buffer = NULL;
 
 		length = sizeof(message) + sizeof(param1) + sizeof(param2) + sizeof(error) + sizeof(caller) + sizeof(callback) + sizeof(userParam);
-		if (data.getLength() > 0)
+		if (data.size() > 0)
 		{
-			dataLength = data.getLength();
-			length += sizeof(dataLength) + data.getLength();
+			dataLength = data.size();
+			length += sizeof(dataLength) + data.size();
 		}
 
 		buffer = new unsigned char[length];
@@ -84,16 +85,16 @@ namespace smartcard_service_api
 			memcpy(buffer + current, &userParam, sizeof(userParam));
 			current += sizeof(userParam);
 
-			if (data.getLength() > 0)
+			if (data.size() > 0)
 			{
 				memcpy(buffer + current, &dataLength, sizeof(dataLength));
 				current += sizeof(dataLength);
 
 				memcpy(buffer + current, data.getBuffer(), dataLength);
-				current += data.getLength();
+				current += data.size();
 			}
 
-			result.setBuffer(buffer, length);
+			result.assign(buffer, length);
 
 			delete []buffer;
 		}
@@ -105,12 +106,12 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void Message::deserialize(ByteArray buffer)
+	void Message::deserialize(const ByteArray &buffer)
 	{
-		deserialize(buffer.getBuffer(), buffer.getLength());
+		deserialize(buffer.getBuffer(), buffer.size());
 	}
 
-	void Message::deserialize(unsigned char *buffer, unsigned int length)
+	void Message::deserialize(const unsigned char *buffer, unsigned int length)
 	{
 		unsigned int current = 0;
 		unsigned int dataLength = 0;
@@ -153,16 +154,15 @@ namespace smartcard_service_api
 
 //			_DBG("dataLength [%d]", dataLength);
 
-			data.setBuffer(buffer + current, dataLength);
+			data.assign(buffer + current, dataLength);
 			current += dataLength;
 		}
 	}
 
-	const char *Message::toString()
+	const string Message::toString() const
 	{
+		stringstream ss;
 		const char *msg = NULL;
-
-		memset(&text, 0, sizeof(text));
 
 		switch (message)
 		{
@@ -207,9 +207,9 @@ namespace smartcard_service_api
 			break;
 		}
 
-		snprintf(text, sizeof(text), "Message [%s, %d], param1 [%d], param2 [%d], error [%d], caller [%p], callback [%p], userParam [%p], data length [%d]", msg, message, param1, param2, error, caller, callback, userParam, data.getLength());
+		ss << "Message [" << msg << ", " << message << "], param1 [" << param1 << "], param2 [" << param2 << "], error [" << error << "], caller [" << "], callback [" << callback << "], userParam [" << userParam << "], data length [" << data.size() << "]";
 
-		return (const char *)text;
+		return ss.str();
 	}
 
 } /* namespace smartcard_service_api */

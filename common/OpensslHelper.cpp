@@ -36,7 +36,7 @@ namespace smartcard_service_api
 		BUF_MEM *bptr;
 		BIO *b64, *bmem;
 
-		if (buffer.getLength() == 0)
+		if (buffer.size() == 0)
 		{
 			return ret;
 		}
@@ -49,11 +49,11 @@ namespace smartcard_service_api
 
 		b64 = BIO_push(b64, bmem);
 
-		BIO_write(b64, buffer.getBuffer(), buffer.getLength());
+		BIO_write(b64, buffer.getBuffer(), buffer.size());
 		BIO_flush(b64);
 		BIO_get_mem_ptr(b64, &bptr);
 
-		result.setBuffer((unsigned char *)bptr->data, bptr->length);
+		result.assign((unsigned char *)bptr->data, bptr->length);
 
 		BIO_free_all(b64);
 
@@ -66,7 +66,7 @@ namespace smartcard_service_api
 	{
 		ByteArray temp;
 
-		temp.setBuffer((unsigned char *)buffer, strlen(buffer));
+		temp.assign((unsigned char *)buffer, strlen(buffer));
 
 		return decodeBase64String(temp, result, newLineChar);
 	}
@@ -77,12 +77,12 @@ namespace smartcard_service_api
 		unsigned int length = 0;
 		char *temp;
 
-		if (buffer.getBuffer() == NULL || buffer.getLength() == 0)
+		if (buffer.getBuffer() == NULL || buffer.size() == 0)
 		{
 			return ret;
 		}
 
-		length = buffer.getLength();
+		length = buffer.size();
 
 		temp = new char[length];
 		if (temp != NULL)
@@ -92,7 +92,7 @@ namespace smartcard_service_api
 			memset(temp, 0, length);
 
 			b64 = BIO_new(BIO_f_base64());
-			bmem = BIO_new_mem_buf(buffer.getBuffer(), length);
+			bmem = BIO_new_mem_buf((void *)buffer.getBuffer(), length);
 			if (newLineChar == false)
 				BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 			bmem = BIO_push(b64, bmem);
@@ -101,7 +101,7 @@ namespace smartcard_service_api
 
 			BIO_free_all(bmem);
 
-			result.setBuffer((unsigned char *)temp, length);
+			result.assign((unsigned char *)temp, length);
 
 			delete []temp;
 
@@ -115,19 +115,21 @@ namespace smartcard_service_api
 		return ret;
 	}
 
-	bool OpensslHelper::digestBuffer(const char *algorithm, const uint8_t *buffer, const uint32_t length, ByteArray &result)
+	bool OpensslHelper::digestBuffer(const char *algorithm,
+		const uint8_t *buffer, uint32_t length, ByteArray &result)
 	{
-		ByteArray temp((uint8_t *)buffer, (uint32_t)length);
+		ByteArray temp(buffer, length);
 
 		return digestBuffer(algorithm, temp, result);
 	}
 
-	bool OpensslHelper::digestBuffer(const char *algorithm, const ByteArray &buffer, ByteArray &result)
+	bool OpensslHelper::digestBuffer(const char *algorithm,
+		const ByteArray &buffer, ByteArray &result)
 	{
 		const EVP_MD *md;
 		bool ret = false;
 
-		if (algorithm == NULL || buffer.getLength() == 0)
+		if (algorithm == NULL || buffer.size() == 0)
 		{
 			return ret;
 		}
@@ -142,7 +144,7 @@ namespace smartcard_service_api
 
 			if (EVP_DigestInit(&mdCtx, md) > 0)
 			{
-				if (EVP_DigestUpdate(&mdCtx, buffer.getBuffer(), buffer.getLength()) == 0)
+				if (EVP_DigestUpdate(&mdCtx, buffer.getBuffer(), buffer.size()) == 0)
 				{
 					_ERR("EVP_DigestUpdate failed");
 				}
@@ -150,7 +152,7 @@ namespace smartcard_service_api
 				if (EVP_DigestFinal(&mdCtx, temp, &resultLen) > 0 &&
 					resultLen > 0)
 				{
-					result.setBuffer(temp, resultLen);
+					result.assign(temp, resultLen);
 					ret = true;
 				}
 			}

@@ -48,7 +48,7 @@ namespace smartcard_service_api
 		int select();
 
 		PKCS15ODF *getODF();
-		int getTokenInfo(ByteArray &path);
+		int getTokenInfo(ByteArray &path) const;
 	};
 
 } /* namespace smartcard_service_api */

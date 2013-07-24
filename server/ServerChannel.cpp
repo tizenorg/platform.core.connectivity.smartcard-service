@@ -48,13 +48,13 @@ namespace smartcard_service_api
 		APDUHelper apdu;
 		int rv;
 
-		if (isBasicChannel() == false)
+		if (isClosed() == false && isBasicChannel() == false)
 		{
 			/* close channel */
 			command = apdu.generateAPDU(APDUHelper::COMMAND_CLOSE_LOGICAL_CHANNEL, channelNum, ByteArray::EMPTY);
 			rv = terminal->transmitSync(command, result);
 
-			if (rv == 0 && result.getLength() >= 2)
+			if (rv == 0 && result.size() >= 2)
 			{
 				ResponseHelper resp(result);
 
@@ -69,18 +69,19 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				_ERR("select apdu is failed, rv [%d], length [%d]", rv, result.getLength());
+				_ERR("select apdu is failed, rv [%d], length [%d]", rv, result.size());
 			}
-		}
 
-		channelNum = -1;
+			channelNum = -1;
+		}
 	}
 
-	int ServerChannel::transmitSync(ByteArray command, ByteArray &result)
+	int ServerChannel::transmitSync(const ByteArray &command, ByteArray &result)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		int ret = -1;
 		APDUCommand helper;
+		ByteArray cmd;
 
 		if (isClosed() == true)
 		{
@@ -96,17 +97,17 @@ namespace smartcard_service_api
 				helper.getP1() == APDUCommand::P1_SELECT_BY_DF_NAME) ||
 				(helper.getINS() == APDUCommand::INS_MANAGE_CHANNEL))
 			{
-				return -4; /* security reason */
+				return SCARD_ERROR_SECURITY_NOT_ALLOWED;
 			}
 		}
 
 		/* TODO : insert channel ID using atr information */
 		helper.setChannel(APDUCommand::CLA_CHANNEL_STANDARD, channelNum);
-		helper.getBuffer(command);
+		helper.getBuffer(cmd);
 
-		_DBG("command [%d] : %s", command.getLength(), command.toString());
+		_DBG("command [%d] : %s", cmd.size(), cmd.toString().c_str());
 
-		ret = terminal->transmitSync(command, result);
+		ret = terminal->transmitSync(cmd, result);
 
 		return ret;
 	}

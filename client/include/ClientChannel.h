@@ -46,7 +46,7 @@ namespace smartcard_service_api
 		ByteArray response;
 #endif
 		ClientChannel(void *context, Session *session, int channelNum,
-			ByteArray selectResponse, void *handle);
+			const ByteArray &selectResponse, void *handle);
 		~ClientChannel();
 
 #ifdef USE_GDBUS
@@ -59,13 +59,13 @@ namespace smartcard_service_api
 #endif
 	public:
 		int close(closeChannelCallback callback, void *userParam);
-		int transmit(ByteArray command, transmitCallback callback,
+		int transmit(const ByteArray &command, transmitCallback callback,
 			void *userParam);
 
 		void closeSync()
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorSecurity &, ErrorIllegalParameter &);
-		int transmitSync(ByteArray command, ByteArray &result)
+		int transmitSync(const ByteArray &command, ByteArray &result)
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 

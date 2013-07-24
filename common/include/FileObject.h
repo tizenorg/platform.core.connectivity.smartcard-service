@@ -62,16 +62,16 @@ namespace smartcard_service_api
 		~FileObject();
 
 		void close();
-		inline bool isClosed() { return (opened == false); }
+		inline bool isClosed() const { return (opened == false); }
 		int select(const ByteArray &aid);
 		int select(const ByteArray &path, bool fromCurrentDF);
 		int select(unsigned int fid);
 		int selectParent();
 
-		inline ByteArray getSelectResponse() { return selectResponse; }
+		inline const ByteArray getSelectResponse() const { return selectResponse; }
 
-		FCI *getFCI();
-		FCP *getFCP();
+		const FCI *getFCI() const;
+		const FCP *getFCP() const;
 
 		int readRecord(unsigned int sfi, unsigned int recordId, Record &result);
 		int writeRecord(unsigned int sfi, const Record &record);

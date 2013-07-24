@@ -16,7 +16,7 @@
 
 #ifndef DISPATCHERHELPER_H_
 #define DISPATCHERHELPER_H_
-
+#ifndef USE_GDBUS
 /* standard library header */
 #include <queue>
 #include <pthread.h>
@@ -47,11 +47,11 @@ namespace smartcard_service_api
 
 	public:
 		DispatcherHelper();
-		~DispatcherHelper();
+		virtual ~DispatcherHelper();
 
 		void clearQueue();
 
-		void pushMessage(DispatcherMsg *msg);
+		void pushMessage(const DispatcherMsg &msg);
 		void processMessage(DispatcherMsg *msg);
 
 		bool runDispatcherThread();
@@ -61,4 +61,5 @@ namespace smartcard_service_api
 	};
 
 } /* namespace smartcard_service_api */
+#endif
 #endif /* DISPATCHERHELPER_H_ */

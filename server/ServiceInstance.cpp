@@ -42,7 +42,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	unsigned int ServiceInstance::openSession(Terminal *terminal, vector<ByteArray> &certHashes, void *caller)
+	unsigned int ServiceInstance::openSession(Terminal *terminal, const vector<ByteArray> &certHashes, void *caller)
 	{
 		unsigned int handle = IntegerHandle::assignHandle();
 
@@ -112,7 +112,7 @@ namespace smartcard_service_api
 		mapSessions.clear();
 	}
 
-	unsigned int ServiceInstance::openChannel(unsigned int session, int channelNum, ByteArray response)
+	unsigned int ServiceInstance::openChannel(unsigned int session, int channelNum, const ByteArray &response)
 	{
 		Terminal *terminal = getTerminal(session);
 		ServerChannel *channel = NULL;

@@ -31,7 +31,7 @@
 
 namespace smartcard_service_api
 {
-	ClientIPC::ClientIPC():IPCHelper()
+	ClientIPC::ClientIPC() : IPCHelper()
 	{
 #ifdef USE_AUTOSTART
 		_launch_daemon();
@@ -51,9 +51,9 @@ namespace smartcard_service_api
 				if ((error = security_server_request_cookie(buffer, length))
 					== SECURITY_SERVER_API_SUCCESS)
 				{
-					cookie.setBuffer(buffer, length);
+					cookie.assign(buffer, length);
 
-					_DBG("cookie : %s", cookie.toString());
+					_DBG("cookie : %s", cookie.toString().c_str());
 				}
 				else
 				{
@@ -130,7 +130,7 @@ namespace smartcard_service_api
 	}
 #endif
 
-	bool ClientIPC::sendMessage(Message *msg)
+	bool ClientIPC::sendMessage(const Message &msg)
 	{
 		ByteArray stream;
 		unsigned int length;
@@ -139,14 +139,14 @@ namespace smartcard_service_api
 			return false;
 
 #ifdef SECURITY_SERVER
-		stream = cookie + msg->serialize();
+		stream = cookie + msg.serialize();
 #else
-		stream = msg->serialize();
+		stream = msg.serialize();
 #endif
-		length = stream.getLength();
+		length = stream.size();
 
 		_DBG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
-			ipcSocket, msg->message, stream.getLength());
+			ipcSocket, msg.message, stream.size());
 
 		return IPCHelper::sendMessage(ipcSocket, stream);
 	}
@@ -205,7 +205,7 @@ namespace smartcard_service_api
 			msg = retrieveMessage();
 			if (msg != NULL)
 			{
-				DispatcherMsg dispMsg(msg);
+				DispatcherMsg dispMsg(*msg);
 
 				/* set peer socket */
 				dispMsg.setPeerSocket(ipcSocket);

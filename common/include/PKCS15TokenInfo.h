@@ -26,7 +26,7 @@
 
 namespace smartcard_service_api
 {
-	class PKCS15TokenInfo: public PKCS15Object
+	class PKCS15TokenInfo : public PKCS15Object
 	{
 	public:
 		PKCS15TokenInfo(Channel *channel);

@@ -28,8 +28,7 @@
 namespace smartcard_service_api
 {
 	/* ResponseHelper class */
-	ResponseHelper::ResponseHelper()
-		: status(0)
+	ResponseHelper::ResponseHelper() : status(0)
 	{
 	}
 
@@ -46,21 +45,21 @@ namespace smartcard_service_api
 	{
 		bool result = false;
 		status = SCARD_ERROR_UNKNOWN;
-		dataField.releaseBuffer();
+		dataField.clear();
 
 		this->response = response;
 
-		if (response.getLength() >= 2)
+		if (response.size() >= 2)
 		{
-			sw[0] = response.getReverseAt(1);
-			sw[1] = response.getReverseAt(0);
+			sw[0] = response.reverseAt(1);
+			sw[1] = response.reverseAt(0);
 
 			status = parseStatusWord(sw);
 
-			if (response.getLength() > 2)
+			if (response.size() > 2)
 			{
-				dataField.setBuffer(response.getBuffer(),
-					response.getLength() - 2);
+				dataField.assign(response.getBuffer(),
+					response.size() - 2);
 			}
 
 			result = true;
@@ -69,7 +68,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	int ResponseHelper::parseStatusWord(unsigned char *sw)
+	int ResponseHelper::parseStatusWord(const unsigned char *sw)
 	{
 		int result = sw[0] << 8 | sw[1];
 
@@ -89,45 +88,25 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	int ResponseHelper::getStatus()
-	{
-		return status;
-	}
-
 	int ResponseHelper::getStatus(const ByteArray &response)
 	{
 		int status = 0;
 
-		if (response.getLength() >= 2)
+		if (response.size() >= 2)
 		{
-			status = ResponseHelper::parseStatusWord(response.getBuffer((response.getLength() - 2)));
+			status = ResponseHelper::parseStatusWord(response.getBuffer((response.size() - 2)));
 		}
 
 		return status;
 	}
 
-	unsigned char ResponseHelper::getSW1()
-	{
-		return sw[0];
-	}
-
-	unsigned char ResponseHelper::getSW2()
-	{
-		return sw[1];
-	}
-
-	ByteArray ResponseHelper::getDataField()
-	{
-		return dataField;
-	}
-
-	ByteArray ResponseHelper::getDataField(const ByteArray &response)
+	const ByteArray ResponseHelper::getDataField(const ByteArray &response)
 	{
 		ByteArray result;
 
-		if (response.getLength() > 2)
+		if (response.size() > 2)
 		{
-			result.setBuffer(response.getBuffer(), response.getLength() - 2);
+			result.assign(response.getBuffer(), response.size() - 2);
 		}
 
 		return result;
@@ -145,8 +124,10 @@ namespace smartcard_service_api
 	{
 	}
 
-	bool APDUCommand::setCommand(unsigned char cla, unsigned char ins, unsigned char p1,
-		unsigned char p2, ByteArray commandData, unsigned int maxResponseSize)
+	bool APDUCommand::setCommand(unsigned char cla, unsigned char ins,
+		unsigned char p1, unsigned char p2,
+		const ByteArray &commandData,
+		unsigned int maxResponseSize)
 	{
 		setCLA(cla);
 		setINS(ins);
@@ -164,7 +145,7 @@ namespace smartcard_service_api
 		uint32_t offset = 0;
 		uint32_t lengthSize = 1;
 
-		if (command.getLength() < sizeof(header))
+		if (command.size() < sizeof(header))
 		{
 			return false;
 		}
@@ -177,7 +158,7 @@ namespace smartcard_service_api
 			lengthSize = 2;
 		}
 
-		if (command.getLength() - offset > lengthSize)
+		if (command.size() - offset > lengthSize)
 		{
 			unsigned int length = 0;
 
@@ -189,7 +170,7 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				length = command.getAt(offset);
+				length = command.at(offset);
 				offset += 1;
 			}
 
@@ -197,14 +178,14 @@ namespace smartcard_service_api
 			offset += length;
 		}
 
-		if (command.getLength() - offset == lengthSize)
+		if (command.size() - offset == lengthSize)
 		{
 			if (isExtendedLength)
 			{
 				unsigned int temp;
 
-				temp = command.getAt(offset) << 8;
-				temp |= command.getAt(offset + 1);
+				temp = command.at(offset) << 8;
+				temp |= command.at(offset + 1);
 
 				if (temp == 0)
 					setMaxResponseSize(APDUCommand::LE_MAX);
@@ -215,22 +196,22 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				if (command.getAt(offset) == 0)
+				if (command.at(offset) == 0)
 					setMaxResponseSize(APDUCommand::LE_MAX);
 				else
-					setMaxResponseSize(command.getAt(offset));
+					setMaxResponseSize(command.at(offset));
 
 				offset += 1;
 			}
 		}
 
-		if (command.getLength() == offset)
+		if (command.size() == offset)
 		{
 			result = true;
 		}
 		else
 		{
-			_ERR("command stream is not correct, command.getLength() [%d], offset [%d]", command.getLength(), offset);
+			_ERR("command stream is not correct, command.size() [%d], offset [%d]", command.size(), offset);
 		}
 
 		return result;
@@ -303,7 +284,7 @@ namespace smartcard_service_api
 		header.cla = cla;
 	}
 
-	unsigned char APDUCommand::getCLA()
+	unsigned char APDUCommand::getCLA() const
 	{
 		return header.cla;
 	}
@@ -317,7 +298,7 @@ namespace smartcard_service_api
 		header.ins = ins;
 	}
 
-	unsigned char APDUCommand::getINS()
+	unsigned char APDUCommand::getINS() const
 	{
 		return header.ins;
 	}
@@ -328,7 +309,7 @@ namespace smartcard_service_api
 		header.param[0] = p1;
 	}
 
-	unsigned char APDUCommand::getP1()
+	unsigned char APDUCommand::getP1() const
 	{
 		return header.param[0];
 	}
@@ -339,7 +320,7 @@ namespace smartcard_service_api
 		header.param[1] = p2;
 	}
 
-	unsigned char APDUCommand::getP2()
+	unsigned char APDUCommand::getP2() const
 	{
 		return header.param[1];
 	}
@@ -349,7 +330,7 @@ namespace smartcard_service_api
 		commandData = data;
 	}
 
-	ByteArray APDUCommand::getCommandData()
+	const ByteArray APDUCommand::getCommandData() const
 	{
 		return commandData;
 	}
@@ -359,12 +340,12 @@ namespace smartcard_service_api
 		this->maxResponseSize = maxResponseSize;
 	}
 
-	unsigned int APDUCommand::getMaxResponseSize()
+	unsigned int APDUCommand::getMaxResponseSize() const
 	{
 		return maxResponseSize;
 	}
 
-	bool APDUCommand::getBuffer(ByteArray &array)
+	bool APDUCommand::getBuffer(ByteArray &array) const
 	{
 		unsigned char *temp_buffer = NULL;
 		unsigned int temp_len = 0;
@@ -378,18 +359,18 @@ namespace smartcard_service_api
 		temp_len += sizeof(header);
 
 		/* calculate lc length */
-		if (commandData.getLength() > 0)
+		if (commandData.size() > 0)
 		{
-			if (isExtendedLength/*commandData.getLength() > 255*/)
+			if (isExtendedLength/*commandData.size() > 255*/)
 			{
-				lc[1] = (commandData.getLength() >> 8) & 0x000000FF;
-				lc[2] = commandData.getLength() & 0x000000FF;
+				lc[1] = (commandData.size() >> 8) & 0x000000FF;
+				lc[2] = commandData.size() & 0x000000FF;
 
 				lc_len = 3;
 			}
 			else
 			{
-				lc[0] = commandData.getLength() & 0x000000FF;
+				lc[0] = commandData.size() & 0x000000FF;
 
 				lc_len = 1;
 			}
@@ -398,12 +379,12 @@ namespace smartcard_service_api
 		temp_len += lc_len;
 
 		/* add command data length */
-		temp_len += commandData.getLength();
+		temp_len += commandData.size();
 
 		/* calculate le length */
 		if (maxResponseSize > 0)
 		{
-			if (isExtendedLength/*commandData.getLength() > 255*/)
+			if (isExtendedLength/*commandData.size() > 255*/)
 			{
 				if (maxResponseSize < 65536)
 				{
@@ -438,13 +419,13 @@ namespace smartcard_service_api
 		memcpy(temp_buffer + offset, &header, sizeof(header));
 		offset += sizeof(header);
 
-		if (commandData.getLength() > 0)
+		if (commandData.size() > 0)
 		{
 			memcpy(temp_buffer + offset, &lc, lc_len);
 			offset += lc_len;
 
-			memcpy(temp_buffer + offset, commandData.getBuffer(), commandData.getLength());
-			offset += commandData.getLength();
+			memcpy(temp_buffer + offset, commandData.getBuffer(), commandData.size());
+			offset += commandData.size();
 		}
 
 		if (maxResponseSize > 0)
@@ -453,14 +434,15 @@ namespace smartcard_service_api
 			offset += le_len;
 		}
 
-		array.setBuffer(temp_buffer, temp_len);
+		array.assign(temp_buffer, temp_len);
 		delete []temp_buffer;
 
 		return true;
 	}
 
 	/* APDUHelper class */
-	ByteArray APDUHelper::generateAPDU(int command, int channel, ByteArray data)
+	const ByteArray APDUHelper::generateAPDU(int command,
+		int channel, const ByteArray &data)
 	{
 		ByteArray result;
 		APDUCommand apdu;

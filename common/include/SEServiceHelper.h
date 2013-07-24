@@ -38,7 +38,7 @@ namespace smartcard_service_api
 
 	public:
 		SEServiceHelper() : connected(false) {}
-		virtual ~SEServiceHelper();
+		virtual ~SEServiceHelper() {}
 
 		vector<ReaderHelper *> getReaders() { return readers; }
 		bool isConnected() { return connected; }

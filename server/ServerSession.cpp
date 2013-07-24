@@ -31,7 +31,7 @@
 namespace smartcard_service_api
 {
 	ServerSession::ServerSession(ServerReader *reader,
-		vector<ByteArray> &certHashes,
+		const vector<ByteArray> &certHashes,
 		void *caller, Terminal *terminal) : SessionHelper(reader)
 	{
 		this->terminal = NULL;
@@ -53,10 +53,22 @@ namespace smartcard_service_api
 			closeSync();
 	}
 
-	ByteArray ServerSession::getATRSync()
+	const ByteArray ServerSession::getATRSync()
 		throw(ErrorIO &, ErrorIllegalState &)
 	{
 		/* call get atr to terminal */
+		if (atr.isEmpty()) {
+			if (terminal != NULL) {
+				int error = terminal->getATRSync(atr);
+
+				if (error < SCARD_ERROR_OK) {
+					_ERR("getATRSync failed, [%d]", error);
+				}
+			} else {
+				_ERR("terminal is null.");
+			}
+		}
+
 		return atr;
 	}
 
@@ -84,20 +96,20 @@ namespace smartcard_service_api
 		channels.clear();
 	}
 
-	Channel *ServerSession::openBasicChannelSync(ByteArray &aid)
+	Channel *ServerSession::openBasicChannelSync(const ByteArray &aid)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openBasicChannelSync(aid, NULL);
 	}
 
-	Channel *ServerSession::openBasicChannelSync(ByteArray &aid, void *caller)
+	Channel *ServerSession::openBasicChannelSync(const ByteArray &aid, void *caller)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ServerChannel *channel = NULL;
 		return channel;
 	}
 
-	Channel *ServerSession::openBasicChannelSync(unsigned char *aid, unsigned int length)
+	Channel *ServerSession::openBasicChannelSync(const unsigned char *aid, unsigned int length)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ByteArray temp(aid, length);
@@ -105,7 +117,7 @@ namespace smartcard_service_api
 		return openBasicChannelSync(temp);
 	}
 
-	Channel *ServerSession::openBasicChannelSync(unsigned char *aid, unsigned int length, void *caller)
+	Channel *ServerSession::openBasicChannelSync(const unsigned char *aid, unsigned int length, void *caller)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ByteArray temp(aid, length);
@@ -113,20 +125,20 @@ namespace smartcard_service_api
 		return openBasicChannelSync(temp, caller);
 	}
 
-	Channel *ServerSession::openLogicalChannelSync(ByteArray &aid)
+	Channel *ServerSession::openLogicalChannelSync(const ByteArray &aid)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openLogicalChannelSync(aid, NULL);
 	}
 
-	Channel *ServerSession::openLogicalChannelSync(ByteArray &aid, void *caller)
+	Channel *ServerSession::openLogicalChannelSync(const ByteArray &aid, void *caller)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ServerChannel *channel = NULL;
 		return channel;
 	}
 
-	Channel *ServerSession::openLogicalChannelSync(unsigned char *aid, unsigned int length)
+	Channel *ServerSession::openLogicalChannelSync(const unsigned char *aid, unsigned int length)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ByteArray temp(aid, length);
@@ -134,7 +146,7 @@ namespace smartcard_service_api
 		return openLogicalChannelSync(temp, NULL);
 	}
 
-	Channel *ServerSession::openLogicalChannelSync(unsigned char *aid, unsigned int length, void *caller)
+	Channel *ServerSession::openLogicalChannelSync(const unsigned char *aid, unsigned int length, void *caller)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ByteArray temp(aid, length);

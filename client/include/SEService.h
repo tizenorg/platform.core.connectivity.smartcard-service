@@ -52,7 +52,7 @@ namespace smartcard_service_api
 		SEService();
 
 		void addReader(unsigned int handle, const char *name);
-		bool parseReaderInformation(unsigned int count, ByteArray data);
+		bool parseReaderInformation(unsigned int count, const ByteArray &data);
 #ifdef USE_GDBUS
 		bool parseReaderInformation(GVariant *variant);
 #else

@@ -172,7 +172,7 @@ namespace smartcard_service_api
 		mapClients.clear();
 	}
 
-	int ServerResource::getClientCount()
+	int ServerResource::getClientCount() const
 	{
 		return (int)mapClients.size();
 	}
@@ -393,13 +393,15 @@ namespace smartcard_service_api
 		}
 	}
 #else
-	bool ServerResource::createClient(void *ioChannel, int socket, int watchID, int state, int pid)
+	bool ServerResource::createClient(void *ioChannel, int socket,
+		int watchID, int state, int pid)
 	{
 		bool result = false;
 
 		if (getClient(socket) == NULL)
 		{
-			ClientInstance *instance = new ClientInstance(ioChannel, socket, watchID, state, pid);
+			ClientInstance *instance = new ClientInstance(ioChannel,
+				socket, watchID, state, pid);
 			if (instance != NULL)
 			{
 				mapClients.insert(make_pair(socket, instance));
@@ -456,6 +458,19 @@ namespace smartcard_service_api
 		return result;
 	}
 
+	const ClientInstance *ServerResource::getClient(int socket) const
+	{
+		const ClientInstance *result = NULL;
+		map<int, ClientInstance *>::const_iterator item;
+
+		if ((item = mapClients.find(socket)) != mapClients.end())
+		{
+			result = item->second;
+		}
+
+		return result;
+	}
+
 	void ServerResource::setPID(int socket, int pid)
 	{
 		map<int, ClientInstance *>::iterator item;
@@ -500,7 +515,7 @@ namespace smartcard_service_api
 		mapClients.clear();
 	}
 
-	int ServerResource::getClientCount()
+	int ServerResource::getClientCount() const
 	{
 		return (int)mapClients.size();
 	}
@@ -570,7 +585,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	unsigned int ServerResource::createSession(int socket, unsigned int handle, unsigned int readerID, vector<ByteArray> &certHashes, void *caller)
+	unsigned int ServerResource::createSession(int socket, unsigned int handle, unsigned int readerID, const vector<ByteArray> &certHashes, void *caller)
 	{
 		unsigned int result = -1;
 		Terminal *temp = NULL;
@@ -646,7 +661,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	unsigned int ServerResource::createChannel(int socket, unsigned int handle, unsigned int sessionID, int channelType, ByteArray aid)
+	unsigned int ServerResource::createChannel(int socket, unsigned int handle, unsigned int sessionID, int channelType, const ByteArray &aid)
 		throw(ExceptionBase &)
 	{
 		unsigned int result = -1;
@@ -738,6 +753,23 @@ namespace smartcard_service_api
 		return result;
 	}
 
+	const Terminal *ServerResource::getTerminal(unsigned int terminalID) const
+	{
+		const Terminal *result = NULL;
+		map<unsigned int, Terminal *>::const_iterator item;
+
+		if ((item = mapTerminals.find(terminalID)) != mapTerminals.end())
+		{
+			result = item->second;
+		}
+		else
+		{
+			_ERR("Terminal doesn't exist [%d]", terminalID);
+		}
+
+		return result;
+	}
+
 	Terminal *ServerResource::getTerminal(const char *name)
 	{
 		Terminal *result = NULL;
@@ -747,22 +779,6 @@ namespace smartcard_service_api
 		{
 			if (strncmp(name, item->second->getName(), strlen(name)) == 0)
 			{
-				result = item->second;
-				break;
-			}
-		}
-
-		return result;
-	}
-
-	Terminal *ServerResource::getTerminalByIndex(int index)
-	{
-		int count = 0;
-		Terminal *result = NULL;
-		map<unsigned int, Terminal *>::iterator item;
-
-		for (item = mapTerminals.begin(), count = 0; item != mapTerminals.end(); item++, count++) {
-			if (count == index) {
 				result = item->second;
 				break;
 			}
@@ -788,14 +804,33 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	unsigned int ServerResource::getTerminalID(const char *name)
+	const Terminal *ServerResource::getTerminalByReaderID(unsigned int readerID) const
+	{
+		const Terminal *result = NULL;
+		map<unsigned int, unsigned int>::const_iterator item;
+
+		if ((item = mapReaders.find(readerID)) != mapReaders.end())
+		{
+			result = getTerminal(item->second);
+		}
+		else
+		{
+			_ERR("Terminal doesn't exist, reader ID [%d]", readerID);
+		}
+
+		return result;
+	}
+
+	unsigned int ServerResource::getTerminalID(const char *name) const
 	{
 		unsigned int result = IntegerHandle::INVALID_HANDLE;
-		map<unsigned int, Terminal *>::iterator item;
+		map<unsigned int, Terminal *>::const_iterator item;
 
-		for (item = mapTerminals.begin(); item != mapTerminals.end(); item++)
+		for (item = mapTerminals.begin();
+			item != mapTerminals.end(); item++)
 		{
-			if (strncmp(name, item->second->getName(), strlen(name)) == 0)
+			if (strncmp(name, item->second->getName(),
+				strlen(name)) == 0)
 			{
 				result = item->first;
 				break;
@@ -805,7 +840,8 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	bool ServerResource::_isAuthorizedAccess(ServerChannel *channel, ByteArray aid, vector<ByteArray> &hashes)
+	bool ServerResource::_isAuthorizedAccess(ServerChannel *channel,
+		const ByteArray aid, const vector<ByteArray> &hashes)
 	{
 		bool result = true;
 		AccessControlList *acList = NULL;
@@ -859,7 +895,7 @@ namespace smartcard_service_api
 		/* open channel */
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_OPEN_LOGICAL_CHANNEL, 0, ByteArray::EMPTY);
 		rv = terminal->transmitSync(command, response);
-		if (rv == 0 && response.getLength() >= 2)
+		if (rv == 0 && response.size() >= 2)
 		{
 			ResponseHelper resp(response);
 
@@ -874,7 +910,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_ERR("transmitSync failed, rv [%d], length [%d]", rv, response.getLength());
+			_ERR("transmitSync failed, rv [%d], length [%d]", rv, response.size());
 		}
 
 		return result;
@@ -890,7 +926,7 @@ namespace smartcard_service_api
 		/* open channel */
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_CLOSE_LOGICAL_CHANNEL, channelNum, ByteArray::EMPTY);
 		rv = terminal->transmitSync(command, response);
-		if (rv == 0 && response.getLength() >= 2)
+		if (rv == 0 && response.size() >= 2)
 		{
 			ResponseHelper resp(response);
 
@@ -906,13 +942,15 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.getLength());
+			_ERR("select apdu is failed, rv [%d], length [%d]", rv, response.size());
 		}
 
 		return result;
 	}
 
-	unsigned int ServerResource::_createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid)
+	unsigned int ServerResource::_createChannel(Terminal *terminal,
+		ServiceInstance *service, int channelType,
+		unsigned int sessionID, const ByteArray &aid)
 		throw(ExceptionBase &)
 	{
 		unsigned int result = IntegerHandle::INVALID_HANDLE;
@@ -1203,15 +1241,15 @@ namespace smartcard_service_api
 		}
 	}
 
-	bool ServerResource::isValidReaderHandle(unsigned int reader)
+	bool ServerResource::isValidReaderHandle(unsigned int reader) const
 	{
 		return (getTerminalByReaderID(reader) != NULL);
 	}
 
-	void ServerResource::getReaders(vector<pair<unsigned int, string> > &readers)
+	void ServerResource::getReaders(vector<pair<unsigned int, string> > &readers) const
 	{
-		Terminal *terminal;
-		map<unsigned int, unsigned int>::iterator item;
+		const Terminal *terminal;
+		map<unsigned int, unsigned int>::const_iterator item;
 
 		readers.clear();
 
@@ -1228,7 +1266,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	int ServerResource::getReadersInformation(ByteArray &info)
+	int ServerResource::getReadersInformation(ByteArray &info) const
 	{
 		int result = 0;
 		unsigned char *buffer = NULL;
@@ -1238,8 +1276,8 @@ namespace smartcard_service_api
 
 		if (mapReaders.size() > 0)
 		{
-			Terminal *terminal = NULL;
-			map<unsigned int, unsigned int>::iterator item;
+			const Terminal *terminal = NULL;
+			map<unsigned int, unsigned int>::const_iterator item;
 
 			for (item = mapReaders.begin(); item != mapReaders.end(); item++)
 			{
@@ -1286,7 +1324,7 @@ namespace smartcard_service_api
 					}
 				}
 
-				info.setBuffer(buffer, length);
+				info.assign(buffer, length);
 				delete []buffer;
 			}
 			else
@@ -1304,15 +1342,17 @@ namespace smartcard_service_api
 	}
 
 #ifndef USE_GDBUS
-	bool ServerResource::sendMessageToAllClients(Message &msg)
+	bool ServerResource::sendMessageToAllClients(const Message &msg)
 	{
 		bool result = true;
 
-		map<int, ClientInstance *>::iterator item;
+		map<int, ClientInstance *>::const_iterator item;
 
-		for (item = mapClients.begin(); item != mapClients.end(); item++)
+		for (item = mapClients.begin();
+			item != mapClients.end(); item++)
 		{
-			if (item->second->sendMessageToAllServices(item->second->getSocket(), msg) == false)
+			if (item->second->sendMessageToAllServices(
+				item->second->getSocket(), msg) == false)
 				result = false;
 		}
 
@@ -1320,7 +1360,8 @@ namespace smartcard_service_api
 	}
 #endif
 
-	void ServerResource::terminalCallback(void *terminal, int event, int error, void *user_param)
+	void ServerResource::terminalCallback(const void *terminal, int event,
+		int error, void *user_param)
 	{
 		_DBG("terminal [%s], event [%d], error [%d], user_param [%p]", (char *)terminal, event, error, user_param);
 
@@ -1345,7 +1386,8 @@ namespace smartcard_service_api
 					/* send all client to refresh reader */
 					msg.message = msg.MSG_NOTIFY_SE_INSERTED;
 					msg.param1 = readerID;
-					msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
+					msg.data.assign((uint8_t *)terminal,
+						strlen((char *)terminal) + 1);
 
 					instance.sendMessageToAllClients(msg);
 #endif
@@ -1362,14 +1404,16 @@ namespace smartcard_service_api
 
 				readerID = instance.getReaderID((char *)terminal);
 #ifdef USE_GDBUS
-				ServerGDBus::getInstance().emitReaderRemoved(readerID, (const char *)terminal);
+				ServerGDBus::getInstance().emitReaderRemoved(
+					readerID, (const char *)terminal);
 #else
 				Message msg;
 
 				/* send all client to refresh reader */
 				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
 				msg.param1 = readerID;
-				msg.data.setBuffer((unsigned char *)terminal, strlen((char *)terminal) + 1);
+				msg.data.assign((uint8_t *)terminal,
+					strlen((char *)terminal) + 1);
 
 				instance.sendMessageToAllClients(msg);
 #endif
@@ -1394,16 +1438,18 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	unsigned int ServerResource::getReaderID(const char *name)
+	unsigned int ServerResource::getReaderID(const char *name) const
 	{
-		unsigned int result = IntegerHandle::INVALID_HANDLE, terminalID = IntegerHandle::INVALID_HANDLE;
+		unsigned int result = IntegerHandle::INVALID_HANDLE,
+			terminalID = IntegerHandle::INVALID_HANDLE;
 
 		terminalID = getTerminalID(name);
 		if (terminalID != IntegerHandle::INVALID_HANDLE)
 		{
-			map<unsigned int, unsigned int>::iterator item;
+			map<unsigned int, unsigned int>::const_iterator item;
 
-			for (item = mapReaders.begin(); item != mapReaders.end(); item++)
+			for (item = mapReaders.begin();
+				item != mapReaders.end(); item++)
 			{
 				if (item->second == terminalID)
 				{
@@ -1426,7 +1472,8 @@ namespace smartcard_service_api
 		}
 	}
 
-	bool ServerResource::isAuthorizedNFCAccess(Terminal *terminal, ByteArray &aid, vector<ByteArray> &hashes)
+	bool ServerResource::isAuthorizedNFCAccess(Terminal *terminal,
+		const ByteArray &aid, const vector<ByteArray> &hashes)
 	{
 		bool result = false;
 

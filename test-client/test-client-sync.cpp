@@ -117,11 +117,11 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 				{
 					_ERR("exception....");
 				}
-				_DBG("atr[%d] : %s", temp.getLength(), temp.toString());
+				_DBG("atr[%d] : %s", temp.size(), temp.toString().c_str());
 
 				ByteArray aid;
 
-				aid.setBuffer(buffer, sizeof(buffer));
+				aid.assign(buffer, sizeof(buffer));
 				try
 				{
 					ClientChannel *channel = (ClientChannel *)session->openLogicalChannelSync(aid);
@@ -133,16 +133,16 @@ void testConnectedCallback(SEServiceHelper *service, void *userData)
 						int fid = 0x00003150;
 
 						response = channel->getSelectResponse();
-						_INFO("response : %s", response.toString());
+						_INFO("response : %s", response.toString().c_str());
 
 						_DBG("isBasicChannel() = %s", channel->isBasicChannel() ? "Basic" : "Logical");
 						_DBG("isClosed() = %s", channel->isClosed() ? "Closed" : "Opened");
 
-						data.setBuffer((unsigned char *)&fid, 2);
+						data.assign((unsigned char *)&fid, 2);
 						command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_ID, 0, data);
 						int error = channel->transmitSync(command, response);
 
-						_INFO("error : %d, response : %s", error, response.toString());
+						_INFO("error : %d, response : %s", error, response.toString().c_str());
 
 						channel->closeSync();
 					}

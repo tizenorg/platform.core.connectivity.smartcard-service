@@ -23,7 +23,8 @@
 
 namespace smartcard_service_api
 {
-	PKCS15TokenInfo::PKCS15TokenInfo(Channel *channel):PKCS15Object(channel)
+	PKCS15TokenInfo::PKCS15TokenInfo(Channel *channel) :
+		PKCS15Object(channel)
 	{
 	}
 

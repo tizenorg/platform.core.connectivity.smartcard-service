@@ -31,15 +31,15 @@ ENDFOREACH(flag)
 
 MESSAGE("CHECK MODULE in ${PROJECT_NAME} ${pkgs_server_LDFLAGS}")
 
-SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} -pipe -fomit-frame-pointer -Wall -Wno-trigraphs  -fno-strict-aliasing -Wl,-zdefs -fvisibility=hidden -std=c++0x")
-SET(ARM_CXXFLAGS "${ARM_CXXLAGS} -mapcs -mno-sched-prolog -mabi=aapcs-linux -Uarm -fno-common -fpic")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXXFLAGS}")
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-
 SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} -pipe -fomit-frame-pointer -Wall -Wno-trigraphs  -fno-strict-aliasing -Wl,-zdefs -fvisibility=hidden")
 SET(ARM_CFLAGS "${ARM_CLAGS} -mapcs -mno-sched-prolog -mabi=aapcs-linux -Uarm -fno-common -fpic")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS}")
 SET(CMAKE_C_FLAGS_DEBUG "-O0 -g")
+
+SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} -pipe -fomit-frame-pointer -Wall -Wno-trigraphs  -fno-strict-aliasing -Wl,-zdefs -fvisibility=hidden -std=c++0x")
+SET(ARM_CXXFLAGS "${ARM_CXXLAGS} -mapcs -mno-sched-prolog -mabi=aapcs-linux -Uarm -fno-common -fpic")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXXFLAGS}")
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
 FIND_PROGRAM(UNAME NAMES uname)
 EXEC_PROGRAM("${UNAME}" ARGS "-m" OUTPUT_VARIABLE "ARCH")

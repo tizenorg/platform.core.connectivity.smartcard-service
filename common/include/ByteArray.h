@@ -18,7 +18,9 @@
 #define BYTEARRAY_H_
 
 /* standard library header */
+#include <string>
 #include <stdint.h>
+#include <stddef.h>
 
 /* SLP library header */
 
@@ -27,42 +29,47 @@
 
 #define ARRAY_AND_SIZE(x) (uint8_t *)(&x), sizeof(x)
 
+using namespace std;
+
 namespace smartcard_service_api
 {
 	class ByteArray //: public Serializable
 	{
 	protected:
 		uint8_t *buffer;
-		uint32_t length;
-		char strBuffer[100];
+		size_t length;
 
-		bool _setBuffer(uint8_t *array, uint32_t bufferLen);
+		bool _assign(uint8_t *array, size_t size);
 		void save(const char *filePath);
 
 	public:
 		static ByteArray EMPTY;
 
 		ByteArray();
-		ByteArray(uint8_t *array, uint32_t bufferLen);
+		ByteArray(const uint8_t *array, size_t size);
 		ByteArray(const ByteArray &T);
 		~ByteArray();
 
 //		ByteArray serialize();
 //		void deserialize(ByteArray buffer);
 
-		bool setBuffer(uint8_t *array, uint32_t bufferLen);
-		void releaseBuffer();
+		bool assign(const uint8_t *array, size_t size);
+		inline bool setBuffer(const uint8_t *array, size_t size) { return assign(array, size); }
+		void clear();
 
-		uint32_t getLength() const;
-		uint8_t *getBuffer() const;
-		uint8_t *getBuffer(uint32_t offset) const;
+		size_t size() const;
+		inline size_t getLength() const { return size(); }
+		uint8_t *getBuffer();
+		inline const uint8_t *getBuffer() const { return getBuffer(); }
+		uint8_t *getBuffer(size_t offset);
+		inline const uint8_t *getBuffer(size_t offset) const { return getBuffer(offset); }
 
-		uint8_t getAt(uint32_t index) const;
-		uint8_t getReverseAt(uint32_t index) const;
+		uint8_t at(size_t index) const;
+		uint8_t reverseAt(size_t index) const;
 
-		uint32_t copyFromArray(uint8_t *array, uint32_t bufferLen) const;
+		size_t extract(uint8_t *array, size_t size) const;
 
-		ByteArray sub(uint32_t offset, uint32_t size) const;
+		const ByteArray sub(size_t offset, size_t size) const;
 
 		/* operator overloading */
 		ByteArray &operator =(const ByteArray &T);
@@ -72,10 +79,10 @@ namespace smartcard_service_api
 		bool operator !=(const ByteArray &T) const;
 		bool operator <(const ByteArray &T) const;
 		bool operator >(const ByteArray &T) const;
-		uint8_t &operator [](uint32_t index) const;
+		uint8_t operator [](size_t index) const;
 
 		inline bool isEmpty() const { return (buffer == (void *)0 || length == 0); }
-		const char *toString();
+		const string toString() const;
 	};
 
 } /* namespace smartcard_service_api */

@@ -71,7 +71,7 @@ namespace smartcard_service_api
 		if (tlv.decodeTLV() == true) {
 			switch (tlv.getTag()) {
 			case DO_TAG_AID_REF :
-				if (tlv.getLength() > 0) {
+				if (tlv.size() > 0) {
 					result = tlv.getValue();
 				} else {
 					result = AccessControlList::ALL_SE_APPS;
@@ -83,11 +83,11 @@ namespace smartcard_service_api
 				break;
 
 			default :
-				_ERR("decodeTLV failed, %s", tlv.toString());
+				_ERR("decodeTLV failed, %s", tlv.toString().c_str());
 				break;
 			}
 		} else {
-			_ERR("decodeTLV failed, %s", tlv.toString());
+			_ERR("decodeTLV failed, %s", tlv.toString().c_str());
 		}
 
 		_END();
@@ -103,13 +103,13 @@ namespace smartcard_service_api
 
 		if (tlv.decodeTLV() == true &&
 			tlv.getTag() == DO_TAG_HASH_REF) {
-			if (tlv.getLength() > 0) {
+			if (tlv.size() > 0) {
 				result = tlv.getValue();
 			} else {
 				result = AccessControlList::ALL_DEVICE_APPS;
 			}
 		} else {
-			_ERR("decodeTLV failed, %s", tlv.toString());
+			_ERR("decodeTLV failed, %s", tlv.toString().c_str());
 		}
 
 		_END();
@@ -129,9 +129,9 @@ namespace smartcard_service_api
 			hash = getHash(tlv);
 			tlv.returnToParentTLV();
 
-			_DBG("aid : %s, hash : %s", aid.toString(), hash.toString());
+			_DBG("aid : %s, hash : %s", aid.toString().c_str(), hash.toString().c_str());
 		} else {
-			_ERR("unknown tag : %s", tlv.toString());
+			_ERR("unknown tag : %s", tlv.toString().c_str());
 			result = SCARD_ERROR_ILLEGAL_PARAM;
 		}
 
@@ -150,7 +150,7 @@ namespace smartcard_service_api
 		if (tlv.decodeTLV() == true && tlv.getTag() == DO_TAG_AR) {
 			tlv.enterToValueTLV();
 			while (tlv.decodeTLV() == true) {
-				int length = tlv.getLength();
+				int length = tlv.size();
 
 				switch (tlv.getTag()) {
 				case DO_TAG_APDU_AR :
@@ -159,21 +159,21 @@ namespace smartcard_service_api
 						ByteArray temp;
 
 						for (i = 0; i < length; i += 8) {
-							temp.setBuffer(tlv.getValue().getBuffer(i), 8);
-							_DBG("apdu rule[%d] : %s", temp.getLength(), temp.toString());
+							temp.assign(tlv.getValue().getBuffer(i), 8);
+							_DBG("apdu rule[%d] : %s", temp.size(), temp.toString().c_str());
 							apduRule.push_back(temp);
 						}
 					} else if (length == 1){
-						_DBG("apdu rule : %s", tlv.getValue().toString());
+						_DBG("apdu rule : %s", tlv.getValue().toString().c_str());
 						apduRule.push_back(tlv.getValue());
 					} else {
-						_ERR("invalid rule, %s", tlv.toString());
+						_ERR("invalid rule, %s", tlv.toString().c_str());
 					}
 					break;
 
 				case DO_TAG_NFC_AR :
 					nfcRule = tlv.getValue();
-					_DBG("nfc rule : %s", tlv.getValue().toString());
+					_DBG("nfc rule : %s", tlv.getValue().toString().c_str());
 					break;
 
 				default :
@@ -201,7 +201,7 @@ namespace smartcard_service_api
 
 		if (apduRule.size() > 0) {
 			if (apduRule.size() == 1 &&
-				apduRule[0].getLength() == 1) {
+				apduRule[0].size() == 1) {
 				/* apdu grant/deny */
 				if (apduRule[0][0] == 1) {
 					condition.setAPDUAccessRule(hash, true);
@@ -217,7 +217,7 @@ namespace smartcard_service_api
 			}
 		}
 
-		if (nfcRule.getLength() == 1) {
+		if (nfcRule.size() == 1) {
 			if (nfcRule[0] == 1) {
 				condition.setNFCAccessRule(hash, true);
 			} else {
@@ -228,7 +228,7 @@ namespace smartcard_service_api
 		_END();
 	}
 
-	int GPARAACL::updateRule(ByteArray &data)
+	int GPARAACL::updateRule(const ByteArray &data)
 	{
 		int result = SCARD_ERROR_OK;
 		SimpleTLV tlv(data);
@@ -327,7 +327,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	static bool _isAuthorizedAccess(ByteArray &data, ByteArray &command)
+	static bool _isAuthorizedAccess(const ByteArray &data, const ByteArray &command)
 	{
 		vector<ByteArray> apduRule;
 		ByteArray nfcRule;
@@ -337,8 +337,8 @@ namespace smartcard_service_api
 		if (parseARDO(tlv, apduRule, nfcRule) >= SCARD_ERROR_OK) {
 			if (apduRule.size() > 0) {
 				if (apduRule.size() > 1 ||
-					apduRule[0].getLength() != 1) {
-					if (command.getLength() > 0) {
+					apduRule[0].size() != 1) {
+					if (command.size() > 0) {
 						/* TODO : check apdu rule */
 					} else {
 						/* check hash only */
@@ -348,16 +348,16 @@ namespace smartcard_service_api
 					result = (apduRule[0][0] == 1 ? true : false);
 				}
 			} else {
-				_ERR("unknown data : %s", tlv.toString());
+				_ERR("unknown data : %s", tlv.toString().c_str());
 			}
 		} else {
-			_ERR("parseARDO failed : %s", tlv.toString());
+			_ERR("parseARDO failed : %s", tlv.toString().c_str());
 		}
 
 		return result;
 	}
 
-	static bool _isAuthorizedNFCAccess(ByteArray &data)
+	static bool _isAuthorizedNFCAccess(const ByteArray &data)
 	{
 		vector<ByteArray> apduRule;
 		ByteArray nfcRule;
@@ -365,20 +365,20 @@ namespace smartcard_service_api
 		bool result = false;
 
 		if (parseARDO(tlv, apduRule, nfcRule) >= SCARD_ERROR_OK) {
-			if (nfcRule.getLength() == 1) {
+			if (nfcRule.size() == 1) {
 				result = (nfcRule[0] == 1 ? true : false);
 			} else {
-				_ERR("unknown data : %s", nfcRule.toString());
+				_ERR("unknown data : %s", nfcRule.toString().c_str());
 			}
 		} else {
-			_ERR("parseARDO failed : %s", tlv.toString());
+			_ERR("parseARDO failed : %s", tlv.toString().c_str());
 		}
 
 		return result;
 	}
 
-	bool GPARAACL::isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
-		ByteArray &certHash)
+	bool GPARAACL::isAuthorizedAccess(GPARAM &aram, const ByteArray &aid,
+		const ByteArray &certHash) const
 	{
 		vector<ByteArray> hashes;
 
@@ -387,9 +387,11 @@ namespace smartcard_service_api
 		return isAuthorizedAccess(aram, aid, hashes, ByteArray::EMPTY);
 	}
 
-	bool GPARAACL::isAuthorizedAccess(GPARAM &aram, unsigned char *aidBuffer,
-		unsigned int aidLength, unsigned char *certHashBuffer,
-		unsigned int certHashLength)
+	bool GPARAACL::isAuthorizedAccess(GPARAM &aram,
+		const unsigned char *aidBuffer,
+		unsigned int aidLength,
+		const unsigned char *certHashBuffer,
+		unsigned int certHashLength) const
 	{
 		ByteArray aid(aidBuffer, aidLength);
 		ByteArray hash(certHashBuffer, certHashLength);
@@ -397,18 +399,18 @@ namespace smartcard_service_api
 		return isAuthorizedAccess(aram, aid, hash);
 	}
 
-	bool GPARAACL::isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
-		vector<ByteArray> &certHashes)
+	bool GPARAACL::isAuthorizedAccess(GPARAM &aram, const ByteArray &aid,
+		const vector<ByteArray> &certHashes) const
 	{
 		return isAuthorizedAccess(aram, aid, certHashes, ByteArray::EMPTY);
 	}
 
-	bool GPARAACL::isAuthorizedAccess(GPARAM &aram, ByteArray &aid,
-		vector<ByteArray> &certHashes, ByteArray &command)
+	bool GPARAACL::isAuthorizedAccess(GPARAM &aram, const ByteArray &aid,
+		const vector<ByteArray> &certHashes, const ByteArray &command) const
 	{
 		bool result = allGranted;
 		ByteArray data;
-		vector<ByteArray>::reverse_iterator item;
+		vector<ByteArray>::const_reverse_iterator item;
 
 		if (aram.isClosed() == true)
 			return result;
@@ -423,18 +425,18 @@ namespace smartcard_service_api
 			result == false && item != certHashes.rend();
 			item++) {
 			if (aram.getDataSpecific(aid, *item, data)
-				>= SCARD_ERROR_OK && data.getLength() > 0) {
+				>= SCARD_ERROR_OK && data.size() > 0) {
 				result = _isAuthorizedAccess(data, command);
-				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString(), (*item).toString());
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), (*item).toString().c_str());
 				goto END;
 			}
 		}
 
 		/* Step B, find with aid and ALL_DEVICES_APPS */
 		if (aram.getDataSpecific(aid, ByteArray::EMPTY, data)
-			>= SCARD_ERROR_OK && data.getLength() > 0) {
+			>= SCARD_ERROR_OK && data.size() > 0) {
 			result = _isAuthorizedAccess(data, command);
-			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString(), "All device applications");
+			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), "All device applications");
 			goto END;
 		}
 
@@ -443,16 +445,16 @@ namespace smartcard_service_api
 			result == false && item != certHashes.rend();
 			item++) {
 			if (aram.getDataSpecific(ByteArray::EMPTY, *item, data)
-				>= SCARD_ERROR_OK && data.getLength() > 0) {
+				>= SCARD_ERROR_OK && data.size() > 0) {
 				result = _isAuthorizedAccess(data, command);
-				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString());
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString().c_str());
 				goto END;
 			}
 		}
 
 		/* Step D, find with ALL_SE_APPS and ALL_DEVICES_APPS */
 		if (aram.getDataSpecific(ByteArray::EMPTY, ByteArray::EMPTY, data)
-			>= SCARD_ERROR_OK && data.getLength() > 0) {
+			>= SCARD_ERROR_OK && data.size() > 0) {
 			result = _isAuthorizedAccess(data, command);
 			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", "All device applications");
 			goto END;
@@ -464,12 +466,12 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	bool GPARAACL::isAuthorizedNFCAccess(GPARAM &aram, ByteArray &aid,
-		vector<ByteArray> &certHashes)
+	bool GPARAACL::isAuthorizedNFCAccess(GPARAM &aram, const ByteArray &aid,
+		const vector<ByteArray> &certHashes) const
 	{
 		bool result = allGranted;
 		ByteArray data;
-		vector<ByteArray>::reverse_iterator item;
+		vector<ByteArray>::const_reverse_iterator item;
 
 		if (aram.isClosed() == true)
 			return result;
@@ -484,18 +486,18 @@ namespace smartcard_service_api
 			result == false && item != certHashes.rend();
 			item++) {
 			if (aram.getDataSpecific(aid, *item, data)
-				>= SCARD_ERROR_OK && data.getLength() > 0) {
+				>= SCARD_ERROR_OK && data.size() > 0) {
 				result = _isAuthorizedNFCAccess(data);
-				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString(), (*item).toString());
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), (*item).toString().c_str());
 				goto END;
 			}
 		}
 
 		/* Step B, find with aid and ALL_DEVICES_APPS */
 		if (aram.getDataSpecific(aid, ByteArray::EMPTY, data)
-			>= SCARD_ERROR_OK && data.getLength() > 0) {
+			>= SCARD_ERROR_OK && data.size() > 0) {
 			result = _isAuthorizedNFCAccess(data);
-			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString(), "All device applications");
+			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), "All device applications");
 			goto END;
 		}
 
@@ -504,16 +506,16 @@ namespace smartcard_service_api
 			result == false && item != certHashes.rend();
 			item++) {
 			if (aram.getDataSpecific(ByteArray::EMPTY, *item, data)
-				>= SCARD_ERROR_OK && data.getLength() > 0) {
+				>= SCARD_ERROR_OK && data.size() > 0) {
 				result = _isAuthorizedNFCAccess(data);
-				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString());
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString().c_str());
 				goto END;
 			}
 		}
 
 		/* Step D, find with ALL_SE_APPS and ALL_DEVICES_APPS */
 		if (aram.getDataSpecific(ByteArray::EMPTY, ByteArray::EMPTY, data)
-			>= SCARD_ERROR_OK && data.getLength() > 0) {
+			>= SCARD_ERROR_OK && data.size() > 0) {
 			result = _isAuthorizedNFCAccess(data);
 			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", "All device applications");
 			goto END;

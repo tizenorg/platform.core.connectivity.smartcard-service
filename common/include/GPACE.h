@@ -41,17 +41,19 @@ namespace smartcard_service_api
 
 		int loadACL(Channel *channel);
 
-		bool isAuthorizedAccess(ByteArray &aid,
-			ByteArray &certHash);
-		bool isAuthorizedAccess(unsigned char *aidBuffer,
-			unsigned int aidLength, unsigned char *certHashBuffer,
-			unsigned int certHashLength);
-		bool isAuthorizedAccess(ByteArray &aid,
-			vector<ByteArray> &certHashes);
-		bool isAuthorizedAccess(ByteArray &aid,
-			vector<ByteArray> &certHashes, ByteArray &command);
-		bool isAuthorizedNFCAccess(ByteArray &aid,
-			vector<ByteArray> &certHashes);
+		bool isAuthorizedAccess(const ByteArray &aid,
+			const ByteArray &certHash) const;
+		bool isAuthorizedAccess(const unsigned char *aidBuffer,
+			unsigned int aidLength,
+			const unsigned char *certHashBuffer,
+			unsigned int certHashLength) const;
+		bool isAuthorizedAccess(const ByteArray &aid,
+			const vector<ByteArray> &certHashes) const;
+		bool isAuthorizedAccess(const ByteArray &aid,
+			const vector<ByteArray> &certHashes,
+			const ByteArray &command) const;
+		bool isAuthorizedNFCAccess(const ByteArray &aid,
+			const vector<ByteArray> &certHashes) const;
 	};
 
 } /* namespace smartcard_service_api */

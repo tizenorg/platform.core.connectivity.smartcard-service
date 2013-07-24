@@ -15,8 +15,9 @@
  */
 
 /* standard library header */
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <sstream>
 
 /* SLP library header */
 
@@ -35,7 +36,7 @@ namespace smartcard_service_api
 		resetMemberVar();
 	}
 
-	FCP::FCP(ByteArray &array)
+	FCP::FCP(const ByteArray &array)
 	{
 		resetMemberVar();
 
@@ -59,7 +60,7 @@ namespace smartcard_service_api
 		lcs = FCI::INFO_NOT_AVAILABLE;
 	}
 
-	bool FCP::setFCP(ByteArray array)
+	bool FCP::setFCP(const ByteArray &array)
 	{
 		bool result = false;
 		SimpleTLV tlv;
@@ -68,7 +69,7 @@ namespace smartcard_service_api
 
 		releaseFCP();
 
-		if (array.getLength() == 0)
+		if (array.size() == 0)
 			return false;
 
 		fcpBuffer = array;
@@ -80,7 +81,7 @@ namespace smartcard_service_api
 		}
 
 		/* parse... */
-		tlv.setTLVBuffer(fcpBuffer.getBuffer(), fcpBuffer.getLength());
+		tlv.setTLVBuffer(fcpBuffer.getBuffer(), fcpBuffer.size());
 
 		if (tlv.decodeTLV())
 		{
@@ -92,8 +93,8 @@ namespace smartcard_service_api
 				{
 				case 0x80 : /* file length without structural information */
 					{
-						_DBG("0x%02X : file length without structural information : %s", tlv.getTag(), tlv.getValue().toString());
-						if (tlv.getLength() > 0)
+						_DBG("0x%02X : file length without structural information : %s", tlv.getTag(), tlv.getValue().toString().c_str());
+						if (tlv.size() > 0)
 						{
 							fileSize = NumberStream::getBigEndianNumber(tlv.getValue());
 						}
@@ -102,8 +103,8 @@ namespace smartcard_service_api
 
 				case 0x81 : /* file length with structural information */
 					{
-						_DBG("0x%02X : file length with structural information : %s", tlv.getTag(), tlv.getValue().toString());
-						if (tlv.getLength() > 0)
+						_DBG("0x%02X : file length with structural information : %s", tlv.getTag(), tlv.getValue().toString().c_str());
+						if (tlv.size() > 0)
 						{
 							maxRecordSize = NumberStream::getBigEndianNumber(tlv.getValue());
 						}
@@ -112,162 +113,152 @@ namespace smartcard_service_api
 
 				case 0x82 : /* file descriptor bytes */
 					{
-						_DBG("0x%02X : file descriptor bytes : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : file descriptor bytes : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x83 : /* file identifier */
 					{
-						_DBG("0x%02X : file identifier : %s", tlv.getTag(), tlv.getValue().toString());
-						if (tlv.getLength() > 0)
+						_DBG("0x%02X : file identifier : %s", tlv.getTag(), tlv.getValue().toString().c_str());
+						if (tlv.size() > 0)
 						{
 							ByteArray value = tlv.getValue();
 
 							fid = 0;
 
-							memcpy(&fid, value.getBuffer(), value.getLength());
+							memcpy(&fid, value.getBuffer(), value.size());
 						}
 					}
 					break;
 
 				case 0x84 : /* DF name */
 					{
-						SCARD_DEBUG("0x%02X : DF name : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x85 : /* proprietary information not encoded in BER-TLV */
 					{
-						_DBG("0x%02X : proprietary information not encoded in BER-TLV : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : proprietary information not encoded in BER-TLV : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x86 : /* Security attribute in proprietary format */
 					{
-						SCARD_DEBUG("0x%02X : Security attribute in proprietary format : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x87 : /* Identifier of an EF containing an extension of the file control information */
 					{
-						_DBG("0x%02X : Identifier of an EF containing an extension of the file control information : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : Identifier of an EF containing an extension of the file control information : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x88 : /* Short EF identifier */
 					{
-						_DBG("0x%02X : Short EF identifier : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : Short EF identifier : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 
-						if (tlv.getLength() > 0)
+						if (tlv.size() > 0)
 						{
 							ByteArray value = tlv.getValue();
 
 							sfi = 0;
 
-							memcpy(&sfi, value.getBuffer(), value.getLength());
+							memcpy(&sfi, value.getBuffer(), value.size());
 						}
 					}
 					break;
 
 				case 0x8A : /* life cycle status byte */
 					{
-						_DBG("0x%02X : life cycle status byte : %s", tlv.getTag(), tlv.getValue().toString());
-						if (tlv.getLength() > 0)
+						_DBG("0x%02X : life cycle status byte : %s", tlv.getTag(), tlv.getValue().toString().c_str());
+						if (tlv.size() > 0)
 						{
 							ByteArray value = tlv.getValue();
 
 							lcs = 0;
 
-							memcpy(&lcs, value.getBuffer(), value.getLength());
+							memcpy(&lcs, value.getBuffer(), value.size());
 						}
 					}
 					break;
 
 				case 0x8B : /* Security attribute referencing the expanded format */
 					{
-						SCARD_DEBUG("0x%02X : Security attribute referencing the expanded format : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x8C : /* Security attribute in compact format */
 					{
-						SCARD_DEBUG("0x%02X : Security attribute in compact format : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x8D : /* Identifier of an EF containing security environment templates */
 					{
-						SCARD_DEBUG("0x%02X : Identifier of an EF containing security environment templates : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x8E : /* Channel security attribute */
 					{
-						SCARD_DEBUG("0x%02X : Channel security attribute : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xA0 : /* Security attribute template for data objects */
 					{
-						SCARD_DEBUG("0x%02X : Security attribute template for data objects : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xA1 : /* Security attribute template in proprietary format */
 					{
-						SCARD_DEBUG("0x%02X : Security attribute template in proprietary format : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xA2 : /* Template consisting of one or more pairs of data objects */
 					{
-						_DBG("0x%02X : Template consisting of one or more pairs of data objects : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : Template consisting of one or more pairs of data objects : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xA5 : /* proprietary information encoded in BER-TLV */
 					{
-						_DBG("0x%02X : proprietary information encoded in BER-TLV : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : proprietary information encoded in BER-TLV : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xAB : /* Security attribute template in expanded format */
 					{
-						SCARD_DEBUG("0x%02X : Security attribute template in expanded format : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xAC : /* Cryptographic mechanism identifier template */
 					{
-						_DBG("0x%02X : Cryptographic mechanism identifier template : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : Cryptographic mechanism identifier template : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xC6 : /* PIN status template DO */
 					{
-						SCARD_DEBUG("0x%02X : PIN status template DO : %s", tlv.getTag(), tlv.getValue().toString());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				default :
 					{
-						_DBG("0x%02X : unknown : %s", tlv.getTag(), tlv.getValue().toString());
+						_DBG("0x%02X : unknown : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 					}
 					break;
 				}
@@ -284,71 +275,95 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	ByteArray FCP::getFCP()
+	const ByteArray FCP::getFCP() const
 	{
 		return fcpBuffer;
 	}
 
 	void FCP::releaseFCP()
 	{
-		fcpBuffer.releaseBuffer();
+		fcpBuffer.clear();
 
 		resetMemberVar();
 	}
 
-	unsigned int FCP::getFileSize()
+	int FCP::getFileSize() const
 	{
 		return fileSize;
 	}
 
-	unsigned int FCP::getTotalFileSize()
+	int FCP::getTotalFileSize() const
 	{
 		return totalFileSize;
 	}
 
-	unsigned int FCP::getFID()
+	int FCP::getFID() const
 	{
 		return fid;
 	}
 
-	unsigned int FCP::getSFI()
+	int FCP::getSFI() const
 	{
 		return sfi;
 	}
 
-	unsigned int FCP::getMaxRecordSize()
+	int FCP::getMaxRecordSize() const
 	{
 		return maxRecordSize;
 	}
 
-	unsigned int FCP::getNumberOfRecord()
+	int FCP::getNumberOfRecord() const
 	{
 		return numberOfRecord;
 	}
 
-	unsigned int FCP::getFileType()
+	int FCP::getFileType() const
 	{
 		return fileType;
 	}
 
-	unsigned int FCP::getFileStructure()
+	int FCP::getFileStructure() const
 	{
 		return fileStructure;
 	}
 
-	unsigned int FCP::getLCS()
+	int FCP::getLCS() const
 	{
 		return lcs;
 	}
 
-	const char *FCP::toString()
+	const string FCP::toString() const
 	{
-		memset(strBuffer, 0, sizeof(strBuffer));
+		stringstream ss;
 
-		snprintf(strBuffer, sizeof(strBuffer), "size [%d], total size [%d], fid [%x], sfi [%x], max rec [%d], n of rec [%d], type [%d], struct [%d], lcs [%d]",
-			getFileSize(), getTotalFileSize(), getFID(), getSFI(), getMaxRecordSize(), getNumberOfRecord(), getFileType(), getFileStructure(), getLCS());
+		if (fileSize != FCI::INFO_NOT_AVAILABLE)
+			ss << "size [" << fileSize << "], ";
 
-		return (const char *)strBuffer;
+		if (totalFileSize != FCI::INFO_NOT_AVAILABLE)
+			ss << "total size [" << totalFileSize << "], ";
+
+		if (fid != FCI::INFO_NOT_AVAILABLE)
+			ss << "fid [" << fid << "], ";
+
+		if (sfi != FCI::INFO_NOT_AVAILABLE)
+			ss << "sfi [" << sfi << "], ";
+
+		if (maxRecordSize != FCI::INFO_NOT_AVAILABLE)
+			ss << "max rec. [" << maxRecordSize << "], ";
+
+		if (numberOfRecord != FCI::INFO_NOT_AVAILABLE)
+			ss << "n of rec [" << numberOfRecord << "], ";
+
+		if (fileType != FCI::INFO_NOT_AVAILABLE)
+			ss << "type [" << fileType << "], ";
+
+		if (fileStructure != FCI::INFO_NOT_AVAILABLE)
+			ss << "struct [" << fileStructure << "], ";
+
+		if (lcs != FCI::INFO_NOT_AVAILABLE)
+			ss << "lcs [" << lcs << "], ";
+
+		return ss.str();
 	}
 
 
@@ -371,7 +386,7 @@ namespace smartcard_service_api
 	{
 	}
 
-	bool FCI::setFCIBuffer(ByteArray array)
+	bool FCI::setFCIBuffer(const ByteArray &array)
 	{
 		bool result = false;
 

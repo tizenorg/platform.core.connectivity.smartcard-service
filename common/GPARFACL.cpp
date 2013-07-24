@@ -115,12 +115,12 @@ namespace smartcard_service_api
 			ByteArray data;
 			FileObject file(channel);
 
-			_DBG("oid path : %s", path.toString());
+			_DBG("oid path : %s", path.toString().c_str());
 
 			file.select(NumberStream::getLittleEndianNumber(path));
 			file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
 
-			_DBG("data : %s", data.toString());
+			_DBG("data : %s", data.toString().c_str());
 
 			/* PKCS #15 and DODF OID exists. apply access control rule!! */
 			allGranted = false;
@@ -135,7 +135,7 @@ namespace smartcard_service_api
 				ByteArray refreshTag;
 
 				refreshTag = SimpleTLV::getOctetString(tlv);
-				_DBG("current refresh tag : %s", refreshTag.toString());
+				_DBG("current refresh tag : %s", refreshTag.toString().c_str());
 
 				if (this->refreshTag != refreshTag) /* need to update access control list */
 				{
@@ -151,7 +151,7 @@ namespace smartcard_service_api
 
 						/* OCTET STRING */
 						path = SimpleTLV::getOctetString(tlv.getValue());
-						_DBG("access control rule path : %s", path.toString());
+						_DBG("access control rule path : %s", path.toString().c_str());
 
 						if (loadRules(channel, path) == 0)
 						{
@@ -190,7 +190,7 @@ namespace smartcard_service_api
 		file.select(NumberStream::getLittleEndianNumber(path));
 		file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
 
-		_DBG("data : %s", data.toString());
+		_DBG("data : %s", data.toString().c_str());
 
 		SimpleTLV tlv(data);
 
@@ -216,7 +216,7 @@ namespace smartcard_service_api
 					break;
 				}
 
-				_DBG("aid : %s", aid.toString());
+				_DBG("aid : %s", aid.toString().c_str());
 
 				/* access condition path */
 				if (tlv.decodeTLV() == true && tlv.getTag() == 0x30) /* SEQUENCE : Path */
@@ -225,7 +225,7 @@ namespace smartcard_service_api
 
 					/* OCTET STRING */
 					path = SimpleTLV::getOctetString(tlv.getValue());
-					_DBG("path : %s", path.toString());
+					_DBG("path : %s", path.toString().c_str());
 
 					if (loadAccessConditions(channel, aid, path) == 0)
 					{
@@ -273,18 +273,18 @@ namespace smartcard_service_api
 
 						value = tlv.getValue();
 
-						_DBG("APDU rule : %s", value.toString());
+						_DBG("APDU rule : %s", value.toString().c_str());
 
-						if (value.getLength() == 8) /* apdu 4 bytes + mask 4 bytes */
+						if (value.size() == 8) /* apdu 4 bytes + mask 4 bytes */
 						{
-							apdu.setBuffer(value.getBuffer(), 4);
-							mask.setBuffer(value.getBuffer(4), 4);
+							apdu.assign(value.getBuffer(), 4);
+							mask.assign(value.getBuffer(4), 4);
 
 							rule->addAPDUAccessRule(apdu, mask);
 						}
 						else
 						{
-							_ERR("Invalid APDU rule : %s", value.toString());
+							_ERR("Invalid APDU rule : %s", value.toString().c_str());
 						}
 					}
 					else
@@ -309,14 +309,14 @@ namespace smartcard_service_api
 
 	static void loadAccessCondition(AccessCondition &condition, const ByteArray &data)
 	{
-		if (data.getLength() > 0)
+		if (data.size() > 0)
 		{
 			SimpleTLV tlv(data);
 			ByteArray hash;
 
 			while (tlv.decodeTLV() == true && tlv.getTag() == 0x30) /* SEQUENCE */
 			{
-				if (tlv.getLength() > 0)
+				if (tlv.size() > 0)
 				{
 					/* access granted for specific applications */
 					tlv.enterToValueTLV();
@@ -325,7 +325,7 @@ namespace smartcard_service_api
 						switch (tlv.getTag())
 						{
 						case 0x04 : /* OCTET STRING : CertHash */
-							_DBG("aid : %s, hash : %s", condition.getAID().toString(), tlv.getValue().toString());
+							_DBG("aid : %s, hash : %s", condition.getAID().toString().c_str(), tlv.getValue().toString().c_str());
 
 							hash = tlv.getValue();
 							condition.addAccessRule(tlv.getValue());
@@ -376,7 +376,7 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					_INFO("access denied for all applications, aid : %s", condition.getAID().toString());
+					_INFO("access denied for all applications, aid : %s", condition.getAID().toString().c_str());
 
 					condition.setAccessCondition(false);
 					break;
@@ -385,7 +385,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			_INFO("access denied for all applications, aid : %s", condition.getAID().toString());
+			_INFO("access denied for all applications, aid : %s", condition.getAID().toString().c_str());
 
 			condition.setAccessCondition(false);
 		}
@@ -399,7 +399,7 @@ namespace smartcard_service_api
 		file.select(NumberStream::getLittleEndianNumber(path));
 		file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
 
-		_DBG("data : %s", data.toString());
+		_DBG("data : %s", data.toString().c_str());
 
 		AccessCondition condition;
 

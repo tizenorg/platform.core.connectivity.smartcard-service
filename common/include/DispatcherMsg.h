@@ -26,59 +26,59 @@
 
 namespace smartcard_service_api
 {
-	class DispatcherMsg: public Message
+	class DispatcherMsg : public Message
 	{
 	private:
 		int peerSocket;
 
 	public:
-		DispatcherMsg():Message()
+		DispatcherMsg() : Message()
 		{
 			peerSocket = -1;
 		}
 
-		DispatcherMsg(Message *msg):Message()
+		DispatcherMsg(const Message &msg) : Message()
 		{
 			peerSocket = -1;
-			message = msg->message;
-			param1 = msg->param1;
-			param2 = msg->param2;
-			error = msg->error;
-			data = msg->data;
-			caller = msg->caller;
-			callback = msg->callback;
-			userParam = msg->userParam;
+			message = msg.message;
+			param1 = msg.param1;
+			param2 = msg.param2;
+			error = msg.error;
+			data = msg.data;
+			caller = msg.caller;
+			callback = msg.callback;
+			userParam = msg.userParam;
 		}
 
-		DispatcherMsg(DispatcherMsg *msg):Message()
+		DispatcherMsg(const DispatcherMsg &msg) : Message()
 		{
-			peerSocket = msg->peerSocket;
-			message = msg->message;
-			param1 = msg->param1;
-			param2 = msg->param2;
-			error = msg->error;
-			data = msg->data;
-			caller = msg->caller;
-			callback = msg->callback;
-			userParam = msg->userParam;
+			peerSocket = msg.peerSocket;
+			message = msg.message;
+			param1 = msg.param1;
+			param2 = msg.param2;
+			error = msg.error;
+			data = msg.data;
+			caller = msg.caller;
+			callback = msg.callback;
+			userParam = msg.userParam;
 		}
 
-		DispatcherMsg(Message *msg, int socket):Message()
+		DispatcherMsg(const Message &msg, int socket) : Message()
 		{
 			peerSocket = socket;
-			message = msg->message;
-			param1 = msg->param1;
-			param2 = msg->param2;
-			error = msg->error;
-			data = msg->data;
-			caller = msg->caller;
-			callback = msg->callback;
-			userParam = msg->userParam;
+			message = msg.message;
+			param1 = msg.param1;
+			param2 = msg.param2;
+			error = msg.error;
+			data = msg.data;
+			caller = msg.caller;
+			callback = msg.callback;
+			userParam = msg.userParam;
 		}
 
 		~DispatcherMsg() {}
 
-		inline int getPeerSocket() { return peerSocket; }
+		inline int getPeerSocket() const { return peerSocket; }
 		inline void setPeerSocket(int socket) { peerSocket = socket; }
 	};
 

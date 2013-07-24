@@ -77,7 +77,7 @@ namespace smartcard_service_api
 			result = ResponseHelper::getStatus(resp);
 			if (result >= SCARD_ERROR_OK) {
 				response = ResponseHelper::getDataField(resp);
-				_DBG("response[%d] : %s", response.getLength(), response.toString());
+				_DBG("response[%d] : %s", response.size(), response.toString().c_str());
 			} else {
 				_ERR("transmit returns error, [%d]", result);
 			}
@@ -114,7 +114,7 @@ namespace smartcard_service_api
 
 		helper.getBuffer(cmd);
 
-		_DBG("command[%d] : %s", cmd.getLength(), cmd.toString());
+		_DBG("command[%d] : %s", cmd.size(), cmd.toString().c_str());
 
 		result = doTransmit(channel, cmd, response);
 
@@ -150,29 +150,29 @@ namespace smartcard_service_api
 
 			if (tlv.decodeTLV() == true &&
 				tlv.getTag() == ARAM_TAG_ALL_AR) {
-				unsigned int length = tlv.getLength();
+				unsigned int length = tlv.size();
 
 				if (length > 0){
 					data = tlv.getValue();
 
-					while (length > data.getLength()) {
+					while (length > data.size()) {
 						result = doCommand(channel, GET_DATA_NEXT, response);
 						if (result >= SCARD_ERROR_OK) {
 							data += response;
 						} else {
 							_ERR("generateCommand failed, [%d]", result);
-							data.releaseBuffer();
+							data.clear();
 							break;
 						}
 					}
 
-					_DBG("data[%d] : %s", data.getLength(), data.toString());
+					_DBG("data[%d] : %s", data.size(), data.toString().c_str());
 				} else {
 					_INFO("Response-ALL-AR-DO is empty");
-					data.releaseBuffer();
+					data.clear();
 				}
 			} else {
-				_ERR("decodeTLV failed, %s", response.toString());
+				_ERR("decodeTLV failed, %s", response.toString().c_str());
 				result = SCARD_ERROR_ILLEGAL_PARAM;
 			}
 		} else {
@@ -192,7 +192,7 @@ namespace smartcard_service_api
 		temp += SimpleTLV::encode(DO_TAG_HASH_REF, hash);
 
 		refDo = SimpleTLV::encode(DO_TAG_REF, temp);
-		_DBG("encoded Ref DO : %s", refDo.toString());
+		_DBG("encoded Ref DO : %s", refDo.toString().c_str());
 
 		return SCARD_ERROR_OK;
 	}
@@ -213,28 +213,28 @@ namespace smartcard_service_api
 
 			if (tlv.decodeTLV() == true &&
 				tlv.getTag() == ARAM_TAG_AR) {
-				unsigned int length = tlv.getLength();
+				unsigned int length = tlv.size();
 
 				if (length > 0){
 					data = tlv.getValue();
 
-					while (length > data.getLength()) {
+					while (length > data.size()) {
 						result = doCommand(channel, GET_DATA_NEXT, response);
 						if (result >= SCARD_ERROR_OK) {
 							data += response;
 						} else {
 							_ERR("generateCommand failed, [%d]", result);
-							data.releaseBuffer();
+							data.clear();
 							break;
 						}
 					}
-					_DBG("data[%d] : %s", data.getLength(), data.toString());
+					_DBG("data[%d] : %s", data.size(), data.toString().c_str());
 				} else {
 					_INFO("Response-ALL-AR-DO is empty");
-					data.releaseBuffer();
+					data.clear();
 				}
 			} else {
-				_ERR("decodeTLV failed, %s", response.toString());
+				_ERR("decodeTLV failed, %s", response.toString().c_str());
 				result = SCARD_ERROR_ILLEGAL_PARAM;
 			}
 		} else {
@@ -259,12 +259,12 @@ namespace smartcard_service_api
 
 			if (tlv.decodeTLV() == true &&
 				tlv.getTag() == ARAM_TAG_REFRESH &&
-				tlv.getLength() == 8) {
+				tlv.size() == 8) {
 				tag = tlv.getValue();
 				result = SCARD_ERROR_OK;
-				_DBG("refreshTag[%d] : %s", tag.getLength(), tag.toString());
+				_DBG("refreshTag[%d] : %s", tag.size(), tag.toString().c_str());
 			} else {
-				_ERR("decodeTLV failed, %s", response.toString());
+				_ERR("decodeTLV failed, %s", response.toString().c_str());
 				result = SCARD_ERROR_ILLEGAL_PARAM;
 			}
 		} else {

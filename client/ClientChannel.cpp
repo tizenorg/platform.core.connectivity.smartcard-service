@@ -44,7 +44,7 @@
 namespace smartcard_service_api
 {
 	ClientChannel::ClientChannel(void *context, Session *session,
-		int channelNum, ByteArray selectResponse, void *handle)
+		int channelNum, const ByteArray &selectResponse, void *handle)
 		: Channel(session)
 	{
 		this->channelNum = -1;
@@ -130,7 +130,7 @@ namespace smartcard_service_api
 
 		if (callback != NULL) {
 			callback(response.getBuffer(),
-				response.getLength(),
+				response.size(),
 				result, param->user_param);
 		}
 
@@ -223,7 +223,7 @@ namespace smartcard_service_api
 				msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
 				syncLock();
-				if (ClientIPC::getInstance().sendMessage(&msg) == true)
+				if (ClientIPC::getInstance().sendMessage(msg) == true)
 				{
 					rv = waitTimedCondition(0);
 					if (rv < 0)
@@ -287,7 +287,7 @@ namespace smartcard_service_api
 				msg.callback = (void *)callback;
 				msg.userParam = userParam;
 
-				if (ClientIPC::getInstance().sendMessage(&msg) == false)
+				if (ClientIPC::getInstance().sendMessage(msg) == false)
 				{
 					_ERR("sendMessage failed");
 					result = SCARD_ERROR_IPC_FAILED;
@@ -304,7 +304,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	int ClientChannel::transmitSync(ByteArray command, ByteArray &result)
+	int ClientChannel::transmitSync(const ByteArray &command, ByteArray &result)
 		throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 			ErrorIllegalParameter &, ErrorSecurity &)
 	{
@@ -350,7 +350,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
 			syncLock();
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				rv = waitTimedCondition(0);
 				if (rv >= 0)
@@ -386,7 +386,7 @@ namespace smartcard_service_api
 		return rv;
 	}
 
-	int ClientChannel::transmit(ByteArray command, transmitCallback callback, void *userParam)
+	int ClientChannel::transmit(const ByteArray &command, transmitCallback callback, void *userParam)
 	{
 		int result;
 
@@ -423,7 +423,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)callback;
 			msg.userParam = userParam;
 
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				result = SCARD_ERROR_OK;
 			}
@@ -482,7 +482,10 @@ namespace smartcard_service_api
 					transmitCallback cb = (transmitCallback)msg->callback;
 
 					/* async call */
-					cb(msg->data.getBuffer(), msg->data.getLength(), msg->error, msg->userParam);
+					cb(msg->data.getBuffer(),
+						msg->data.size(),
+						msg->error,
+						msg->userParam);
 				}
 			}
 			break;
@@ -512,7 +515,7 @@ namespace smartcard_service_api
 			break;
 
 		default:
-			_DBG("Unknown message : %s", msg->toString());
+			_DBG("Unknown message : %s", msg->toString().c_str());
 			break;
 		}
 
@@ -557,7 +560,7 @@ EXTERN_API int channel_transmit(channel_h handle, unsigned char *command,
 	CHANNEL_EXTERN_BEGIN;
 	ByteArray temp;
 
-	temp.setBuffer(command, length);
+	temp.assign(command, length);
 	result = channel->transmit(temp, (transmitCallback)callback, userParam);
 	CHANNEL_EXTERN_END;
 
@@ -591,14 +594,14 @@ EXTERN_API int channel_transmit_sync(channel_h handle, unsigned char *command,
 	CHANNEL_EXTERN_BEGIN;
 	ByteArray temp, resp;
 
-	temp.setBuffer(command, cmd_len);
+	temp.assign(command, cmd_len);
 
 	try
 	{
 		result = channel->transmitSync(temp, resp);
-		if (resp.getLength() > 0)
+		if (resp.size() > 0)
 		{
-			*resp_len = resp.getLength();
+			*resp_len = resp.size();
 			*response = (unsigned char *)calloc(1, *resp_len);
 			memcpy(*response, resp.getBuffer(), *resp_len);
 		}
@@ -640,7 +643,7 @@ EXTERN_API unsigned int channel_get_select_response_length(channel_h handle)
 	unsigned int result = 0;
 
 	CHANNEL_EXTERN_BEGIN;
-	result = channel->getSelectResponse().getLength();
+	result = channel->getSelectResponse().size();
 	CHANNEL_EXTERN_END;
 
 	return result;
@@ -660,9 +663,9 @@ EXTERN_API bool channel_get_select_response(channel_h handle,
 	ByteArray response;
 
 	response = channel->getSelectResponse();
-	if (response.getLength() > 0)
+	if (response.size() > 0)
 	{
-		memcpy(buffer, response.getBuffer(), MIN(length, response.getLength()));
+		memcpy(buffer, response.getBuffer(), MIN(length, response.size()));
 		result = true;
 	}
 	CHANNEL_EXTERN_END;

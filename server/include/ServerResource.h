@@ -83,12 +83,12 @@ namespace smartcard_service_api
 		bool appendSELibrary(char *library);
 		void clearSELibraries();
 
-		static void terminalCallback(void *terminal, int event, int error, void *user_param);
+		static void terminalCallback(const void *terminal, int event, int error, void *user_param);
 
 		int _openLogicalChannel(Terminal *terminal);
 		int _closeLogicalChannel(Terminal *terminal, int channelNum);
-		bool _isAuthorizedAccess(ServerChannel *channel, ByteArray aid, vector<ByteArray> &hashes);
-		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, ByteArray aid)
+		bool _isAuthorizedAccess(ServerChannel *channel, const ByteArray &aid, const vector<ByteArray> &hashes);
+		unsigned int _createChannel(Terminal *terminal, ServiceInstance *service, int channelType, unsigned int sessionID, const ByteArray &aid)
 			throw(ExceptionBase &);
 
 	public:
@@ -109,16 +109,17 @@ namespace smartcard_service_api
 		void unloadSecureElements();
 
 		Terminal *getTerminal(unsigned int terminalID);
+		const Terminal *getTerminal(unsigned int terminalID) const;
 		Terminal *getTerminal(const char *name);
-		Terminal *getTerminalByIndex(int index);
 		Terminal *getTerminalByReaderID(unsigned int readerID);
-		unsigned int getTerminalID(const char *name);
-		int getReadersInformation(ByteArray &info);
-		void getReaders(vector<pair<unsigned int, string> > &readers);
-		bool isValidReaderHandle(unsigned int reader);
+		const Terminal *getTerminalByReaderID(unsigned int readerID) const;
+		unsigned int getTerminalID(const char *name) const;
+		int getReadersInformation(ByteArray &info) const;
+		void getReaders(vector<pair<unsigned int, string> > &readers) const;
+		bool isValidReaderHandle(unsigned int reader) const;
 
 		unsigned int createReader(unsigned int terminalID);
-		unsigned int getReaderID(const char *name);
+		unsigned int getReaderID(const char *name) const;
 		void removeReader(unsigned int readerID);
 
 #ifdef USE_GDBUS
@@ -126,7 +127,7 @@ namespace smartcard_service_api
 		ClientInstance *getClient(const char *name);
 		void removeClient(const char *name);
 		void removeClients();
-		int getClientCount();
+		int getClientCount() const;
 
 		ServiceInstance *createService(const char *name);
 		ServiceInstance *getService(const char *name, unsigned int handle);
@@ -148,24 +149,25 @@ namespace smartcard_service_api
 		bool createClient(void *ioChannel, int socket, int watchID, int state, int pid);
 		bool createClient(int pid);
 		ClientInstance *getClient(int socket);
+		const ClientInstance *getClient(int socket) const;
 		void setPID(int socket, int pid);
 		void removeClient(int socket);
 		void removeClients();
-		int getClientCount();
+		int getClientCount() const;
 
 		ServiceInstance *createService(int socket);
 		ServiceInstance *getService(int socket, unsigned int handle);
 		void removeService(int socket, unsigned int handle);
 		void removeServices(int socket);
 
-		unsigned int createSession(int socket, unsigned int handle, unsigned int readerID, vector<ByteArray> &certHashes, void *caller);
+		unsigned int createSession(int socket, unsigned int handle, unsigned int readerID, const vector<ByteArray> &certHashes, void *caller);
 		ServerSession *getSession(int socket, unsigned int handle, unsigned int sessionID);
 		unsigned int getChannelCount(int socket, unsigned int handle, unsigned int sessionID);
 		void removeSession(int socket, unsigned int handle, unsigned int session);
 		bool isValidSessionHandle(int socket, unsigned int handle, unsigned int sessionID);
 
 		unsigned int createChannel(int socket, unsigned int handle,
-			unsigned int sessionID, int channelType, ByteArray aid)
+			unsigned int sessionID, int channelType, const ByteArray &aid)
 			throw(ExceptionBase &);
 		Channel *getChannel(int socket, unsigned int handle, unsigned int channelID);
 		void removeChannel(int socket, unsigned int handle, unsigned int channelID);
@@ -175,10 +177,10 @@ namespace smartcard_service_api
 		AccessControlList *getAccessControlList(Terminal *terminal);
 		AccessControlList *getAccessControlList(ServerChannel *channel);
 #ifndef USE_GDBUS
-		bool sendMessageToAllClients(Message &msg);
+		bool sendMessageToAllClients(const Message &msg);
 #endif
-		bool isAuthorizedNFCAccess(Terminal *terminal, ByteArray &aid,
-			vector<ByteArray> &hashes);
+		bool isAuthorizedNFCAccess(Terminal *terminal, const ByteArray &aid,
+			const vector<ByteArray> &hashes);
 
 		friend void terminalCallback(void *terminal, int event, int error, void *user_param);
 	};

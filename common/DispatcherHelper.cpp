@@ -61,7 +61,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	void DispatcherHelper::pushMessage(DispatcherMsg *msg)
+	void DispatcherHelper::pushMessage(const DispatcherMsg &msg)
 	{
 		DispatcherMsg *pushMsg = new DispatcherMsg(msg);
 

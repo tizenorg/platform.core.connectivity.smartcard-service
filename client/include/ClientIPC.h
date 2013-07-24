@@ -51,7 +51,7 @@ namespace smartcard_service_api
 
 	public:
 		static ClientIPC &getInstance();
-		bool sendMessage(Message *msg);
+		bool sendMessage(const Message &msg);
 	};
 
 } /* namespace open_mobile_api */

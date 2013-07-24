@@ -37,12 +37,10 @@ namespace smartcard_service_api
 		bool nfcRule;
 		vector<pair<ByteArray, ByteArray> > listFilters;
 
-		void printAccessRules();
+		void printAccessRules() const;
 
 	public :
-		AccessRule() : apduRule(true), nfcRule(true)
-		{
-		}
+		AccessRule() : apduRule(true), nfcRule(true) {}
 
 		inline void setAPDUAccessRule(bool rule) { apduRule = rule; }
 		inline void setNFCAccessRule(bool rule) { nfcRule = rule; }
@@ -50,12 +48,12 @@ namespace smartcard_service_api
 		void addAPDUAccessRule(const ByteArray &apdu,
 			const ByteArray &mask);
 
-		inline bool isAuthorizedAccess(void)
+		inline bool isAuthorizedAccess(void) const
 		{
 			return (apduRule || (listFilters.size() > 0));
 		}
-		bool isAuthorizedAPDUAccess(const ByteArray &command);
-		bool isAuthorizedNFCAccess(void);
+		bool isAuthorizedAPDUAccess(const ByteArray &command) const;
+		bool isAuthorizedNFCAccess(void) const;
 
 		friend class AccessCondition;
 	};
@@ -67,18 +65,15 @@ namespace smartcard_service_api
 		ByteArray aid;
 		map<ByteArray, AccessRule> mapRules;
 
-		void printAccessConditions();
+		void printAccessConditions() const;
 
 	public :
-		AccessCondition() : permission(false)
-		{
-		}
+		AccessCondition() : permission(false) {}
 
 		inline void setAID(const ByteArray &aid) { this->aid = aid; }
-		inline ByteArray getAID() { return aid; }
+		inline const ByteArray getAID() const { return aid; }
 		inline void setAccessCondition(bool rule) { permission = rule; }
 		void addAccessRule(const ByteArray &hash);
-		AccessCondition *getAccessCondition(const ByteArray &hash);
 
 		void setAPDUAccessRule(const ByteArray &certHash, bool rule);
 		void addAPDUAccessRule(const ByteArray &certHash,
@@ -88,12 +83,14 @@ namespace smartcard_service_api
 
 		void setNFCAccessRule(const ByteArray &certHash, bool rule);
 
-		bool isAuthorizedAccess(const ByteArray &certHash);
+		bool isAuthorizedAccess(const ByteArray &certHash) const;
 		bool isAuthorizedAPDUAccess(const ByteArray &certHash,
-			const ByteArray &command);
-		bool isAuthorizedNFCAccess(const ByteArray &certHash);
+			const ByteArray &command) const;
+		bool isAuthorizedNFCAccess(const ByteArray &certHash) const;
 
 		AccessRule *getAccessRule(const ByteArray &certHash);
+		const AccessRule *getAccessRule(const ByteArray &certHash) const;
+
 
 		friend class AccessControlList;
 	};

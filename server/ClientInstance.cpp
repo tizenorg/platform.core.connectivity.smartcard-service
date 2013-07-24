@@ -86,14 +86,14 @@ namespace smartcard_service_api
 	}
 
 #ifndef USE_GDBUS
-	bool ClientInstance::sendMessageToAllServices(int socket, Message &msg)
+	bool ClientInstance::sendMessageToAllServices(int socket, const Message &msg)
 	{
 		bool result = true;
-		map<unsigned int, ServiceInstance *>::iterator item;
+		map<unsigned int, ServiceInstance *>::const_iterator item;
 
 		for (item = mapServices.begin(); item != mapServices.end(); item++)
 		{
-			if (ServerIPC::getInstance()->sendMessage(socket, &msg) == false)
+			if (ServerIPC::getInstance()->sendMessage(socket, msg) == false)
 				result = false;
 		}
 

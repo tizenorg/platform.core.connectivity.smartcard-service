@@ -34,7 +34,6 @@ namespace smartcard_service_api
 		TLVHelper *parentTLV;
 		TLVHelper *childTLV;
 
-		char strBuffer[200];
 		ByteArray tlvBuffer;
 		unsigned int offset;
 
@@ -42,43 +41,42 @@ namespace smartcard_service_api
 		unsigned int currentL;
 		ByteArray currentV;
 
-		void initialize(TLVHelper *parent = NULL);
 		TLVHelper(TLVHelper *parent);
 		TLVHelper(const ByteArray &array, TLVHelper *parent);
 
-		virtual int decodeTag(unsigned char *buffer) = 0;
-		virtual int decodeLength(unsigned char *buffer) = 0;
-		virtual int decodeValue(unsigned char *buffer) = 0;
+		virtual int decodeTag(const unsigned char *buffer) = 0;
+		virtual int decodeLength(const unsigned char *buffer) = 0;
+		virtual int decodeValue(const unsigned char *buffer) = 0;
 
-		virtual TLVHelper *getChildTLV(ByteArray data) = 0;
+		virtual TLVHelper *getChildTLV(const ByteArray &data) = 0;
 		TLVHelper *getParentTLV();
 
 		bool setTLVBuffer(const ByteArray &array, TLVHelper *parent);
-		bool setTLVBuffer(unsigned char *buffer, unsigned int length, TLVHelper *parent);
+		bool setTLVBuffer(const unsigned char *buffer, unsigned int length, TLVHelper *parent);
 
-		bool _isEndOfBuffer() { return offset >= tlvBuffer.getLength(); }
+		inline bool _isEndOfBuffer() const { return offset >= tlvBuffer.size(); }
 		bool _decodeTLV();
 
-		unsigned int _getTag() { return currentT; }
-		unsigned int _getLength() { return currentL; }
-		ByteArray _getValue() { return currentV; }
+		inline unsigned int _getTag() const { return currentT; }
+		inline unsigned int _size() const { return currentL; }
+		inline const ByteArray _getValue() const { return currentV; }
 
 	public:
 		TLVHelper();
 		TLVHelper(const ByteArray &array);
-		~TLVHelper();
+		virtual ~TLVHelper();
 
 		bool setTLVBuffer(const ByteArray &array) { return setTLVBuffer(array, NULL); }
-		bool setTLVBuffer(unsigned char *buffer, unsigned int length) { return setTLVBuffer(buffer, length, NULL); }
+		bool setTLVBuffer(const unsigned char *buffer, unsigned int length) { return setTLVBuffer(buffer, length, NULL); }
 
-		bool isEndOfBuffer() { return currentTLV->_isEndOfBuffer(); }
-		bool decodeTLV() { return currentTLV->_decodeTLV(); }
+		inline bool isEndOfBuffer() const { return currentTLV->_isEndOfBuffer(); }
+		inline bool decodeTLV() { return currentTLV->_decodeTLV(); }
 
-		unsigned int getTag() { return currentTLV->_getTag(); }
-		unsigned int getLength() { return currentTLV->_getLength(); }
-		ByteArray getValue() { return currentTLV->_getValue(); }
+		unsigned int getTag() const { return currentTLV->_getTag(); }
+		unsigned int size() const { return currentTLV->_size(); }
+		const ByteArray getValue() const { return currentTLV->_getValue(); }
 
-		const char *toString();
+		const string toString() const;
 
 		bool enterToValueTLV();
 		bool returnToParentTLV();

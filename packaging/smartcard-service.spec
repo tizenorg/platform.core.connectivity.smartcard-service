@@ -1,7 +1,7 @@
 # FOR COMMENTING DEFINITION, MUST USE %% instead of %
 %global use_autostart "-DUSE_AUTOSTART=1"
 %global use_gdbus "-DUSE_GDBUS=1"
-%global test_client "-DTEST_CLIENT=1"
+#%%global test_client "-DTEST_CLIENT=1"
 
 Name:       smartcard-service
 Summary:    Smartcard Service FW

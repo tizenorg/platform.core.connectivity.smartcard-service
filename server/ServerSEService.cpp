@@ -97,7 +97,7 @@ namespace smartcard_service_api
 
 				libraries.push_back(libHandle);
 
-				pair<char *, Terminal *> newPair(terminal->getName(), terminal);
+				pair<string, Terminal *> newPair(terminal->getName(), terminal);
 				mapTerminals.insert(newPair);
 
 				if (terminal->isSecureElementPresence() == true)
@@ -226,12 +226,12 @@ namespace smartcard_service_api
 		}
 
 		/* response to client */
-		ServerIPC::getInstance()->sendMessage(socket, &response);
+		ServerIPC::getInstance()->sendMessage(socket, response);
 #endif
 		return false;
 	}
 
-	void ServerSEService::terminalCallback(void *terminal, int event, int error, void *user_param)
+	void ServerSEService::terminalCallback(const void *terminal, int event, int error, void *user_param)
 	{
 		switch (event)
 		{
@@ -242,7 +242,7 @@ namespace smartcard_service_api
 
 				/* send all client to refresh reader */
 				msg.message = msg.MSG_NOTIFY_SE_INSERTED;
-				msg.data.setBuffer((unsigned char *)terminal,
+				msg.data.assign((unsigned char *)terminal,
 					strlen((char *)terminal) + 1);
 
 				ServerResource::getInstance().sendMessageToAllClients(msg);
@@ -257,7 +257,7 @@ namespace smartcard_service_api
 
 				/* send all client to refresh reader */
 				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
-				msg.data.setBuffer((unsigned char *)terminal,
+				msg.data.assign((unsigned char *)terminal,
 					strlen((char *)terminal) + 1);
 
 				ServerResource::getInstance().sendMessageToAllClients(msg);

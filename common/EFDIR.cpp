@@ -34,7 +34,7 @@ namespace smartcard_service_api
 	{
 	}
 
-	EFDIR::EFDIR(Channel *channel, ByteArray selectResponse) :
+	EFDIR::EFDIR(Channel *channel, const ByteArray &selectResponse) :
 		FileObject(channel, selectResponse)
 	{
 	}
@@ -56,7 +56,7 @@ namespace smartcard_service_api
 		return ret;
 	}
 
-	ByteArray EFDIR::parseRecord(Record &record, ByteArray &aid)
+	const ByteArray EFDIR::parseRecord(const Record &record, const ByteArray &aid)
 	{
 		bool matched = false;
 		ByteArray result;
@@ -86,18 +86,18 @@ namespace smartcard_service_api
 
 			if (matched == true)
 			{
-				_DBG("Found!! : path %s", result.toString());
+				_DBG("Found!! : path %s", result.toString().c_str());
 			}
 			else
 			{
-				result.setBuffer(NULL, 0);
+				result.clear();
 			}
 		}
 
 		return result;
 	}
 
-	ByteArray EFDIR::getPathByAID(ByteArray &aid)
+	const ByteArray EFDIR::getPathByAID(const ByteArray &aid)
 	{
 		ByteArray result;
 		Record record;
@@ -110,7 +110,7 @@ namespace smartcard_service_api
 			if (status >= 0)
 			{
 				result = parseRecord(record, aid);
-				if (result.getLength() > 0)
+				if (result.size() > 0)
 					break;
 			}
 		}

@@ -26,7 +26,7 @@
 
 namespace smartcard_service_api
 {
-	PKCS15OID::PKCS15OID(ByteArray data)
+	PKCS15OID::PKCS15OID(const ByteArray &data)
 	{
 		parseOID(data);
 	}
@@ -35,7 +35,7 @@ namespace smartcard_service_api
 	{
 	}
 
-	bool PKCS15OID::parseOID(ByteArray data)
+	bool PKCS15OID::parseOID(const ByteArray &data)
 	{
 		bool result = false;
 		SimpleTLV tlv(data);
@@ -47,14 +47,13 @@ namespace smartcard_service_api
 			switch (tlv.getTag())
 			{
 			case PKCS15::TAG_SEQUENCE :
-				if (tlv.getLength() > 0)
+				if (tlv.size() > 0)
 				{
 					/* common object attribute */
 					tlv.enterToValueTLV();
 					if (tlv.decodeTLV() == true && tlv.getTag() == 0x0C) /* ?? */
 					{
 						name = tlv.getValue();
-						SCARD_DEBUG("name : %s", name.toString());
 					}
 					tlv.returnToParentTLV();
 				}
@@ -83,7 +82,7 @@ namespace smartcard_service_api
 					{
 						oid = tlv.getValue();
 
-						_DBG("oid : %s", oid.toString());
+						_DBG("oid : %s", oid.toString().c_str());
 					}
 					else
 					{
@@ -95,7 +94,7 @@ namespace smartcard_service_api
 					{
 						path = SimpleTLV::getOctetString(tlv.getValue());
 
-						_DBG("path : %s", path.toString());
+						_DBG("path : %s", path.toString().c_str());
 
 						result = true;
 					}
@@ -124,20 +123,4 @@ namespace smartcard_service_api
 
 		return result;
 	}
-
-	ByteArray PKCS15OID::getOID()
-	{
-		return oid;
-	}
-
-	ByteArray PKCS15OID::getName()
-	{
-		return name;
-	}
-
-	ByteArray PKCS15OID::getPath()
-	{
-		return path;
-	}
-
 } /* namespace smartcard_service_api */

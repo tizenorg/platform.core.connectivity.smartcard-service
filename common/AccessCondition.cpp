@@ -35,17 +35,17 @@ namespace smartcard_service_api
 		listFilters.push_back(item);
 	}
 
-	bool AccessRule::isAuthorizedAPDUAccess(const ByteArray &command)
+	bool AccessRule::isAuthorizedAPDUAccess(const ByteArray &command) const
 	{
 		bool result = false;
 
-		if (command.getLength() < 4) /* apdu header size */
+		if (command.size() < 4) /* apdu header size */
 			return false;
 
 		if (listFilters.size() > 0)
 		{
 			unsigned int cmd, mask, rule;
-			vector<pair<ByteArray, ByteArray> >::iterator item;
+			vector<pair<ByteArray, ByteArray> >::const_iterator item;
 
 			cmd = *(unsigned int *)command.getBuffer();
 			for (item = listFilters.begin(); item != listFilters.end(); item++)
@@ -69,17 +69,17 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void AccessRule::printAccessRules()
+	void AccessRule::printAccessRules() const
 	{
 		if (listFilters.size() > 0)
 		{
-			vector<pair<ByteArray, ByteArray> >::iterator item;
+			vector<pair<ByteArray, ByteArray> >::const_iterator item;
 
 			_DBG("         +---- Granted APDUs");
 
 			for (item = listFilters.begin(); item != listFilters.end(); item++)
 			{
-				_DBG("         +----- APDU : %s, Mask : %s", item->first.toString(), item->second.toString());
+				_DBG("         +----- APDU : %s, Mask : %s", item->first.toString().c_str(), item->second.toString().c_str());
 			}
 		}
 		else
@@ -90,7 +90,7 @@ namespace smartcard_service_api
 		_DBG("         +---- NFC  Access ALLOW : %s", nfcRule ? "ALWAYS" : "NEVER");
 	}
 
-	bool AccessRule::isAuthorizedNFCAccess(void)
+	bool AccessRule::isAuthorizedNFCAccess(void) const
 	{
 		return nfcRule;
 	}
@@ -99,6 +99,19 @@ namespace smartcard_service_api
 	{
 		AccessRule *result = NULL;
 		map<ByteArray, AccessRule>::iterator item;
+
+		item = mapRules.find(certHash);
+		if (item != mapRules.end()) {
+			result = &item->second;
+		}
+
+		return result;
+	}
+
+	const AccessRule *AccessCondition::getAccessRule(const ByteArray &certHash) const
+	{
+		const AccessRule *result = NULL;
+		map<ByteArray, AccessRule>::const_iterator item;
 
 		item = mapRules.find(certHash);
 		if (item != mapRules.end()) {
@@ -117,38 +130,31 @@ namespace smartcard_service_api
 		mapRules.insert(item);
 	}
 
-	bool AccessCondition::isAuthorizedAccess(const ByteArray &certHash)
+	bool AccessCondition::isAuthorizedAccess(const ByteArray &certHash) const
 	{
-		bool result = false;
-		map<ByteArray, AccessRule>::iterator item;
+		bool result = permission;
+		const AccessRule *rule = getAccessRule(certHash);
 
-		item = mapRules.find(certHash);
-		if (item != mapRules.end())
-		{
+		if (rule != NULL) {
 			result = true;
-		}
-		else
-		{
-			/* TODO */
-			result = permission;
 		}
 
 		return result;
 	}
 
-	void AccessCondition::printAccessConditions()
+	void AccessCondition::printAccessConditions() const
 	{
 		_DBG("   +-- Access Condition");
 
 		if (mapRules.size() > 0)
 		{
-			map<ByteArray, AccessRule>::iterator item;
+			map<ByteArray, AccessRule>::const_iterator item;
 
 			for (item = mapRules.begin(); item != mapRules.end(); item++)
 			{
 				ByteArray temp = item->first;
 
-				_DBG("   +--- hash : %s", (temp == AccessControlList::ALL_DEVICE_APPS) ? "All device applications" : temp.toString());
+				_DBG("   +--- hash : %s", (temp == AccessControlList::ALL_DEVICE_APPS) ? "All device applications" : temp.toString().c_str());
 				item->second.printAccessRules();
 			}
 		}
@@ -181,7 +187,7 @@ namespace smartcard_service_api
 	void AccessCondition::addAPDUAccessRule(const ByteArray &certHash,
 		const ByteArray &rule)
 	{
-		if (rule.getLength() != 8)
+		if (rule.size() != 8)
 			return;
 
 		addAPDUAccessRule(certHash, rule.sub(0, 4), rule.sub(4, 4));
@@ -198,25 +204,25 @@ namespace smartcard_service_api
 	}
 
 	bool AccessCondition::isAuthorizedAPDUAccess(const ByteArray &certHash,
-		const ByteArray &command)
+		const ByteArray &command) const
 	{
 		bool result = false;
-		AccessRule *access = getAccessRule(certHash);
+		const AccessRule *rule = getAccessRule(certHash);
 
-		if (access != NULL) {
-			result = access->isAuthorizedAPDUAccess(command);
+		if (rule != NULL) {
+			result = rule->isAuthorizedAPDUAccess(command);
 		}
 
 		return result;
 	}
 
-	bool AccessCondition::isAuthorizedNFCAccess(const ByteArray &certHash)
+	bool AccessCondition::isAuthorizedNFCAccess(const ByteArray &certHash) const
 	{
 		bool result = false;
-		AccessRule *access = getAccessRule(certHash);
+		const AccessRule *rule = getAccessRule(certHash);
 
-		if (access != NULL) {
-			result = access->isAuthorizedNFCAccess();
+		if (rule != NULL) {
+			result = rule->isAuthorizedNFCAccess();
 		}
 
 		return result;

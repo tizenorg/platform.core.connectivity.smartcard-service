@@ -88,33 +88,34 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	bool GPACE::isAuthorizedAccess(ByteArray &aid,
-		ByteArray &certHash)
+	bool GPACE::isAuthorizedAccess(const ByteArray &aid,
+		const ByteArray &certHash) const
 	{
 		return (acl != NULL) ? acl->isAuthorizedAccess(aid, certHash) : false;
 	}
 
-	bool GPACE::isAuthorizedAccess(unsigned char *aidBuffer,
-		unsigned int aidLength, unsigned char *certHashBuffer,
-		unsigned int certHashLength)
+	bool GPACE::isAuthorizedAccess(const unsigned char *aidBuffer,
+		unsigned int aidLength, const unsigned char *certHashBuffer,
+		unsigned int certHashLength) const
 	{
 		return (acl != NULL) ? acl->isAuthorizedAccess(aidBuffer, aidLength, certHashBuffer, certHashLength) : false;
 	}
 
-	bool GPACE::isAuthorizedAccess(ByteArray &aid,
-		vector<ByteArray> &certHashes)
+	bool GPACE::isAuthorizedAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes) const
 	{
 		return (acl != NULL) ? acl->isAuthorizedAccess(aid, certHashes) : false;
 	}
 
-	bool GPACE::isAuthorizedAccess(ByteArray &aid,
-		vector<ByteArray> &certHashes, ByteArray &command)
+	bool GPACE::isAuthorizedAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes,
+		const ByteArray &command) const
 	{
 		return (acl != NULL) ? acl->isAuthorizedAccess(aid, certHashes, command) : false;
 	}
 
-	bool GPACE::isAuthorizedNFCAccess(ByteArray &aid,
-		vector<ByteArray> &certHashes)
+	bool GPACE::isAuthorizedNFCAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes) const
 	{
 		return (acl != NULL) ? acl->isAuthorizedNFCAccess(aid, certHashes) : false;
 	}

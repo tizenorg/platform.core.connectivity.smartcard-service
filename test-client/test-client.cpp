@@ -126,12 +126,12 @@ void testOpenChannelCallback(Channel *channel, int error, void *userData)
 
 		response = channel->getSelectResponse();
 
-		_INFO("response : %s", response.toString());
+		_INFO("response : %s", response.toString().c_str());
 
 		_DBG("isBasicChannel() = %s", channel->isBasicChannel() ? "Basic" : "Logical");
 		_DBG("isClosed() = %s", channel->isClosed() ? "Closed" : "Opened");
 
-		data.setBuffer((unsigned char *)&fid, 2);
+		data.assign((unsigned char *)&fid, 2);
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_SELECT_BY_ID, 0, data);
 		context->clientChannel->transmit(command, testTransmitCallback, userData);
 	}
@@ -148,9 +148,9 @@ void testGetATRCallback(unsigned char *atr, unsigned int length, int error, void
 	ByteArray aid, result(atr, length);
 	user_context_t *context = (user_context_t *)userData;
 
-	_DBG("atr[%d] : %s", result.getLength(), result.toString());
+	_DBG("atr[%d] : %s", result.size(), result.toString().c_str());
 
-	aid.setBuffer(MF, sizeof(MF));
+	aid.assign(MF, sizeof(MF));
 	context->clientSession->openLogicalChannel(aid, testOpenChannelCallback, userData);
 }
 

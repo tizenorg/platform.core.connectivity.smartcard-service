@@ -31,13 +31,11 @@ namespace smartcard_service_api
 	protected:
 		Channel *channel;
 
-//		ProviderHelper();
-
 	public:
-		ProviderHelper(Channel *channel);
-		~ProviderHelper();
+		ProviderHelper(Channel *channel) : channel(channel) {}
+		virtual ~ProviderHelper() {}
 
-		Channel *getChannel();
+		inline Channel *getChannel() { return channel; }
 	};
 
 } /* namespace smartcard_service_api */

@@ -245,7 +245,7 @@ namespace smartcard_service_api
 			msg.caller = (void *)this;
 			msg.callback = (void *)NULL;
 
-			if (ClientIPC::getInstance().sendMessage(&msg) == false)
+			if (ClientIPC::getInstance().sendMessage(msg) == false)
 			{
 				_ERR("time over");
 			}
@@ -288,7 +288,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
 			syncLock();
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				int rv;
 
@@ -388,7 +388,7 @@ namespace smartcard_service_api
 			msg.caller = (void *)this;
 			msg.userParam = context;
 
-			result = clientIPC->sendMessage(&msg);
+			result = clientIPC->sendMessage(msg);
 		}
 #endif
 		_END();
@@ -457,7 +457,7 @@ namespace smartcard_service_api
 		return true;
 	}
 #endif
-	bool SEService::parseReaderInformation(unsigned int count, ByteArray data)
+	bool SEService::parseReaderInformation(unsigned int count, const ByteArray &data)
 	{
 		size_t i;
 		unsigned int offset = 0;
@@ -466,7 +466,7 @@ namespace smartcard_service_api
 		Reader *reader = NULL;
 		char name[100];
 
-		for (i = 0; i < count && offset < data.getLength(); i++)
+		for (i = 0; i < count && offset < data.size(); i++)
 		{
 			memset(name, 0, sizeof(name));
 
@@ -627,7 +627,7 @@ namespace smartcard_service_api
 			break;
 
 		default :
-			_DBG("unknown message [%s]", msg->toString());
+			_DBG("unknown message [%s]", msg->toString().c_str());
 			break;
 		}
 

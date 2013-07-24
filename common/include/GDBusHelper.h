@@ -35,9 +35,6 @@ namespace smartcard_service_api
 	class GDBusHelper
 	{
 	public :
-		GDBusHelper();
-		~GDBusHelper();
-
 		static void convertVariantToByteArray(GVariant *var,
 			ByteArray &array);
 

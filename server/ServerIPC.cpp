@@ -37,7 +37,7 @@
 
 namespace smartcard_service_api
 {
-	ServerIPC::ServerIPC():IPCHelper()
+	ServerIPC::ServerIPC() : IPCHelper()
 	{
 		_BEGIN();
 
@@ -71,10 +71,10 @@ namespace smartcard_service_api
 			ByteArray cookie;
 			int result, gid;
 
-			if (buffer.getLength() < 20)
+			if (buffer.size() < 20)
 				return msg;
 
-			cookie.setBuffer(buffer.getBuffer(), 20);
+			cookie.assign(buffer.getBuffer(), 20);
 
 			gid = security_server_get_gid("smartcard-daemon");
 			if ((result = security_server_check_privilege(cookie.getBuffer(), gid)) != SECURITY_SERVER_API_SUCCESS)
@@ -209,7 +209,7 @@ ERROR :
 			dispMsg.setPeerSocket(peerSocket);
 
 			/* push to dispatcher */
-			ServerDispatcher::getInstance()->pushMessage(&dispMsg);
+			ServerDispatcher::getInstance()->pushMessage(dispMsg);
 		}
 
 		_END();
@@ -251,10 +251,10 @@ ERROR :
 				/* read message */
 				if ((msg = retrieveMessage(peerSocket)) != NULL)
 				{
-					DispatcherMsg dispMsg(msg, peerSocket);
+					DispatcherMsg dispMsg(*msg, peerSocket);
 
 					/* push to dispatcher */
-					ServerDispatcher::getInstance()->pushMessage(&dispMsg);
+					ServerDispatcher::getInstance()->pushMessage(dispMsg);
 
 					result = TRUE;
 

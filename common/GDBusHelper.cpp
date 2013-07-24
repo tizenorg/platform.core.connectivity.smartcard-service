@@ -19,14 +19,6 @@
 
 namespace smartcard_service_api
 {
-	GDBusHelper::GDBusHelper()
-	{
-	}
-
-	GDBusHelper::~GDBusHelper()
-	{
-	}
-
 	void GDBusHelper::convertVariantToByteArray(GVariant *var,
 		ByteArray &array)
 	{
@@ -48,7 +40,7 @@ namespace smartcard_service_api
 
 		g_variant_iter_free(iter);
 
-		array.setBuffer((uint8_t *)buf, (uint32_t)i);
+		array.assign((uint8_t *)buf, (uint32_t)i);
 
 		g_free(buf);
 	}
@@ -60,7 +52,7 @@ namespace smartcard_service_api
 
 		g_variant_builder_init(&builder, G_VARIANT_TYPE("a(y)"));
 
-		for (i = 0; i < array.getLength(); i++)
+		for (i = 0; i < array.size(); i++)
 			g_variant_builder_add(&builder, "(y)", array[i]);
 
 		return g_variant_builder_end(&builder);

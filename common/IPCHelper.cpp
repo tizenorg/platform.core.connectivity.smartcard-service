@@ -517,26 +517,26 @@ ERROR :
 		}
 	}
 
-	bool IPCHelper::sendMessage(int socket, Message *msg)
+	bool IPCHelper::sendMessage(int socket, const Message &msg)
 	{
 		ByteArray stream;
 		unsigned int length = 0;
 
-		stream = msg->serialize();
-		length = stream.getLength();
+		stream = msg.serialize();
+		length = stream.size();
 
 		_DBG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
-			socket, msg->message, stream.getLength());
+			socket, msg.message, stream.size());
 
 		return sendMessage(socket, stream);
 	}
 
-	bool IPCHelper::sendMessage(int socket, ByteArray &buffer)
+	bool IPCHelper::sendMessage(int socket, const ByteArray &buffer)
 	{
 		bool result = false;
 		unsigned int length = 0;
 
-		length = buffer.getLength();
+		length = buffer.size();
 
 		if (length > 0)
 		{
@@ -589,7 +589,7 @@ ERROR :
 		_BEGIN();
 
 		buffer = retrieveBuffer(socket);
-		if (buffer.getLength() > 0)
+		if (buffer.size() > 0)
 		{
 			msg = new Message();
 			if (msg != NULL)
@@ -611,7 +611,7 @@ ERROR :
 		return msg;
 	}
 
-	ByteArray IPCHelper::retrieveBuffer(int socket)
+	const ByteArray IPCHelper::retrieveBuffer(int socket)
 	{
 		ByteArray buffer;
 		unsigned int length = 0;
@@ -650,7 +650,7 @@ ERROR :
 
 					_DBG("<<<[RETRIEVE]<<< socket [%d], msg_length [%d]", socket, length);
 
-					buffer.setBuffer(temp, length);
+					buffer.assign(temp, length);
 
 					delete []temp;
 				}

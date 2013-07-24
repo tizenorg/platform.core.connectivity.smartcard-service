@@ -15,9 +15,9 @@
  */
 
 /* standard library header */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 #include <unistd.h>
 #include <list>
 #include <string>
@@ -44,7 +44,7 @@ namespace smartcard_service_api
 		return aul_app_get_pkgname_bypid(pid, package, length);
 	}
 
-	ByteArray SignatureHelper::getCertificationHash(const char *packageName)
+	const ByteArray SignatureHelper::getCertificationHash(const char *packageName)
 	{
 		ByteArray result;
 		int ret = 0;
@@ -81,9 +81,9 @@ namespace smartcard_service_api
 						if (value != NULL && strlen(value) > 0)
 						{
 							OpensslHelper::decodeBase64String(value, result, false);
-							if (result.getLength() > 0)
+							if (result.size() > 0)
 							{
-								_DBG("type [%d] hash [%d] : %s", type, result.getLength(), result.toString());
+								_DBG("type [%d] hash [%d] : %s", type, result.size(), result.toString().c_str());
 								break;
 							}
 						}
@@ -105,7 +105,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	ByteArray SignatureHelper::getCertificationHash(int pid)
+	const ByteArray SignatureHelper::getCertificationHash(int pid)
 	{
 		ByteArray result;
 		int error = 0;
@@ -179,12 +179,12 @@ namespace smartcard_service_api
 							ByteArray decodeValue, hash;
 
 							OpensslHelper::decodeBase64String(value, decodeValue, false);
-							if (decodeValue.getLength() > 0)
+							if (decodeValue.size() > 0)
 							{
-								OpensslHelper::digestBuffer("sha1", decodeValue.getBuffer(), decodeValue.getLength(), hash);
-								if(hash.getLength() > 0)
+								OpensslHelper::digestBuffer("sha1", decodeValue.getBuffer(), decodeValue.size(), hash);
+								if(hash.size() > 0)
 								{
-									_DBG("type [%d] hash [%d] : %s", type, hash.getLength(), hash.toString());
+									_DBG("type [%d] hash [%d] : %s", type, hash.size(), hash.toString().c_str());
 									certHashes.push_back(hash);
 								}
 							}
@@ -227,7 +227,7 @@ certiHash *__signature_helper_vector_to_linked_list(vector<ByteArray> &certHashe
 		if ((tmp = (certiHash *)calloc(1, sizeof(certiHash))) == NULL)
 			goto ERROR;
 
-		tmp->length = (*item).getLength();
+		tmp->length = (*item).size();
 
 		if ((tmp->value = (uint8_t *)calloc(tmp->length, sizeof(uint8_t))) == NULL)
 		{

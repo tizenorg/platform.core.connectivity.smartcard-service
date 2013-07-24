@@ -32,16 +32,16 @@ namespace smartcard_service_api
 	class EFDIR : public FileObject
 	{
 	private:
-		ByteArray parseRecord(Record &record, ByteArray &aid);
+		const ByteArray parseRecord(const Record &record, const ByteArray &aid);
 
 	public:
 		EFDIR(Channel *channel);
-		EFDIR(Channel *channel, ByteArray selectResponse);
+		EFDIR(Channel *channel, const ByteArray &selectResponse);
 		~EFDIR();
 
 		int select();
 
-		ByteArray getPathByAID(ByteArray &aid);
+		const ByteArray getPathByAID(const ByteArray &aid);
 	};
 } /* namespace smartcard_service_api */
 #endif /* EFDIR_H_ */

@@ -15,9 +15,10 @@
  */
 
 /* standard library header */
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
+#include <sstream>
 
 /* SLP library header */
 
@@ -29,81 +30,74 @@ namespace smartcard_service_api
 {
 	ByteArray ByteArray::EMPTY = ByteArray();
 
-	ByteArray::ByteArray()
+	ByteArray::ByteArray() : buffer(NULL), length(0)
 	{
-		buffer = NULL;
-		length = 0;
 	}
 
-	ByteArray::ByteArray(uint8_t *array, uint32_t bufferLen)
+	ByteArray::ByteArray(const uint8_t *array, size_t size) :
+		buffer(NULL), length(0)
 	{
-		buffer = NULL;
-		length = 0;
-
-		setBuffer(array, bufferLen);
+		assign(array, size);
 	}
 
-	ByteArray::ByteArray(const ByteArray &T)
+	ByteArray::ByteArray(const ByteArray &T) : buffer(NULL), length(0)
 	{
-		buffer = NULL;
-		length = 0;
-
-		setBuffer(T.buffer, T.length);
+		assign(T.buffer, T.length);
 	}
 
 	ByteArray::~ByteArray()
 	{
-		releaseBuffer();
+		clear();
 	}
 
-	bool ByteArray::setBuffer(uint8_t *array, uint32_t bufferLen)
+	bool ByteArray::assign(const uint8_t *array, size_t size)
 	{
-		if (array == NULL || bufferLen == 0)
+		if (array == NULL || size == 0)
 		{
 			return false;
 		}
 
-		releaseBuffer();
+		clear();
 
-		buffer = new uint8_t[bufferLen];
+		buffer = new uint8_t[size];
 		if (buffer == NULL)
 		{
 			_ERR("alloc failed");
 			return false;
 		}
 
-		memcpy(buffer, array, bufferLen);
-		length = bufferLen;
+		memcpy(buffer, array, size);
+		length = size;
 
 		return true;
 	}
 
-	bool ByteArray::_setBuffer(uint8_t *array, uint32_t bufferLen)
+	bool ByteArray::_assign(uint8_t *array, size_t size)
 	{
-		if (array == NULL || bufferLen == 0)
+		if (array == NULL || size == 0)
 		{
 			return false;
 		}
 
-		releaseBuffer();
+		clear();
 
 		buffer = array;
-		length = bufferLen;
+		length = size;
 
 		return true;
 	}
 
-	uint32_t ByteArray::getLength() const
+	size_t ByteArray::size() const
 	{
 		return length;
 	}
 
-	uint8_t *ByteArray::getBuffer() const
+	uint8_t *ByteArray::getBuffer()
 	{
 		return getBuffer(0);
 	}
 
-	uint8_t *ByteArray::getBuffer(uint32_t offset) const
+	uint8_t *ByteArray::getBuffer(size_t offset)
 	{
 		if (length == 0)
 			return NULL;
@@ -117,62 +111,72 @@ namespace smartcard_service_api
 		return buffer + offset;
 	}
 
-	uint8_t ByteArray::getAt(uint32_t index) const
+	uint8_t ByteArray::at(size_t index) const
 	{
 		if (index >= length)
 		{
 			_ERR("buffer overflow, index [%d], length [%d]", index, length);
-			return buffer[length -1];
+			if (length > 0)
+			{
+				return buffer[length - 1];
+			}
+			else
+			{
+				return 0;
+			}
 		}
 
 		return buffer[index];
 	}
 
-	uint8_t ByteArray::getReverseAt(uint32_t index) const
+	uint8_t ByteArray::reverseAt(size_t index) const
 	{
 		if (index >= length)
 		{
 			_ERR("buffer underflow, index [%d], length [%d]", index, length);
-			return buffer[0];
+			if (length > 0)
+			{
+				return buffer[0];
+			}
+			else
+			{
+				return 0;
+			}
 		}
 
 		return buffer[length - index - 1];
 	}
 
-	uint32_t ByteArray::copyFromArray(uint8_t *array, uint32_t bufferLen) const
+	size_t ByteArray::extract(uint8_t *array, size_t size) const
 	{
 		uint32_t min_len = 0;
 
-		if (array == NULL || bufferLen == 0)
+		if (array == NULL || size == 0)
 		{
-			_ERR("invaild param");
-			return false;
+			_ERR("invalid param");
+			return min_len;
 		}
 
-		min_len = (bufferLen < length) ? bufferLen : length;
+		min_len = (size < length) ? size : length;
 
 		memcpy(array, buffer, min_len);
 
 		return min_len;
 	}
 
-	ByteArray ByteArray::sub(uint32_t offset, uint32_t size) const
+	const ByteArray ByteArray::sub(size_t offset, size_t size) const
 	{
-		ByteArray newArray;
-
 		if (length == 0 || offset >= length || (offset + size) > length)
 		{
 			_DBG("length is zero");
 
-			return newArray;
+			return ByteArray();
 		}
 
-		newArray.setBuffer(buffer + offset, size);
-
-		return newArray;
+		return ByteArray(buffer + offset, size);
 	}
 
-	void ByteArray::releaseBuffer()
+	void ByteArray::clear()
 	{
 		if (buffer != NULL)
 		{
@@ -185,7 +189,7 @@ namespace smartcard_service_api
 	/* operator overloading */
 	ByteArray ByteArray::operator +(const ByteArray &T)
 	{
-		uint32_t newLen;
+		size_t newLen;
 		uint8_t *newBuffer;
 		ByteArray newArray;
 
@@ -215,7 +219,7 @@ namespace smartcard_service_api
 		memcpy(newBuffer, buffer, length);
 		memcpy(newBuffer + length, T.buffer, T.length);
 
-		newArray._setBuffer(newBuffer, newLen);
+		newArray._assign(newBuffer, newLen);
 
 		return newArray;
 	}
@@ -224,7 +228,7 @@ namespace smartcard_service_api
 	{
 		if (this != &T)
 		{
-			setBuffer(T.buffer, T.length);
+			assign(T.buffer, T.length);
 		}
 
 		return *this;
@@ -260,29 +264,32 @@ namespace smartcard_service_api
 		return (memcmp(buffer, T.buffer, (length < T.length) ? length : T.length) > 0);
 	}
 
-	uint8_t &ByteArray::operator [](uint32_t index) const
+	uint8_t ByteArray::operator [](size_t index) const
 	{
 		if (index >= length)
 		{
 			_ERR("buffer overflow, index [%d], length [%d]", index, length);
-			return buffer[length -1];
+			if (length > 0)
+			{
+				return buffer[length -1];
+			}
+			else
+			{
+				return 0;
+			}
 		}
 
 		return buffer[index];
 	}
-
-	const char *ByteArray::toString()
+	const string ByteArray::toString() const
 	{
-		memset(strBuffer, 0, sizeof(strBuffer));
+		stringstream ss;
 
-		if (length == 0)
+		if (length > 0)
 		{
-			snprintf(strBuffer, sizeof(strBuffer), "buffer is empty");
-		}
-		else
-		{
+			char temp[20];
 			int count;
-			int i, offset = 0;
+			int i = 0;
 			bool ellipsis = false;
 
 			count = length;
@@ -292,26 +299,27 @@ namespace smartcard_service_api
 				ellipsis = true;
 			}
 
-			snprintf(strBuffer + offset, sizeof(strBuffer) - offset, "{ ");
-			offset += 2;
+			ss << "{ ";
 
 			for (i = 0; i < count; i++)
 			{
-				snprintf(strBuffer + offset, sizeof(strBuffer) - offset, "%02X ", buffer[i]);
-				offset += 3;
+				snprintf(temp, sizeof(temp), "%02X ", buffer[i]);
+				ss << temp;
 			}
 
 			if (ellipsis)
 			{
-				snprintf(strBuffer + offset, sizeof(strBuffer) - offset, "... }");
+				ss << "... ";
 			}
-			else
-			{
-				snprintf(strBuffer + offset, sizeof(strBuffer) - offset, "}");
-			}
+
+			ss << "}";
+		}
+		else
+		{
+			ss << "buffer is empty";
 		}
 
-		return (const char *)strBuffer;
+		return ss.str();
 	}
 
 	void ByteArray::save(const char *filePath)
@@ -325,7 +333,6 @@ namespace smartcard_service_api
 		{
 			fwrite(buffer, 1, length, file);
 			fflush(file);
-
 			fclose(file);
 		}
 		else

@@ -32,14 +32,14 @@ namespace smartcard_service_api
 	private:
 		map<ByteArray, PKCS15OID> mapOID;
 
-		bool parseData(ByteArray data);
+		bool parseData(const ByteArray &data);
 
 	public:
 		PKCS15DODF(unsigned int fid, Channel *channel);
-		PKCS15DODF(ByteArray path, Channel *channel);
+		PKCS15DODF(const ByteArray &path, Channel *channel);
 		~PKCS15DODF();
 
-		int searchOID(ByteArray oid, ByteArray &data);
+		int searchOID(const ByteArray &oid, ByteArray &data) const;
 	};
 
 } /* namespace smartcard_service_api */

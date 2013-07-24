@@ -145,7 +145,8 @@ namespace smartcard_service_api
 		}
 
 		if (callback != NULL) {
-			callback(atr.getBuffer(), atr.getLength(), result, param->user_param);
+			callback(atr.getBuffer(),
+				atr.size(), result, param->user_param);
 		}
 
 		delete param;
@@ -252,7 +253,7 @@ namespace smartcard_service_api
 		delete param;
 	}
 #endif
-	ByteArray Session::getATRSync()
+	const ByteArray Session::getATRSync()
 		throw (ExceptionBase &, ErrorIO &, ErrorSecurity &,
 			ErrorIllegalState &, ErrorIllegalParameter &)
 	{
@@ -299,7 +300,7 @@ namespace smartcard_service_api
 				msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
 				syncLock();
-				if (ClientIPC::getInstance().sendMessage(&msg) == true)
+				if (ClientIPC::getInstance().sendMessage(msg) == true)
 				{
 					rv = waitTimedCondition(0);
 					if (rv != 0)
@@ -367,7 +368,7 @@ namespace smartcard_service_api
 				msg.callback = (void *)callback;
 				msg.userParam = userData;
 
-				if (ClientIPC::getInstance().sendMessage(&msg) == true)
+				if (ClientIPC::getInstance().sendMessage(msg) == true)
 				{
 					result = SCARD_ERROR_OK;
 				}
@@ -383,7 +384,8 @@ namespace smartcard_service_api
 				result = SCARD_ERROR_OK;
 
 				/* TODO : invoke callback directly */
-				callback(atr.getBuffer(), atr.getLength(), 0, userData);
+				callback(atr.getBuffer(),
+					atr.size(), 0, userData);
 			}
 		}
 		else
@@ -438,7 +440,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
 			syncLock();
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				rv = waitTimedCondition(0);
 
@@ -494,7 +496,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)callback;
 			msg.userParam = userData;
 
-			if (ClientIPC::getInstance().sendMessage(&msg) == false)
+			if (ClientIPC::getInstance().sendMessage(msg) == false)
 			{
 				_ERR("sendMessage failed");
 				result = SCARD_ERROR_IPC_FAILED;
@@ -527,7 +529,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
 			syncLock();
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				rv = waitTimedCondition(0);
 				if (rv != 0)
@@ -578,7 +580,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)callback;
 			msg.userParam = userData;
 
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				result = SCARD_ERROR_OK;
 			}
@@ -598,7 +600,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	Channel *Session::openChannelSync(int id, ByteArray &aid)
+	Channel *Session::openChannelSync(int id, const ByteArray &aid)
 		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 			ErrorIllegalParameter &, ErrorSecurity &)
 	{
@@ -666,7 +668,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
 
 			syncLock();
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				rv = waitTimedCondition(0);
 				if (rv != 0)
@@ -700,7 +702,7 @@ namespace smartcard_service_api
 		return (Channel *)channel;
 	}
 
-	int Session::openChannel(int id, ByteArray &aid, openChannelCallback callback, void *userData)
+	int Session::openChannel(int id, const ByteArray &aid, openChannelCallback callback, void *userData)
 	{
 		int result;
 
@@ -736,7 +738,7 @@ namespace smartcard_service_api
 			msg.callback = (void *)callback;
 			msg.userParam = userData;
 
-			if (ClientIPC::getInstance().sendMessage(&msg) == true)
+			if (ClientIPC::getInstance().sendMessage(msg) == true)
 			{
 				result = SCARD_ERROR_OK;
 			}
@@ -756,13 +758,13 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	Channel *Session::openBasicChannelSync(ByteArray &aid)
+	Channel *Session::openBasicChannelSync(const ByteArray &aid)
 		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openChannelSync(0, aid);
 	}
 
-	Channel *Session::openBasicChannelSync(unsigned char *aid, unsigned int length)
+	Channel *Session::openBasicChannelSync(const unsigned char *aid, unsigned int length)
 		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ByteArray temp(aid, length);
@@ -770,12 +772,12 @@ namespace smartcard_service_api
 		return openBasicChannelSync(temp);
 	}
 
-	int Session::openBasicChannel(ByteArray &aid, openChannelCallback callback, void *userData)
+	int Session::openBasicChannel(const ByteArray &aid, openChannelCallback callback, void *userData)
 	{
 		return openChannel(0, aid, callback, userData);
 	}
 
-	int Session::openBasicChannel(unsigned char *aid, unsigned int length,
+	int Session::openBasicChannel(const unsigned char *aid, unsigned int length,
 		openChannelCallback callback, void *userData)
 	{
 		ByteArray temp(aid, length);
@@ -783,13 +785,13 @@ namespace smartcard_service_api
 		return openBasicChannel(temp, callback, userData);
 	}
 
-	Channel *Session::openLogicalChannelSync(ByteArray &aid)
+	Channel *Session::openLogicalChannelSync(const ByteArray &aid)
 		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		return openChannelSync(1, aid);
 	}
 
-	Channel *Session::openLogicalChannelSync(unsigned char *aid, unsigned int length)
+	Channel *Session::openLogicalChannelSync(const unsigned char *aid, unsigned int length)
 		throw (ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ByteArray temp(aid, length);
@@ -797,12 +799,12 @@ namespace smartcard_service_api
 		return openLogicalChannelSync(temp);
 	}
 
-	int Session::openLogicalChannel(ByteArray &aid, openChannelCallback callback, void *userData)
+	int Session::openLogicalChannel(const ByteArray &aid, openChannelCallback callback, void *userData)
 	{
 		return openChannel(1, aid, callback, userData);
 	}
 
-	int Session::openLogicalChannel(unsigned char *aid, unsigned int length,
+	int Session::openLogicalChannel(const unsigned char *aid, unsigned int length,
 		openChannelCallback callback, void *userData)
 	{
 		ByteArray temp(aid, length);
@@ -892,7 +894,10 @@ namespace smartcard_service_api
 					getATRCallback cb = (getATRCallback)msg->callback;
 
 					/* async call */
-					cb(msg->data.getBuffer(), msg->data.getLength(), msg->error, msg->userParam);
+					cb(msg->data.getBuffer(),
+						msg->data.size(),
+						msg->error,
+						msg->userParam);
 				}
 			}
 			break;
@@ -947,7 +952,7 @@ namespace smartcard_service_api
 			break;
 
 		default :
-			_DBG("unknown message : %s", msg->toString());
+			_DBG("unknown message : %s", msg->toString().c_str());
 			break;
 		}
 
@@ -1074,9 +1079,9 @@ EXTERN_API int session_get_atr_sync(session_h handle, unsigned char **buffer, un
 
 	SESSION_EXTERN_BEGIN;
 		temp = session->getATRSync();
-		if (temp.getLength() > 0)
+		if (temp.size() > 0)
 		{
-			*length = temp.getLength();
+			*length = temp.size();
 			*buffer = (unsigned char *)calloc(1, *length);
 			memcpy(*buffer, temp.getBuffer(), *length);
 

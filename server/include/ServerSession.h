@@ -41,19 +41,21 @@ namespace smartcard_service_api
 		Terminal *terminal;
 		vector<ByteArray> certHashes;
 
-		ServerSession(ServerReader *reader, vector<ByteArray> &certHashes, void *caller, Terminal *terminal);
+		ServerSession(ServerReader *reader,
+			const vector<ByteArray> &certHashes,
+			void *caller, Terminal *terminal);
 
-		int getATR(getATRCallback callback, void *userData){ return -1; }
-		int close(closeSessionCallback callback, void *userData){ return -1; }
+		int getATR(getATRCallback callback, void *userData) { return -1; }
+		int close(closeSessionCallback callback, void *userData) { return -1; }
 
-		int openBasicChannel(ByteArray &aid, openChannelCallback callback, void *userData){ return -1; }
-		int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData){ return -1; }
-		int openLogicalChannel(ByteArray &aid, openChannelCallback callback, void *userData){ return -1; }
-		int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData){ return -1; }
+		int openBasicChannel(const ByteArray &aid, openChannelCallback callback, void *userData){ return -1; }
+		int openBasicChannel(const unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData){ return -1; }
+		int openLogicalChannel(const ByteArray &aid, openChannelCallback callback, void *userData){ return -1; }
+		int openLogicalChannel(const unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData){ return -1; }
 	public:
 		~ServerSession();
 
-		ByteArray getATRSync()
+		const ByteArray getATRSync()
 			throw(ErrorIO &, ErrorIllegalState &);
 		void closeSync()
 			throw(ErrorIO &, ErrorIllegalState &);
@@ -61,22 +63,22 @@ namespace smartcard_service_api
 		void closeChannels()
 			throw(ErrorIO &, ErrorIllegalState &);
 
-		Channel *openBasicChannelSync(ByteArray &aid)
+		Channel *openBasicChannelSync(const ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length)
+		Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		Channel *openBasicChannelSync(ByteArray &aid, void *caller)
+		Channel *openBasicChannelSync(const ByteArray &aid, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length, void *caller)
+		Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
-		Channel *openLogicalChannelSync(ByteArray &aid)
+		Channel *openLogicalChannelSync(const ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length)
+		Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		Channel *openLogicalChannelSync(ByteArray &aid, void *caller)
+		Channel *openLogicalChannelSync(const ByteArray &aid, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
-		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length, void *caller)
+		Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
 		friend class ServerReader;

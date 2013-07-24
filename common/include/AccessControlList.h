@@ -38,11 +38,11 @@ namespace smartcard_service_api
 		map<ByteArray, AccessCondition> mapConditions;
 		bool allGranted;
 
-		AccessRule *findAccessRule(const ByteArray &aid,
-			const ByteArray &hash);
+		const AccessRule *findAccessRule(const ByteArray &aid,
+			const ByteArray &hash) const;
 		AccessCondition &getAccessCondition(const ByteArray &aid);
 
-		void printAccessControlList();
+		void printAccessControlList() const;
 
 	public:
 		static ByteArray ALL_SE_APPS;
@@ -57,17 +57,17 @@ namespace smartcard_service_api
 		int updateACL(Channel *channel) { return loadACL(channel); }
 		void releaseACL();
 
-		virtual bool isAuthorizedAccess(ByteArray &aid,
-			ByteArray &certHash);
-		virtual bool isAuthorizedAccess(unsigned char *aidBuffer,
-			unsigned int aidLength, unsigned char *certHashBuffer,
-			unsigned int certHashLength);
-		virtual bool isAuthorizedAccess(ByteArray &aid,
-			vector<ByteArray> &certHashes);
-		virtual bool isAuthorizedAccess(ByteArray &aid,
-			vector<ByteArray> &certHashes, ByteArray &command);
-		virtual bool isAuthorizedNFCAccess(ByteArray &aid,
-			vector<ByteArray> &certHashes);
+		virtual bool isAuthorizedAccess(const ByteArray &aid,
+			const ByteArray &certHash) const;
+		virtual bool isAuthorizedAccess(const unsigned char *aidBuffer,
+			unsigned int aidLength, const unsigned char *certHashBuffer,
+			unsigned int certHashLength) const;
+		virtual bool isAuthorizedAccess(const ByteArray &aid,
+			const vector<ByteArray> &certHashes) const;
+		virtual bool isAuthorizedAccess(const ByteArray &aid,
+			const vector<ByteArray> &certHashes, const ByteArray &command) const;
+		virtual bool isAuthorizedNFCAccess(const ByteArray &aid,
+			const vector<ByteArray> &certHashes) const;
 	};
 
 } /* namespace smartcard_service_api */

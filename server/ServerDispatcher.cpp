@@ -136,7 +136,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -151,7 +151,7 @@ namespace smartcard_service_api
 				resource->removeService(socket, msg->param1);
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -186,7 +186,7 @@ namespace smartcard_service_api
 				response.param1 = handle;
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -205,7 +205,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -217,7 +217,7 @@ namespace smartcard_service_api
 
 				response.param1 = IntegerHandle::INVALID_HANDLE;
 				response.param2 = 0;
-				response.data.releaseBuffer();
+				response.data.clear();
 
 				try
 				{
@@ -256,7 +256,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -270,7 +270,7 @@ namespace smartcard_service_api
 				response.param1 = resource->getChannelCount(socket, msg->error/* service context */, msg->param1);
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -288,7 +288,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -332,7 +332,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -366,7 +366,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -387,7 +387,7 @@ namespace smartcard_service_api
 			break;
 
 		default :
-			_DBG("unknown message [%s], socket [%d]", msg->toString(), socket);
+			_DBG("unknown message [%s], socket [%d]", msg->toString().c_str(), socket);
 			break;
 		}
 

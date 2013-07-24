@@ -51,8 +51,8 @@ namespace smartcard_service_api
 		Session(void *context, Reader *reader, void *handle);
 		~Session();
 
-		int openChannel(int id, ByteArray &aid, openChannelCallback callback, void *userData);
-		Channel *openChannelSync(int id, ByteArray &aid)
+		int openChannel(int id, const ByteArray &aid, openChannelCallback callback, void *userData);
+		Channel *openChannelSync(int id, const ByteArray &aid)
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 #ifdef USE_GDBUS
@@ -73,13 +73,13 @@ namespace smartcard_service_api
 		int getATR(getATRCallback callback, void *userData);
 		int close(closeSessionCallback callback, void *userData);
 
-		int openBasicChannel(ByteArray &aid, openChannelCallback callback, void *userData);
-		int openBasicChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
-		int openLogicalChannel(ByteArray &aid, openChannelCallback callback, void *userData);
-		int openLogicalChannel(unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
+		int openBasicChannel(const ByteArray &aid, openChannelCallback callback, void *userData);
+		int openBasicChannel(const unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
+		int openLogicalChannel(const ByteArray &aid, openChannelCallback callback, void *userData);
+		int openLogicalChannel(const unsigned char *aid, unsigned int length, openChannelCallback callback, void *userData);
 		int getChannelCount(getChannelCountCallback callback, void * userData);
 
-		ByteArray getATRSync()
+		const ByteArray getATRSync()
 			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
 				ErrorIllegalState &, ErrorIllegalParameter &);
 
@@ -87,19 +87,19 @@ namespace smartcard_service_api
 			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
 				ErrorIllegalState &, ErrorIllegalParameter &);
 
-		Channel *openBasicChannelSync(ByteArray &aid)
+		Channel *openBasicChannelSync(const ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
-		Channel *openBasicChannelSync(unsigned char *aid, unsigned int length)
+		Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
-		Channel *openLogicalChannelSync(ByteArray &aid)
+		Channel *openLogicalChannelSync(const ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
-		Channel *openLogicalChannelSync(unsigned char *aid, unsigned int length)
+		Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 

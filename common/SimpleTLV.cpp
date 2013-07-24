@@ -26,22 +26,21 @@
 
 namespace smartcard_service_api
 {
-	SimpleTLV::SimpleTLV():TLVHelper()
+	SimpleTLV::SimpleTLV() : TLVHelper()
 	{
 	}
 
-	SimpleTLV::SimpleTLV(TLVHelper *parent):TLVHelper(parent)
-	{
-		parentTLV = parent;
-	}
-
-	SimpleTLV::SimpleTLV(const ByteArray &array):TLVHelper(array)
+	SimpleTLV::SimpleTLV(TLVHelper *parent) : TLVHelper(parent)
 	{
 	}
 
-	SimpleTLV::SimpleTLV(const ByteArray &array, TLVHelper *parent):TLVHelper(array, parent)
+	SimpleTLV::SimpleTLV(const ByteArray &array) : TLVHelper(array)
 	{
-		parentTLV = parent;
+	}
+
+	SimpleTLV::SimpleTLV(const ByteArray &array, TLVHelper *parent) :
+		TLVHelper(array, parent)
+	{
 	}
 
 	SimpleTLV::~SimpleTLV()
@@ -53,7 +52,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	int SimpleTLV::decodeTag(unsigned char *buffer)
+	int SimpleTLV::decodeTag(const unsigned char *buffer)
 	{
 		/* 0x00 or 0xFF is invalid tag value */
 		if (buffer[0] == 0x00 || buffer[0] == 0xFF)
@@ -66,7 +65,7 @@ namespace smartcard_service_api
 		return 1;
 	}
 
-	int SimpleTLV::decodeLength(unsigned char *buffer)
+	int SimpleTLV::decodeLength(const unsigned char *buffer)
 	{
 		int count = 0;
 
@@ -86,17 +85,17 @@ namespace smartcard_service_api
 		return count;
 	}
 
-	int SimpleTLV::decodeValue(unsigned char *buffer)
+	int SimpleTLV::decodeValue(const unsigned char *buffer)
 	{
 		if (currentL == 0)
 			return 0;
 
-		currentV.setBuffer(buffer, currentL);
+		currentV.assign(buffer, currentL);
 
 		return currentL;
 	}
 
-	ByteArray SimpleTLV::encode(unsigned int tag, ByteArray buffer)
+	const ByteArray SimpleTLV::encode(unsigned int tag, const ByteArray &buffer)
 	{
 		bool isLongBuffer = false;
 		ByteArray result;
@@ -108,11 +107,11 @@ namespace smartcard_service_api
 		total_len += 1;
 
 		/* add length's length */
-		if (buffer.getLength() < 255)
+		if (buffer.size() < 255)
 		{
 			total_len += 1;
 		}
-		else if (buffer.getLength() < 65536)
+		else if (buffer.size() < 65536)
 		{
 			total_len += 3;
 			isLongBuffer = true;
@@ -123,7 +122,7 @@ namespace smartcard_service_api
 		}
 
 		/* add buffer's length */
-		total_len += buffer.getLength();
+		total_len += buffer.size();
 
 		/* alloc new buffer */
 		temp_buffer = new unsigned char[total_len];
@@ -140,31 +139,31 @@ namespace smartcard_service_api
 		if (isLongBuffer == true)
 		{
 			temp_buffer[current++] = (unsigned char)(0xFF);
-			temp_buffer[current++] = (unsigned char)(buffer.getLength() >> 8);
-			temp_buffer[current++] = (unsigned char)(buffer.getLength());
+			temp_buffer[current++] = (unsigned char)(buffer.size() >> 8);
+			temp_buffer[current++] = (unsigned char)(buffer.size());
 		}
 		else
 		{
-			temp_buffer[current++] = (unsigned char)(buffer.getLength());
+			temp_buffer[current++] = (unsigned char)(buffer.size());
 		}
 
 		/* fill value */
-		if (buffer.getLength() > 0)
-			memcpy(temp_buffer + current, buffer.getBuffer(), buffer.getLength());
+		if (buffer.size() > 0)
+			memcpy(temp_buffer + current, buffer.getBuffer(), buffer.size());
 
-		result.setBuffer(temp_buffer, total_len);
+		result.assign(temp_buffer, total_len);
 
 		delete []temp_buffer;
 
 		return result;
 	}
 
-	ByteArray SimpleTLV::encode(unsigned int tag, unsigned char *buffer, unsigned int length)
+	const ByteArray SimpleTLV::encode(unsigned int tag, unsigned char *buffer, unsigned int length)
 	{
 		return encode(tag, ByteArray(buffer, length));
 	}
 
-	TLVHelper *SimpleTLV::getChildTLV(ByteArray data)
+	TLVHelper *SimpleTLV::getChildTLV(const ByteArray &data)
 	{
 		if (childTLV != NULL)
 		{
@@ -176,14 +175,14 @@ namespace smartcard_service_api
 		return (TLVHelper *)childTLV;
 	}
 
-	ByteArray SimpleTLV::getOctetString(const ByteArray &array)
+	const ByteArray SimpleTLV::getOctetString(const ByteArray &array)
 	{
 		SimpleTLV tlv(array);
 
 		return SimpleTLV::getOctetString(tlv);
 	}
 
-	ByteArray SimpleTLV::getOctetString(SimpleTLV &tlv)
+	const ByteArray SimpleTLV::getOctetString(SimpleTLV &tlv)
 	{
 		ByteArray result;
 
@@ -212,7 +211,7 @@ namespace smartcard_service_api
 
 		if (tlv.decodeTLV() == true && tlv.getTag() == 0x80) /* BOOLEAN */
 		{
-			if (tlv.getValue().getAt(0) == 0)
+			if (tlv.getValue().at(0) == 0)
 				result = false;
 			else
 				result = true;

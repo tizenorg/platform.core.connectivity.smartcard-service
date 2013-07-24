@@ -56,7 +56,7 @@ namespace smartcard_service_api
 		ret = PKCS15Object::select(PKCS15::PKCS15_AID);
 		if (ret >= SCARD_ERROR_OK)
 		{
-			_DBG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString().c_str());
 		}
 		else if (ret == ResponseHelper::ERROR_FILE_NOT_FOUND)
 		{
@@ -65,7 +65,7 @@ namespace smartcard_service_api
 			ret = selectFromEFDIR();
 			if (ret >= SCARD_ERROR_OK)
 			{
-				_DBG("response : %s", selectResponse.toString());
+				_DBG("response : %s", selectResponse.toString().c_str());
 			}
 			else
 			{
@@ -90,7 +90,7 @@ namespace smartcard_service_api
 		if (ret >= SCARD_ERROR_OK)
 		{
 			path = dir.getPathByAID(PKCS15_AID);
-			if (path.getLength() > 0)
+			if (path.size() > 0)
 			{
 				ret = PKCS15Object::select(path, false);
 				if (ret < SCARD_ERROR_OK)

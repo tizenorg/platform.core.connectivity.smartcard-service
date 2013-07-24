@@ -18,19 +18,20 @@
 #define MESSAGE_H_
 #ifndef USE_GDBUS
 /* standard library header */
+#include <string>
 
 /* SLP library header */
 
 /* local header */
 #include "Serializable.h"
 
+using namespace std;
+
 namespace smartcard_service_api
 {
-	class Message: public Serializable
+	class Message : public Serializable
 	{
 	private:
-		char text[200];
-
 	public:
 		static const int MSG_REQUEST_READERS = 0x80;
 		static const int MSG_REQUEST_SHUTDOWN = 0x81;
@@ -57,15 +58,15 @@ namespace smartcard_service_api
 		void *userParam;
 
 		Message();
-		~Message();
+		virtual ~Message();
 
-		ByteArray serialize();
-		void deserialize(unsigned char *buffer, unsigned int length);
-		void deserialize(ByteArray buffer);
+		const ByteArray serialize() const;
+		void deserialize(const unsigned char *buffer, unsigned int length);
+		void deserialize(const ByteArray &buffer);
 
-		inline bool isSynchronousCall() { return (caller == callback); }
+		inline bool isSynchronousCall() const { return (caller == callback); }
 
-		const char *toString();
+		const string toString() const;
 	};
 
 } /* namespace smartcard_service_api */
