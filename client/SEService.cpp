@@ -449,8 +449,6 @@ namespace smartcard_service_api
 		count = g_variant_iter_n_children(iter);
 		while (g_variant_iter_loop(iter, "(us)", &handle, &name) == true)
 		{
-			SECURE_LOGD("Reader : name [%s], handle [%08x]", name, handle);
-
 			/* add readers */
 			reader = new Reader((void *)this->handle, name, GUINT_TO_POINTER(handle));
 			if (reader == NULL)

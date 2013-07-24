@@ -69,27 +69,6 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void AccessRule::printAccessRules() const
-	{
-		if (listFilters.size() > 0)
-		{
-			vector<pair<ByteArray, ByteArray> >::const_iterator item;
-
-			_DBG("         +---- Granted APDUs");
-
-			for (item = listFilters.begin(); item != listFilters.end(); item++)
-			{
-				_DBG("         +----- APDU : %s, Mask : %s", item->first.toString().c_str(), item->second.toString().c_str());
-			}
-		}
-		else
-		{
-			_DBG("         +---- APDU Access ALLOW : %s", apduRule ? "ALWAYS" : "NEVER");
-		}
-
-		_DBG("         +---- NFC  Access ALLOW : %s", nfcRule ? "ALWAYS" : "NEVER");
-	}
-
 	bool AccessRule::isAuthorizedNFCAccess(void) const
 	{
 		return nfcRule;
@@ -140,28 +119,6 @@ namespace smartcard_service_api
 		}
 
 		return result;
-	}
-
-	void AccessCondition::printAccessConditions() const
-	{
-		_DBG("   +-- Access Condition");
-
-		if (mapRules.size() > 0)
-		{
-			map<ByteArray, AccessRule>::const_iterator item;
-
-			for (item = mapRules.begin(); item != mapRules.end(); item++)
-			{
-				ByteArray temp = item->first;
-
-				_DBG("   +--- hash : %s", (temp == AccessControlList::ALL_DEVICE_APPS) ? "All device applications" : temp.toString().c_str());
-				item->second.printAccessRules();
-			}
-		}
-		else
-		{
-			_DBG("   +--- permission : %s", permission ? "granted all" : "denied all");
-		}
 	}
 
 	void AccessCondition::setAPDUAccessRule(const ByteArray &certHash,

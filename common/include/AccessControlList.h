@@ -42,8 +42,6 @@ namespace smartcard_service_api
 			const ByteArray &hash) const;
 		AccessCondition &getAccessCondition(const ByteArray &aid);
 
-		void printAccessControlList() const;
-
 	public:
 		static ByteArray ALL_SE_APPS;
 		static ByteArray DEFAULT_SE_APP;

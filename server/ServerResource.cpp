@@ -1202,8 +1202,6 @@ namespace smartcard_service_api
 						snprintf(fullPath, sizeof(fullPath),
 							"%s/%s", OMAPI_SE_PATH, entry->d_name);
 
-						SCARD_DEBUG("se name [%s]", fullPath);
-
 						result = appendSELibrary(fullPath);
 					}
 				}

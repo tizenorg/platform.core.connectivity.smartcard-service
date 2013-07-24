@@ -77,7 +77,6 @@ namespace smartcard_service_api
 					result = loadAccessControl(channel, dodf);
 					if (result == SCARD_ERROR_OK)
 					{
-						printAccessControlList();
 					}
 					else
 					{

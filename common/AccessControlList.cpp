@@ -221,22 +221,4 @@ END :
 END :
 		return result;
 	}
-
-	void AccessControlList::printAccessControlList() const
-	{
-		ByteArray temp;
-		map<ByteArray, AccessCondition>::const_iterator iterMap;
-
-		_DBG("========================== Access Control Rules ============================");
-		for (iterMap = mapConditions.begin(); iterMap != mapConditions.end(); iterMap++)
-		{
-			temp = iterMap->first;
-
-			_DBG("+ aid : %s", (temp == DEFAULT_SE_APP) ? "Default Application" : (temp == ALL_SE_APPS) ? "All SE Applications" : temp.toString().c_str());
-
-			iterMap->second.printAccessConditions();
-		}
-		_DBG("============================================================================");
-	}
-
 } /* namespace smartcard_service_api */

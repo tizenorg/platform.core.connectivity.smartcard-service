@@ -37,8 +37,6 @@ namespace smartcard_service_api
 		bool nfcRule;
 		vector<pair<ByteArray, ByteArray> > listFilters;
 
-		void printAccessRules() const;
-
 	public :
 		AccessRule() : apduRule(true), nfcRule(true) {}
 
@@ -65,8 +63,6 @@ namespace smartcard_service_api
 		ByteArray aid;
 		map<ByteArray, AccessRule> mapRules;
 
-		void printAccessConditions() const;
-
 	public :
 		AccessCondition() : permission(false) {}
 
@@ -90,7 +86,6 @@ namespace smartcard_service_api
 
 		AccessRule *getAccessRule(const ByteArray &certHash);
 		const AccessRule *getAccessRule(const ByteArray &certHash) const;
-
 
 		friend class AccessControlList;
 	};

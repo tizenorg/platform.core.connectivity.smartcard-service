@@ -292,8 +292,6 @@ namespace smartcard_service_api
 			{
 				_INFO("access rules are not changed. skip update");
 			}
-
-			printAccessControlList();
 		} else {
 			_ERR("transmitSync failed, %x", result);
 		}
