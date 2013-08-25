@@ -1,5 +1,0 @@
-usr/include/smartcard-service/*
-#usr/lib/lib*.a
-usr/lib/libsmartcard-service.so
-usr/lib/pkgconfig/smartcard-service.pc
-#usr/share/pkgconfig/*
