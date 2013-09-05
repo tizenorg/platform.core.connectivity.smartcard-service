@@ -38,6 +38,8 @@
 #define EXTERN_API __attribute__((visibility("default")))
 #endif
 
+#define SHUTDOWN_DELAY		500000 /* us */
+
 namespace smartcard_service_api
 {
 	SEService::SEService() : SEServiceHelper(),
@@ -226,36 +228,7 @@ namespace smartcard_service_api
 #endif
 	void SEService::shutdown()
 	{
-		if (connected == true)
-		{
-			uint32_t i;
-
-			for (i = 0; i < readers.size(); i++)
-			{
-				readers[i]->closeSessions();
-			}
-#ifdef USE_GDBUS
-			smartcard_service_se_service_call_shutdown(
-				(SmartcardServiceSeService *)proxy,
-				handle,
-				NULL,
-				&SEService::se_service_shutdown_cb,
-				this);
-#else
-			Message msg;
-
-			msg.message = Message::MSG_REQUEST_SHUTDOWN;
-			msg.param1 = (unsigned long)handle;
-			msg.error = (unsigned long)this; /* using error to context */
-			msg.caller = (void *)this;
-			msg.callback = (void *)NULL;
-
-			if (ClientIPC::getInstance().sendMessage(msg) == false)
-			{
-				_ERR("time over");
-			}
-#endif
-		}
+		shutdownSync();
 	}
 
 	void SEService::shutdownSync()
@@ -282,6 +255,9 @@ namespace smartcard_service_api
 
 				g_error_free(error);
 			}
+
+			/* wait at least 500ms */
+			usleep(SHUTDOWN_DELAY);
 
 			connected = false;
 #else
@@ -757,7 +733,7 @@ EXTERN_API void se_service_shutdown(se_service_h handle)
 {
 	SE_SERVICE_EXTERN_BEGIN;
 
-	service->shutdown();
+	service->shutdownSync();
 
 	SE_SERVICE_EXTERN_END;
 }
