@@ -80,22 +80,6 @@ namespace smartcard_service_api
 		mapServices.clear();
 	}
 
-#ifndef USE_GDBUS
-	bool ClientInstance::sendMessageToAllServices(int socket, const Message &msg)
-	{
-		bool result = true;
-		map<unsigned int, ServiceInstance *>::const_iterator item;
-
-		for (item = mapServices.begin(); item != mapServices.end(); item++)
-		{
-			if (ServerIPC::getInstance()->sendMessage(socket, msg) == false)
-				result = false;
-		}
-
-		return result;
-	}
-#endif
-
 	void ClientInstance::generateCertificationHashes()
 	{
 		SignatureHelper::getCertificationHashes(getPID(), certHashes);

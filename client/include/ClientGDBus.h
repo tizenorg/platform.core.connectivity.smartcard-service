@@ -17,7 +17,6 @@
 #ifndef CLIENTGDBUS_H_
 #define CLIENTGDBUS_H_
 
-#ifdef USE_GDBUS
 /* standard library header */
 #include <glib.h>
 
@@ -33,5 +32,5 @@ namespace smartcard_service_api
 	{
 	};
 } /* namespace smartcard_service_api */
-#endif
+
 #endif /* CLIENTGDBUS_H_ */

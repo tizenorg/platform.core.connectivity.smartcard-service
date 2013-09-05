@@ -25,12 +25,7 @@
 #include "Debug.h"
 #include "Reader.h"
 #include "Session.h"
-#ifdef USE_GDBUS
 #include "ClientGDBus.h"
-#else
-#include "Message.h"
-#include "ClientIPC.h"
-#endif
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -49,7 +44,7 @@ namespace smartcard_service_api
 
 			return;
 		}
-#ifdef USE_GDBUS
+
 		/* initialize client */
 		if (!g_thread_supported())
 		{
@@ -72,7 +67,7 @@ namespace smartcard_service_api
 			g_error_free(error);
 			return;
 		}
-#endif
+
 		present = true;
 
 		_END();
@@ -111,7 +106,6 @@ namespace smartcard_service_api
 
 		if (isSecureElementPresent() == true)
 		{
-#ifdef USE_GDBUS
 			gint result;
 			GError *error = NULL;
 			guint session_id;
@@ -143,44 +137,6 @@ namespace smartcard_service_api
 
 				THROW_ERROR(SCARD_ERROR_IPC_FAILED);
 			}
-#else
-			Message msg;
-			int rv;
-
-			openedSession = NULL;
-#ifdef CLIENT_IPC_THREAD
-			/* request channel handle from server */
-			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
-			msg.param1 = (unsigned long)handle;
-			msg.error = (unsigned long)context; /* using error to context */
-			msg.caller = (void *)this;
-			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
-
-			syncLock();
-			if (ClientIPC::getInstance().sendMessage(msg) == true)
-			{
-				rv = waitTimedCondition(0);
-				if (rv != 0)
-				{
-					_ERR("time over");
-					this->error = SCARD_ERROR_OPERATION_TIMEOUT;
-				}
-
-				session = openedSession;
-			}
-			else
-			{
-				_ERR("sendMessage failed");
-				this->error = SCARD_ERROR_IPC_FAILED;
-			}
-			syncUnlock();
-
-			if (this->error != SCARD_ERROR_OK)
-			{
-				ThrowError::throwError(this->error);
-			}
-#endif
-#endif
 		}
 		else
 		{
@@ -191,7 +147,6 @@ namespace smartcard_service_api
 		return session;
 	}
 
-#ifdef USE_GDBUS
 	void Reader::reader_open_session_cb(GObject *source_object,
 		GAsyncResult *res, gpointer user_data)
 	{
@@ -243,7 +198,6 @@ namespace smartcard_service_api
 
 		delete param;
 	}
-#endif
 	int Reader::openSession(openSessionCallback callback, void *userData)
 	{
 		int result;
@@ -252,7 +206,6 @@ namespace smartcard_service_api
 
 		if (isSecureElementPresent() == true)
 		{
-#ifdef USE_GDBUS
 			CallbackParam *param = new CallbackParam();
 
 			param->instance = this;
@@ -266,27 +219,6 @@ namespace smartcard_service_api
 				NULL, &Reader::reader_open_session_cb, param);
 
 			result = SCARD_ERROR_OK;
-#else
-			Message msg;
-
-			/* request channel handle from server */
-			msg.message = Message::MSG_REQUEST_OPEN_SESSION;
-			msg.param1 = (unsigned long)handle;
-			msg.error = (unsigned long)context; /* using error to context */
-			msg.caller = (void *)this;
-			msg.callback = (void *)callback;
-			msg.userParam = userData;
-
-			if (ClientIPC::getInstance().sendMessage(msg) == true)
-			{
-				result = SCARD_ERROR_OK;
-			}
-			else
-			{
-				_ERR("sendMessage failed");
-				result = SCARD_ERROR_IPC_FAILED;
-			}
-#endif
 		}
 		else
 		{
@@ -298,80 +230,6 @@ namespace smartcard_service_api
 
 		return result;
 	}
-
-#ifndef USE_GDBUS
-	bool Reader::dispatcherCallback(void *message)
-	{
-		Message *msg = (Message *)message;
-		Reader *reader;
-		bool result = false;
-
-		_BEGIN();
-
-		if (msg == NULL)
-		{
-			_ERR("message is null");
-			return result;
-		}
-
-		reader = (Reader *)msg->caller;
-
-		switch (msg->message)
-		{
-		case Message::MSG_REQUEST_OPEN_SESSION :
-			{
-				Session *session = NULL;
-
-				_INFO("MSG_REQUEST_OPEN_SESSION");
-
-				if (msg->param1 != 0)
-				{
-					/* create new instance of channel */
-					session = new Session(reader->context, reader, (void *)msg->param1);
-					if (session == NULL)
-					{
-						_ERR("Session creating instance failed");
-
-						return session;
-					}
-
-					reader->sessions.push_back(session);
-				}
-
-				if (msg->isSynchronousCall() == true) /* synchronized call */
-				{
-					/* sync call */
-					reader->syncLock();
-
-					/* copy result */
-					reader->error = msg->error;
-					reader->openedSession = session;
-					reader->signalCondition();
-
-					reader->syncUnlock();
-				}
-				else if (msg->callback != NULL)
-				{
-					openSessionCallback cb = (openSessionCallback)msg->callback;
-
-					/* async call */
-					cb(session, msg->error, msg->userParam);
-				}
-			}
-			break;
-
-		default:
-			_DBG("unknown [%s]", msg->toString().c_str());
-			break;
-		}
-
-		delete msg;
-
-		_END();
-
-		return result;
-	}
-#endif
 } /* namespace smartcard_service_api */
 
 /* export C API */
@@ -437,11 +295,9 @@ EXTERN_API session_h reader_open_session_sync(reader_h handle)
 {
 	session_h result = NULL;
 
-#ifdef CLIENT_IPC_THREAD
 	READER_EXTERN_BEGIN;
 	result = (session_h)reader->openSessionSync();
 	READER_EXTERN_END;
-#endif
 
 	return result;
 }

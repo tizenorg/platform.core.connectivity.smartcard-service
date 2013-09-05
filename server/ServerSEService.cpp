@@ -27,10 +27,6 @@
 /* local header */
 #include "Debug.h"
 #include "TerminalInterface.h"
-#ifndef USE_GDBUS
-#include "Message.h"
-#include "ServerIPC.h"
-#endif
 #include "ServerResource.h"
 #include "ServerSEService.h"
 
@@ -188,78 +184,19 @@ namespace smartcard_service_api
 		}
 	}
 
-	bool ServerSEService::dispatcherCallback(void *message, int socket)
-	{
-#ifndef USE_GDBUS
-		int count;
-		ByteArray info;
-		Message *msg = (Message *)message;
-		Message response(*msg);
-		ServerResource &resource = ServerResource::getInstance();
-		ServiceInstance *service;
-
-		if ((service = resource.createService(socket)) != NULL)
-		{
-			_ERR("client added : pid [%d]", msg->error);
-
-			response.error = SCARD_ERROR_OK;
-			response.param2 = service->getHandle();
-
-			if ((count = resource.getReadersInformation(info)) > 0)
-			{
-				response.param1 = count;
-				response.data = info;
-			}
-			else
-			{
-				_DBG("no secure elements");
-				response.param1 = 0;
-			}
-		}
-		else
-		{
-			_ERR("createClient failed");
-
-			response.error = SCARD_ERROR_OUT_OF_MEMORY;
-		}
-
-		/* response to client */
-		ServerIPC::getInstance()->sendMessage(socket, response);
-#endif
-		return false;
-	}
-
 	void ServerSEService::terminalCallback(const void *terminal, int event, int error, void *user_param)
 	{
 		switch (event)
 		{
 		case Terminal::NOTIFY_SE_AVAILABLE :
 			{
-#ifndef USE_GDBUS
-				Message msg;
-
-				/* send all client to refresh reader */
-				msg.message = msg.MSG_NOTIFY_SE_INSERTED;
-				msg.data.assign((unsigned char *)terminal,
-					strlen((char *)terminal) + 1);
-
-				ServerResource::getInstance().sendMessageToAllClients(msg);
-#endif
+				// TODO: add right se reader
 			}
 			break;
 
 		case Terminal::NOTIFY_SE_NOT_AVAILABLE :
 			{
-#ifndef USE_GDBUS
-				Message msg;
-
-				/* send all client to refresh reader */
-				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
-				msg.data.assign((unsigned char *)terminal,
-					strlen((char *)terminal) + 1);
-
-				ServerResource::getInstance().sendMessageToAllClients(msg);
-#endif
+				// TODO: remove right se reader
 			}
 			break;
 

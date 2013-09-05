@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#ifdef USE_GDBUS
 #include "GDBusHelper.h"
 
 namespace smartcard_service_api
@@ -58,4 +57,3 @@ namespace smartcard_service_api
 		return g_variant_builder_end(&builder);
 	}
 } /* namespace smartcard_service_api */
-#endif

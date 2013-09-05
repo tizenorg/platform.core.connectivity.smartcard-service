@@ -26,13 +26,7 @@
 #include "Debug.h"
 #include "SEService.h"
 #include "Reader.h"
-#ifdef USE_GDBUS
 #include "ClientGDBus.h"
-#else
-#include "Message.h"
-#include "ClientIPC.h"
-#include "ClientDispatcher.h"
-#endif
 
 #ifndef EXTERN_API
 #define EXTERN_API __attribute__((visibility("default")))
@@ -45,9 +39,7 @@ namespace smartcard_service_api
 	SEService::SEService() : SEServiceHelper(),
 		handle(-1), context(NULL), handler(NULL), listener(NULL)
 	{
-#ifdef USE_GDBUS
 		proxy = NULL;
-#endif
 	}
 
 	SEService::SEService(void *user_data, serviceConnected handler)
@@ -104,7 +96,6 @@ namespace smartcard_service_api
 		return new SEService(user_data, handler);
 	}
 
-#ifdef USE_GDBUS
 	void SEService::reader_inserted(GObject *source_object,
 		guint reader_id, gchar *reader_name, gpointer user_data)
 	{
@@ -225,7 +216,7 @@ namespace smartcard_service_api
 			}
 		}
 	}
-#endif
+
 	void SEService::shutdown()
 	{
 		shutdownSync();
@@ -241,7 +232,7 @@ namespace smartcard_service_api
 			{
 				readers[i]->closeSessions();
 			}
-#ifdef USE_GDBUS
+
 			gint result;
 			GError *error = NULL;
 
@@ -260,62 +251,17 @@ namespace smartcard_service_api
 			usleep(SHUTDOWN_DELAY);
 
 			connected = false;
-#else
-#ifdef CLIENT_IPC_THREAD
-			/* send message to load se */
-			Message msg;
-
-			msg.message = Message::MSG_REQUEST_SHUTDOWN;
-			msg.param1 = (unsigned long)handle;
-			msg.error = (unsigned long)this; /* using error to context */
-			msg.caller = (void *)this;
-			msg.callback = (void *)this; /* if callback is class instance, it means synchronized call */
-
-			syncLock();
-			if (ClientIPC::getInstance().sendMessage(msg) == true)
-			{
-				int rv;
-
-				rv = waitTimedCondition(0);
-				if (rv == 0)
-				{
-					ClientDispatcher::getInstance().removeSEService(handle);
-
-					connected = false;
-				}
-				else
-				{
-					_ERR("time over");
-				}
-			}
-			else
-			{
-				_ERR("sendMessage failed");
-			}
-			syncUnlock();
-#endif
-#endif
 		}
 	}
 
 	bool SEService::_initialize() throw(ErrorIO &)
 	{
 		bool result = false;
-#ifndef USE_GDBUS
-		ClientIPC *clientIPC;
-		ClientDispatcher *clientDispatcher;
-#endif
-		_BEGIN();
 
-		/* initialize client */
-		if (!g_thread_supported())
-		{
-			g_thread_init(NULL);
-		}
+		_BEGIN();
 
 		g_type_init();
 
-#ifdef USE_GDBUS
 		/* init default context */
 		GError *error = NULL;
 
@@ -343,40 +289,7 @@ namespace smartcard_service_api
 			NULL,
 			&SEService::se_service_cb,
 			this);
-#else
-		clientDispatcher = &ClientDispatcher::getInstance();
-		clientIPC = &ClientIPC::getInstance();
 
-		clientIPC->setDispatcher(clientDispatcher);
-
-#ifndef CLIENT_IPC_THREAD
-		if (clientDispatcher->runDispatcherThread() == false)
-		{
-			_ERR("clientDispatcher->runDispatcherThread() failed");
-
-			return result;
-		}
-#endif
-
-		if (clientIPC->createConnectSocket() == false)
-		{
-			_ERR("clientIPC->createConnectSocket() failed");
-
-			return result;
-		}
-
-		{
-			/* send message to load se */
-			Message msg;
-
-			msg.message = Message::MSG_REQUEST_READERS;
-			msg.error = getpid(); /* using error to pid */
-			msg.caller = (void *)this;
-			msg.userParam = context;
-
-			result = clientIPC->sendMessage(msg);
-		}
-#endif
 		_END();
 
 		return result;
@@ -410,7 +323,6 @@ namespace smartcard_service_api
 		return _initialize();
 	}
 
-#ifdef USE_GDBUS
 	bool SEService::parseReaderInformation(GVariant *variant)
 	{
 		Reader *reader = NULL;
@@ -440,7 +352,7 @@ namespace smartcard_service_api
 
 		return true;
 	}
-#endif
+
 	bool SEService::parseReaderInformation(unsigned int count,
 		const ByteArray &data)
 	{
@@ -477,152 +389,6 @@ namespace smartcard_service_api
 
 		return true;
 	}
-
-#ifndef USE_GDBUS
-	bool SEService::dispatcherCallback(void *message)
-	{
-		Message *msg = (Message *)message;
-		SEService *service;
-		bool result = false;
-
-		_BEGIN();
-
-		if (msg == NULL)
-		{
-			_ERR("message is null");
-			return result;
-		}
-
-		service = (SEService *)msg->caller;
-
-		switch (msg->message)
-		{
-		case Message::MSG_REQUEST_READERS :
-			_INFO("[MSG_REQUEST_READERS]");
-
-			service->connected = true;
-			service->handle = (unsigned int)msg->param2;
-
-			ClientDispatcher::getInstance().addSEService(service->handle, service);
-
-			/* parse message data */
-			service->parseReaderInformation(msg->param1, msg->data);
-
-			/* call callback function */
-			if (service->listener != NULL)
-			{
-				service->listener->serviceConnected(service, service->context);
-			}
-			else if (service->handler != NULL)
-			{
-				service->handler(service, service->context);
-			}
-			break;
-
-		case Message::MSG_REQUEST_SHUTDOWN :
-			_INFO("[MSG_REQUEST_SHUTDOWN]");
-
-			if (msg->isSynchronousCall() == true) /* synchronized call */
-			{
-				/* sync call */
-				service->syncLock();
-
-				/* copy result */
-//				service->error = msg->error;
-				service->signalCondition();
-				service->syncUnlock();
-			}
-			else
-			{
-				/* Do nothing... */
-			}
-			break;
-
-		case Message::MSG_NOTIFY_SE_INSERTED :
-			{
-				Reader *reader = NULL;
-
-				_INFO("[MSG_NOTIFY_SE_INSERTED]");
-
-				/* add readers */
-				reader = new Reader(service->context,
-					(char *)msg->data.getBuffer(), (void *)msg->param1);
-				if (reader != NULL)
-				{
-					service->readers.push_back(reader);
-				}
-				else
-				{
-					_ERR("alloc failed");
-				}
-
-				if (service->listener != NULL)
-				{
-					service->listener->eventHandler(service,
-						(char *)msg->data.getBuffer(), 1, service->context);
-				}
-				else
-				{
-					_DBG("listener is null");
-				}
-			}
-			break;
-
-		case Message::MSG_NOTIFY_SE_REMOVED :
-			{
-				size_t i;
-
-				_INFO("[MSG_NOTIFY_SE_REMOVED]");
-
-				for (i = 0; i < service->readers.size(); i++)
-				{
-					if (((Reader *)service->readers[i])->handle == (void *)msg->param1)
-					{
-						((Reader *)service->readers[i])->present = false;
-						break;
-					}
-				}
-
-				if (service->listener != NULL)
-				{
-					service->listener->eventHandler(service,
-						(char *)msg->data.getBuffer(), 2, service->context);
-				}
-				else
-				{
-					_DBG("listener is null");
-				}
-			}
-			break;
-
-		case Message::MSG_OPERATION_RELEASE_CLIENT :
-			_INFO("[MSG_OPERATION_RELEASE_CLIENT]");
-
-			if (service->listener != NULL)
-			{
-				service->listener->errorHandler(service, msg->error, service->context);
-
-				ClientDispatcher::getInstance().removeSEService(service->handle);
-				service->connected = false;
-			}
-			else
-			{
-				_ERR("service->listener is null");
-			}
-			break;
-
-		default :
-			_DBG("unknown message [%s]", msg->toString().c_str());
-			break;
-		}
-
-		delete msg;
-
-		_END();
-
-		return result;
-	}
-#endif
 } /* namespace smartcard_service_api */
 
 /* export C API */

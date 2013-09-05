@@ -18,9 +18,8 @@
 #define CLIENTCHANNEL_H_
 
 /* standard library header */
-#ifdef USE_GDBUS
 #include <gio/gio.h>
-#endif
+
 /* SLP library header */
 
 /* local header */
@@ -38,29 +37,21 @@ namespace smartcard_service_api
 	private:
 		void *context;
 		void *handle;
-#ifdef USE_GDBUS
 		void *proxy;
-#else
-		/* temporary data for sync function */
-		int error;
-		ByteArray response;
-#endif
+
 		ClientChannel(void *context, Session *session, int channelNum,
 			const ByteArray &selectResponse, void *handle);
 		~ClientChannel();
 
-#ifdef USE_GDBUS
 		static void channel_transmit_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
 		static void channel_close_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
-#else
-		static bool dispatcherCallback(void *message);
-#endif
+
 	public:
 		int close(closeChannelCallback callback, void *userParam);
-		int transmit(const ByteArray &command, transmitCallback callback,
-			void *userParam);
+		int transmit(const ByteArray &command,
+			transmitCallback callback, void *userParam);
 
 		void closeSync()
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
@@ -69,9 +60,6 @@ namespace smartcard_service_api
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
-#ifndef USE_GDBUS
-		friend class ClientDispatcher;
-#endif
 		friend class Session;
 	};
 } /* namespace smartcard_service_api */
@@ -90,7 +78,7 @@ unsigned int channel_get_select_response_length(channel_h handle);
 bool channel_get_select_response(channel_h handle, unsigned char *buffer,
 	unsigned int length);
 session_h channel_get_session(channel_h handle);
-void channel_destroy_instance(channel_h handle) __attribute__((deprecated)) ;
+void channel_destroy_instance(channel_h handle) __attribute__((deprecated));
 
 int channel_close(channel_h handle, channel_close_cb callback, void *userParam);
 int channel_transmit(channel_h handle, unsigned char *command,

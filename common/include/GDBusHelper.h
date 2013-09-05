@@ -17,7 +17,6 @@
 #ifndef GDBUSHELPER_H_
 #define GDBUSHELPER_H_
 
-#ifdef USE_GDBUS
 #include <glib.h>
 
 #include "ByteArray.h"
@@ -42,5 +41,5 @@ namespace smartcard_service_api
 			const ByteArray &array);
 	};
 } /* namespace smartcard_service_api */
-#endif
+
 #endif /* GDBUSHELPER_H_ */

@@ -31,9 +31,7 @@
 #include "SignatureHelper.h"
 #include "GPACE.h"
 #include "PKCS15.h"
-#ifdef USE_GDBUS
 #include "ServerGDBus.h"
-#endif
 #include "smartcard-daemon.h"
 
 #ifndef EXTERN_API
@@ -88,10 +86,6 @@ namespace smartcard_service_api
 	ServerResource::ServerResource() : seLoaded(false)
 	{
 		_BEGIN();
-#ifndef USE_GDBUS
-		serverIPC = ServerIPC::getInstance();
-		serverDispatcher = ServerDispatcher::getInstance();
-#endif
 		_END();
 	}
 
@@ -106,7 +100,6 @@ namespace smartcard_service_api
 		return serverResource;
 	}
 
-#ifdef USE_GDBUS
 	bool ServerResource::createClient(const char *name, pid_t pid)
 	{
 		bool result = false;
@@ -400,350 +393,7 @@ namespace smartcard_service_api
 			_ERR("getService doesn't exist : name [%s], handle [%d]", name, handle);
 		}
 	}
-#else
-	bool ServerResource::createClient(void *ioChannel, int socket,
-		int watchID, int state, int pid)
-	{
-		bool result = false;
 
-		if (getClient(socket) == NULL)
-		{
-			ClientInstance *instance = new ClientInstance(ioChannel,
-				socket, watchID, state, pid);
-			if (instance != NULL)
-			{
-				mapClients.insert(make_pair(socket, instance));
-				result = true;
-			}
-			else
-			{
-				_ERR("alloc failed");
-			}
-		}
-		else
-		{
-			_ERR("client already exist, socket[%d]", socket);
-		}
-
-		return result;
-	}
-
-	bool ServerResource::createClient(int pid)
-	{
-		bool result = false;
-
-		if (getClient(pid) == NULL)
-		{
-			ClientInstance *instance = new ClientInstance(pid);
-			if (instance != NULL)
-			{
-				mapClients.insert(make_pair(pid, instance));
-				result = true;
-			}
-			else
-			{
-				_ERR("alloc failed");
-			}
-		}
-		else
-		{
-			_ERR("client already exist, pid[%d]", pid);
-		}
-
-		return result;
-	}
-
-	ClientInstance *ServerResource::getClient(int socket)
-	{
-		ClientInstance *result = NULL;
-		map<int, ClientInstance *>::iterator item;
-
-		if ((item = mapClients.find(socket)) != mapClients.end())
-		{
-			result = item->second;
-		}
-
-		return result;
-	}
-
-	const ClientInstance *ServerResource::getClient(int socket) const
-	{
-		const ClientInstance *result = NULL;
-		map<int, ClientInstance *>::const_iterator item;
-
-		if ((item = mapClients.find(socket)) != mapClients.end())
-		{
-			result = item->second;
-		}
-
-		return result;
-	}
-
-	void ServerResource::setPID(int socket, int pid)
-	{
-		map<int, ClientInstance *>::iterator item;
-
-		if ((item = mapClients.find(socket)) != mapClients.end())
-		{
-			if (item->second->getPID() < 0)
-				item->second->setPID(pid);
-		}
-	}
-
-	void ServerResource::removeClient(int socket)
-	{
-		map<int, ClientInstance *>::iterator item;
-
-		if ((item = mapClients.find(socket)) != mapClients.end())
-		{
-#ifndef USE_GDBUS
-			ServerIPC::getInstance()->releaseClient(item->second->getIOChannel(), item->second->getSocket(), item->second->getWatchID());
-#endif
-			delete item->second;
-			mapClients.erase(item);
-		}
-		else
-		{
-			_DBG("client removed already [%d]", socket);
-		}
-	}
-
-	void ServerResource::removeClients()
-	{
-		map<int, ClientInstance *>::iterator item;
-
-		for (item = mapClients.begin(); item != mapClients.end(); item++)
-		{
-#ifndef USE_GDBUS
-			ServerIPC::getInstance()->releaseClient(item->second->getIOChannel(), item->second->getSocket(), item->second->getWatchID());
-#endif
-			delete item->second;
-		}
-
-		mapClients.clear();
-	}
-
-	int ServerResource::getClientCount() const
-	{
-		return (int)mapClients.size();
-	}
-
-	ServiceInstance *ServerResource::createService(int socket)
-	{
-		ServiceInstance *result = NULL;
-		ClientInstance *instance = NULL;
-
-		if ((instance = getClient(socket)) != NULL)
-		{
-			if ((result = instance->createService()) == NULL)
-			{
-				_ERR("ClientInstance::createService failed [%d]", socket);
-			}
-		}
-		else
-		{
-			_ERR("client doesn't exist [%d]", socket);
-		}
-
-		return result;
-	}
-
-	ServiceInstance *ServerResource::getService(int socket, unsigned int handle)
-	{
-		ServiceInstance *result = NULL;
-		ClientInstance *instance = NULL;
-
-		if ((instance = getClient(socket)) != NULL)
-		{
-			result = instance->getService(handle);
-		}
-		else
-		{
-			_ERR("client doesn't exist [%d]", socket);
-		}
-
-		return result;
-	}
-
-	void ServerResource::removeService(int socket, unsigned int handle)
-	{
-		ClientInstance *instance = NULL;
-
-		if ((instance = getClient(socket)) != NULL)
-		{
-			instance->removeService(handle);
-		}
-		else
-		{
-			_ERR("client doesn't exist [%d]", socket);
-		}
-	}
-
-	void ServerResource::removeServices(int socket)
-	{
-		ClientInstance *instance = NULL;
-
-		if ((instance = getClient(socket)) != NULL)
-		{
-			instance->removeServices();
-		}
-		else
-		{
-			_ERR("client doesn't exist [%d]", socket);
-		}
-	}
-
-	unsigned int ServerResource::createSession(int socket, unsigned int handle, unsigned int readerID, const vector<ByteArray> &certHashes, void *caller)
-	{
-		unsigned int result = -1;
-		Terminal *temp = NULL;
-		ServiceInstance *instance = NULL;
-
-		if ((instance = getService(socket, handle)) != NULL)
-		{
-			if ((temp = getTerminalByReaderID(readerID)) != NULL)
-			{
-				result = instance->openSession(temp, certHashes, caller);
-			}
-		}
-		else
-		{
-			_ERR("getService doesn't exist : socket [%d], handle [%d]", socket, handle);
-		}
-
-		return result;
-	}
-
-	ServerSession *ServerResource::getSession(int socket, unsigned int handle, unsigned int sessionID)
-	{
-		ServerSession *result = NULL;
-		ServiceInstance *instance = NULL;
-
-		if ((instance = getService(socket, handle)) != NULL)
-		{
-			result = instance->getSession(sessionID);
-		}
-		else
-		{
-			_ERR("Session doesn't exist : socket [%d], handle [%d], handle [%d]", socket, handle, sessionID);
-		}
-
-		return result;
-	}
-
-	bool ServerResource::isValidSessionHandle(int socket, unsigned int handle, unsigned int session)
-	{
-		ServiceInstance *instance = NULL;
-
-		return (((instance = getService(socket, handle)) != NULL) && (instance->isVaildSessionHandle(session)));
-	}
-
-	unsigned int ServerResource::getChannelCount(int socket, unsigned int handle, unsigned int sessionID)
-	{
-		unsigned int result = -1;
-		ServiceInstance *instance = NULL;
-
-		if ((instance = getService(socket, handle)) != NULL)
-		{
-			result = instance->getChannelCountBySession(sessionID);
-		}
-		else
-		{
-			_ERR("getService doesn't exist : socket [%d], handle [%d]", socket, handle);
-		}
-
-		return result;
-	}
-
-	void ServerResource::removeSession(int socket, unsigned int handle, unsigned int sessionID)
-	{
-		ServiceInstance *instance = NULL;
-
-		if ((instance = getService(socket, handle)) != NULL)
-		{
-			instance->closeSession(sessionID);
-		}
-		else
-		{
-			_ERR("getService doesn't exist : socket [%d], handle [%d]", socket, handle);
-		}
-	}
-
-	unsigned int ServerResource::createChannel(int socket, unsigned int handle, unsigned int sessionID, int channelType, const ByteArray &aid)
-		throw(ExceptionBase &)
-	{
-		unsigned int result = -1;
-		ServiceInstance *service = NULL;
-
-		if ((service = getService(socket, handle)) != NULL)
-		{
-			if (service->isVaildSessionHandle(sessionID) == true)
-			{
-				ServerSession *session = NULL;
-				Terminal *terminal = NULL;
-
-				terminal = service->getTerminal(sessionID);
-				session = service->getSession(sessionID);
-				if (terminal != NULL && session != NULL)
-				{
-					result = _createChannel(terminal, service, channelType, sessionID, aid);
-					if (result == IntegerHandle::INVALID_HANDLE)
-					{
-						_ERR("create channel failed [%d]", sessionID);
-					}
-				}
-				else
-				{
-					_ERR("session is invalid [%d]", sessionID);
-					throw ExceptionBase(SCARD_ERROR_UNAVAILABLE);
-				}
-			}
-			else
-			{
-				_ERR("session is invalid [%d]", sessionID);
-				throw ExceptionBase(SCARD_ERROR_ILLEGAL_STATE);
-			}
-		}
-		else
-		{
-			_ERR("getService is failed [%d] [%d]", socket, handle);
-			throw ExceptionBase(SCARD_ERROR_UNAVAILABLE);
-		}
-
-		return result;
-	}
-
-	Channel *ServerResource::getChannel(int socket, unsigned int handle, unsigned int channelID)
-	{
-		Channel *result = NULL;
-		ServiceInstance *instance = NULL;
-
-		if ((instance = getService(socket, handle)) != NULL)
-		{
-			result = instance->getChannel(channelID);
-		}
-		else
-		{
-			_ERR("Channel doesn't exist : socket [%d], handle [%d], handle [%d]", socket, handle, channelID);
-		}
-
-		return result;
-	}
-
-	void ServerResource::removeChannel(int socket, unsigned int handle, unsigned int channelID)
-	{
-		ServiceInstance *instance = NULL;
-
-		if ((instance = getService(socket, handle)) != NULL)
-		{
-			instance->closeChannel(channelID);
-		}
-		else
-		{
-			_ERR("getService doesn't exist : socket [%d], handle [%d]", socket, handle);
-		}
-	}
-#endif
 	Terminal *ServerResource::getTerminal(unsigned int terminalID)
 	{
 		Terminal *result = NULL;
@@ -1347,25 +997,6 @@ namespace smartcard_service_api
 		return result;
 	}
 
-#ifndef USE_GDBUS
-	bool ServerResource::sendMessageToAllClients(const Message &msg)
-	{
-		bool result = true;
-
-		map<int, ClientInstance *>::const_iterator item;
-
-		for (item = mapClients.begin();
-			item != mapClients.end(); item++)
-		{
-			if (item->second->sendMessageToAllServices(
-				item->second->getSocket(), msg) == false)
-				result = false;
-		}
-
-		return result;
-	}
-#endif
-
 	void ServerResource::terminalCallback(const void *terminal, int event,
 		int error, void *user_param)
 	{
@@ -1384,19 +1015,8 @@ namespace smartcard_service_api
 				if (terminalID != IntegerHandle::INVALID_HANDLE)
 				{
 					unsigned int readerID = instance.createReader(terminalID);
-#ifdef USE_GDBUS
+
 					ServerGDBus::getInstance().emitReaderInserted(readerID, (const char *)terminal);
-#else
-					Message msg;
-
-					/* send all client to refresh reader */
-					msg.message = msg.MSG_NOTIFY_SE_INSERTED;
-					msg.param1 = readerID;
-					msg.data.assign((uint8_t *)terminal,
-						strlen((char *)terminal) + 1);
-
-					instance.sendMessageToAllClients(msg);
-#endif
 				}
 			}
 			break;
@@ -1409,20 +1029,10 @@ namespace smartcard_service_api
 				_INFO("[NOTIFY_SE_NOT_AVAILABLE]");
 
 				readerID = instance.getReaderID((char *)terminal);
-#ifdef USE_GDBUS
+
 				ServerGDBus::getInstance().emitReaderRemoved(
 					readerID, (const char *)terminal);
-#else
-				Message msg;
 
-				/* send all client to refresh reader */
-				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
-				msg.param1 = readerID;
-				msg.data.assign((uint8_t *)terminal,
-					strlen((char *)terminal) + 1);
-
-				instance.sendMessageToAllClients(msg);
-#endif
 				instance.removeReader(readerID);
 			}
 			break;

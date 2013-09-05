@@ -21,16 +21,10 @@
 #include <map>
 #include <vector>
 #include <string>
-#ifndef USE_GDBUS
-#include <glib.h>
-#endif
 
 /* SLP library header */
 
 /* local header */
-#ifndef USE_GDBUS
-#include "Message.h"
-#endif
 #include "ServiceInstance.h"
 
 namespace smartcard_service_api
@@ -38,49 +32,19 @@ namespace smartcard_service_api
 	class ClientInstance
 	{
 	private :
-#ifdef USE_GDBUS
 		string name;
-#else
-		void *ioChannel;
-		int socket;
-		int watchID;
-		int state;
-#endif
 		pid_t pid;
 		vector<ByteArray> certHashes;
 		map<unsigned int, ServiceInstance *> mapServices;
 
 	public :
-#ifdef USE_GDBUS
 		ClientInstance(const char *name, pid_t pid) :
 			name(name), pid(pid)
 		{
 		}
-#else
-		ClientInstance(void *ioChannel, int socket, int watchID,
-			int state, int pid) : ioChannel(ioChannel),
-			socket(socket), watchID(watchID), state(state), pid(pid)
-		{
-		}
-
-		ClientInstance(pid_t pid) : ioChannel(NULL),
-			socket(pid), watchID(0), state(0), pid(pid)
-		{
-		}
-#endif
 		inline ~ClientInstance() { removeServices(); }
-#ifdef USE_GDBUS
 		inline bool operator ==(const char *name) const { return (this->name.compare(name) == 0); }
-#else
-		inline bool operator ==(const int &socket) const { return (this->socket == socket); }
-#endif
 
-#ifndef USE_GDBUS
-		inline void *getIOChannel() { return ioChannel; }
-		inline int getSocket() { return socket; }
-		inline int getWatchID() { return watchID; }
-		inline int getState() { return state; }
-#endif
 		inline void setPID(int pid) { this->pid = pid; }
 		inline int getPID() const { return pid; }
 
@@ -89,12 +53,10 @@ namespace smartcard_service_api
 		void removeService(unsigned int handle);
 		void removeServices();
 		inline size_t getServiceCounts() const { return mapServices.size(); }
-#ifndef USE_GDBUS
-		bool sendMessageToAllServices(int socket, const Message &msg);
-#endif
 		void generateCertificationHashes();
 
 		inline vector<ByteArray> &getCertificationHashes() { return certHashes; }
 	};
 } /* namespace smartcard_service_api */
+
 #endif /* CLIENTINSTANCE_H_ */

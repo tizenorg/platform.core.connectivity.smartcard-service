@@ -16,7 +16,7 @@
 
 #ifndef SERVERGDBUS_H_
 #define SERVERGDBUS_H_
-#ifdef USE_GDBUS
+
 /* standard library header */
 #include <glib.h>
 #include <queue>
@@ -97,5 +97,5 @@ namespace smartcard_service_api
 		void deinitChannel();
 	};
 } /* namespace smartcard_service_api */
-#endif
+
 #endif /* SERVERGDBUS_H_ */

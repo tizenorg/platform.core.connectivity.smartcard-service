@@ -21,9 +21,6 @@ MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 INCLUDE(FindPkgConfig)
 
 SET(PKG_MODULE glib-2.0 dlog)
-IF(NOT DEFINED USE_GDBUS)
-	SET(PKG_MODULE ${PKG_MODULE} dbus-glib-1)
-ENDIF()
 
 pkg_check_modules(pkgs_client REQUIRED ${PKG_MODULE})
 

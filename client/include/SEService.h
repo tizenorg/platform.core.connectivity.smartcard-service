@@ -18,10 +18,8 @@
 #define SESERVICE_H_
 
 /* standard library header */
-#ifdef USE_GDBUS
 #include <glib.h>
 #include <gio/gio.h>
-#endif
 
 /* SLP library header */
 
@@ -46,18 +44,12 @@ namespace smartcard_service_api
 		void *context;
 		serviceConnected handler;
 		SEServiceListener *listener;
-#ifdef USE_GDBUS
 		void *proxy;
-#endif
 		SEService();
 
 		void addReader(unsigned int handle, const char *name);
 		bool parseReaderInformation(unsigned int count, const ByteArray &data);
-#ifdef USE_GDBUS
 		bool parseReaderInformation(GVariant *variant);
-#else
-		static bool dispatcherCallback(void *message);
-#endif
 
 		bool _initialize()
 			throw(ErrorIO &);
@@ -68,7 +60,6 @@ namespace smartcard_service_api
 		SEService *initializeSync(void *context, serviceConnected handler)
 			throw(ErrorIO &, ErrorIllegalParameter &);
 
-#ifdef USE_GDBUS
 		static void reader_inserted(GObject *source_object,
 			guint reader_id, gchar *reader_name,
 			gpointer user_data);
@@ -79,7 +70,7 @@ namespace smartcard_service_api
 			GAsyncResult *res, gpointer user_data);
 		static void se_service_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
-#endif
+
 	public:
 		SEService(void *user_data, serviceConnected handler)
 			throw(ErrorIO &, ErrorIllegalParameter &);
@@ -94,10 +85,6 @@ namespace smartcard_service_api
 
 		void shutdown();
 		void shutdownSync();
-
-#ifndef USE_GDBUS
-		friend class ClientDispatcher;
-#endif
 	};
 } /* namespace smartcard_service_api */
 #endif /* __cplusplus */
@@ -108,9 +95,11 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-se_service_h se_service_create_instance(void *user_data, se_service_connected_cb callback);
+se_service_h se_service_create_instance(void *user_data,
+	se_service_connected_cb callback);
 se_service_h se_service_create_instance_with_event_callback(void *user_data,
-	se_service_connected_cb connected, se_service_event_cb event, se_sesrvice_error_cb error);
+	se_service_connected_cb connected, se_service_event_cb event,
+	se_sesrvice_error_cb error);
 int se_service_get_readers_count(se_service_h handle);
 bool se_service_get_readers(se_service_h handle, reader_h *readers, int *count);
 bool se_service_is_connected(se_service_h handle);

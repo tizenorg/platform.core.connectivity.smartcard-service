@@ -1,6 +1,5 @@
 # FOR COMMENTING DEFINITION, MUST USE %% instead of %
 %global use_autostart "-DUSE_AUTOSTART=1"
-%global use_gdbus "-DUSE_GDBUS=1"
 #%%global test_client "-DTEST_CLIENT=1"
 
 Name:       smartcard-service
@@ -22,14 +21,8 @@ BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(libssl)
 BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: pkgconfig(pkgmgr-info)
-%if 0%{!?use_gdbus:1}
-BuildRequires: pkgconfig(dbus-glib-1)
-%endif
-# for gdbus
-%if 0%{?use_gdbus:1}
 BuildRequires: python
 BuildRequires: python-xml
-%endif
 
 Requires(post):   /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
