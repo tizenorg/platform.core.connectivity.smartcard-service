@@ -17,6 +17,7 @@
 #ifndef IPCHELPER_H_
 #define IPCHELPER_H_
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <glib.h>
 #include <pthread.h>
@@ -72,10 +73,10 @@ namespace smartcard_service_api
 		void destroyListenSocket();
 		void destroyConnectSocket();
 
-		bool sendMessage(int socket, Message *msg);
-		bool sendMessage(int socket, ByteArray &buffer);
+		bool sendMessage(int socket, const Message &msg);
+		bool sendMessage(int socket, const ByteArray &buffer);
 		Message *retrieveMessage();
-		ByteArray retrieveBuffer(int socket);
+		const ByteArray retrieveBuffer(int socket);
 		Message *retrieveMessage(int socket);
 
 		void setDispatcher(DispatcherHelper *dispatcher);
@@ -87,4 +88,5 @@ namespace smartcard_service_api
 	};
 
 } /* namespace smartcard_service_api */
+#endif
 #endif /* IPCHELPER_H_ */

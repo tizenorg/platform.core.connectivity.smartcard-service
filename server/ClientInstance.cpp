@@ -27,52 +27,29 @@
 
 namespace smartcard_service_api
 {
-	gboolean ClientInstance::_getCertificationHashes(gpointer user_data)
-	{
-		gboolean result = false;
-		ClientInstance *instance = (ClientInstance *)user_data;
-
-		SignatureHelper::getCertificationHashes(instance->getPID(), instance->certHashes);
-
-		return result;
-	}
-
-	void ClientInstance::setPID(int pid)
-	{
-		this->pid = pid;
-
-	}
-
-	ServiceInstance *ClientInstance::createService(unsigned int context)
+	ServiceInstance *ClientInstance::createService()
 	{
 		ServiceInstance *result = NULL;
 
-		if ((result = getService(context)) == NULL)
+		result = new ServiceInstance(this);
+		if (result != NULL)
 		{
-			result = new ServiceInstance(this, context);
-			if (result != NULL)
-			{
-				mapServices.insert(make_pair(context, result));
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("alloc failed");
-			}
+			mapServices.insert(make_pair(result->getHandle(), result));
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("service already exist [%d]", context);
+			_ERR("alloc failed");
 		}
 
 		return result;
 	}
 
-	ServiceInstance *ClientInstance::getService(unsigned int context)
+	ServiceInstance *ClientInstance::getService(unsigned int handle)
 	{
 		ServiceInstance *result = NULL;
 		map<unsigned int, ServiceInstance *>::iterator item;
 
-		if ((item = mapServices.find(context)) != mapServices.end())
+		if ((item = mapServices.find(handle)) != mapServices.end())
 		{
 			result = item->second;
 		}
@@ -80,11 +57,11 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	void ClientInstance::removeService(unsigned int context)
+	void ClientInstance::removeService(unsigned int handle)
 	{
 		map<unsigned int, ServiceInstance *>::iterator item;
 
-		if ((item = mapServices.find(context)) != mapServices.end())
+		if ((item = mapServices.find(handle)) != mapServices.end())
 		{
 			delete item->second;
 			mapServices.erase(item);
@@ -103,22 +80,24 @@ namespace smartcard_service_api
 		mapServices.clear();
 	}
 
-	bool ClientInstance::sendMessageToAllServices(int socket, Message &msg)
+#ifndef USE_GDBUS
+	bool ClientInstance::sendMessageToAllServices(int socket, const Message &msg)
 	{
 		bool result = true;
-		map<unsigned int, ServiceInstance *>::iterator item;
+		map<unsigned int, ServiceInstance *>::const_iterator item;
 
 		for (item = mapServices.begin(); item != mapServices.end(); item++)
 		{
-			if (ServerIPC::getInstance()->sendMessage(socket, &msg) == false)
+			if (ServerIPC::getInstance()->sendMessage(socket, msg) == false)
 				result = false;
 		}
 
 		return result;
 	}
+#endif
 
 	void ClientInstance::generateCertificationHashes()
 	{
-		g_idle_add(_getCertificationHashes, (gpointer)this);
+		SignatureHelper::getCertificationHashes(getPID(), certHashes);
 	}
 } /* namespace smartcard_service_api */

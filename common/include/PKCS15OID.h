@@ -33,16 +33,15 @@ namespace smartcard_service_api
 		ByteArray name;
 		ByteArray path;
 
-		bool parseOID(ByteArray data);
+		bool parseOID(const ByteArray &data);
 
 	public:
-		PKCS15OID(ByteArray data);
+		PKCS15OID(const ByteArray &data);
 		~PKCS15OID();
 
-		ByteArray getOID();
-		ByteArray getName();
-		ByteArray getPath();
-
+		inline const ByteArray getOID() const { return oid; }
+		inline const ByteArray getName() const { return name; }
+		inline const ByteArray getPath() const { return path; }
 	};
 
 } /* namespace smartcard_service_api */

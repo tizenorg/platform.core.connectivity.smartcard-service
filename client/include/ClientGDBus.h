@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
+#ifndef CLIENTGDBUS_H_
+#define CLIENTGDBUS_H_
+
+#ifdef USE_GDBUS
 /* standard library header */
-#include <stdio.h>
+#include <glib.h>
 
 /* SLP library header */
 
 /* local header */
-#include "Debug.h"
-#include "SEServiceHelper.h"
+#include "GDBusHelper.h"
+#include "smartcard-service-gdbus.h"
 
 namespace smartcard_service_api
 {
-	SEServiceHelper::~SEServiceHelper()
+	class ClientGDBus
 	{
-		SCARD_BEGIN();
-		SCARD_END();
-	}
-
+	};
 } /* namespace smartcard_service_api */
+#endif
+#endif /* CLIENTGDBUS_H_ */

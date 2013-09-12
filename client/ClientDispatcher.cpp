@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <glib.h>
 
@@ -45,48 +46,48 @@ namespace smartcard_service_api
 		return clientDispatcher;
 	}
 
-	bool ClientDispatcher::addSEService(void *context, SEService *service)
+	bool ClientDispatcher::addSEService(unsigned int handle, SEService *service)
 	{
 		bool result = true;
-		map<void *, SEService *>::iterator item;
+		map<unsigned int, SEService *>::iterator item;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
-		if ((item = mapSESerivces.find(context)) == mapSESerivces.end())
+		if ((item = mapSESerivces.find(handle)) == mapSESerivces.end())
 		{
-			mapSESerivces.insert(make_pair(context, service));
+			mapSESerivces.insert(make_pair(handle, service));
 		}
 		else
 		{
-			SCARD_DEBUG("SEService [%p] exists", context);
+			_DBG("SEService [%p] exists", handle);
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}
 
-	void ClientDispatcher::removeSEService(void *context)
+	void ClientDispatcher::removeSEService(unsigned int handle)
 	{
-		map<void *, SEService *>::iterator item;
+		map<unsigned int, SEService *>::iterator item;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
-		if ((item = mapSESerivces.find(context)) != mapSESerivces.end())
+		if ((item = mapSESerivces.find(handle)) != mapSESerivces.end())
 		{
 			mapSESerivces.erase(item);
 		}
 		else
 		{
-			SCARD_DEBUG("SEService doesn't exist");
+			_DBG("SEService doesn't exist");
 		}
 
-		SCARD_END();
+		_END();
 	}
 
 	void *ClientDispatcher::dispatcherThreadFunc(DispatcherMsg *msg, void *data)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if (msg == NULL)
 			return NULL;
@@ -98,17 +99,17 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_READERS :
 		case Message::MSG_REQUEST_SHUTDOWN :
 			{
+				DispatcherMsg *tempMsg = new DispatcherMsg(*msg);
+
 				if (msg->isSynchronousCall() == false)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
-
 					/* Asynchronous call */
 					g_idle_add((GSourceFunc)&SEService::dispatcherCallback, (gpointer)tempMsg);
 				}
 				else
 				{
 					/* Synchronous call */
-					SEService::dispatcherCallback(msg);
+					SEService::dispatcherCallback(tempMsg);
 				}
 			}
 			break;
@@ -116,17 +117,17 @@ namespace smartcard_service_api
 		/* Reader requests */
 		case Message::MSG_REQUEST_OPEN_SESSION :
 			{
+				DispatcherMsg *tempMsg = new DispatcherMsg(*msg);
+
 				if (msg->isSynchronousCall() == false)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
-
 					/* Asynchronous call */
 					g_idle_add((GSourceFunc)&Reader::dispatcherCallback, (gpointer)tempMsg);
 				}
 				else
 				{
 					/* Synchronous call */
-					Reader::dispatcherCallback(msg);
+					Reader::dispatcherCallback(tempMsg);
 				}
 			}
 			break;
@@ -137,17 +138,17 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_CLOSE_SESSION :
 		case Message::MSG_REQUEST_GET_CHANNEL_COUNT :
 			{
+				DispatcherMsg *tempMsg = new DispatcherMsg(*msg);
+
 				if (msg->isSynchronousCall() == false)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
-
 					/* Asynchronous call */
 					g_idle_add((GSourceFunc)&Session::dispatcherCallback, (gpointer)tempMsg);
 				}
 				else
 				{
 					/* Synchronous call */
-					Session::dispatcherCallback(msg);
+					Session::dispatcherCallback(tempMsg);
 				}
 			}
 			break;
@@ -156,17 +157,17 @@ namespace smartcard_service_api
 		case Message::MSG_REQUEST_TRANSMIT :
 		case Message::MSG_REQUEST_CLOSE_CHANNEL :
 			{
+				DispatcherMsg *tempMsg = new DispatcherMsg(*msg);
+
 				if (msg->isSynchronousCall() == false)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
-
 					/* Asynchronous call */
 					g_idle_add((GSourceFunc)&ClientChannel::dispatcherCallback, (gpointer)tempMsg);
 				}
 				else
 				{
 					/* Synchronous call */
-					ClientChannel::dispatcherCallback(msg);
+					ClientChannel::dispatcherCallback(tempMsg);
 				}
 			}
 			break;
@@ -174,11 +175,11 @@ namespace smartcard_service_api
 		case Message::MSG_NOTIFY_SE_INSERTED :
 		case Message::MSG_NOTIFY_SE_REMOVED :
 			{
-				map<void *, SEService *>::iterator item;
+				map<unsigned int, SEService *>::iterator item;
 
 				for (item = mapSESerivces.begin(); item != mapSESerivces.end(); item++)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
+					DispatcherMsg *tempMsg = new DispatcherMsg(*msg);
 
 					tempMsg->caller = item->second;
 
@@ -190,11 +191,11 @@ namespace smartcard_service_api
 
 		case Message::MSG_OPERATION_RELEASE_CLIENT :
 			{
-				map<void *, SEService *>::iterator item;
+				map<unsigned int, SEService *>::iterator item;
 
 				for (item = mapSESerivces.begin(); item != mapSESerivces.end(); item++)
 				{
-					DispatcherMsg *tempMsg = new DispatcherMsg(msg);
+					DispatcherMsg *tempMsg = new DispatcherMsg(*msg);
 
 					tempMsg->caller = item->second;
 					tempMsg->error = -1;
@@ -209,10 +210,10 @@ namespace smartcard_service_api
 			break;
 		}
 
-		SCARD_END();
+		_END();
 
 		return NULL;
 	}
 
 } /* namespace open_mobile_api */
-
+#endif /* USE_GDBUS */

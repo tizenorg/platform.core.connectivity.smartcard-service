@@ -29,11 +29,13 @@ namespace smartcard_service_api
 //	{
 //	}
 
-	PKCS15Object::PKCS15Object(Channel *channel):FileObject(channel)
+	PKCS15Object::PKCS15Object(Channel *channel) : FileObject(channel)
 	{
 	}
 
-	PKCS15Object::PKCS15Object(Channel *channel, ByteArray selectResponse):FileObject(channel, selectResponse)
+	PKCS15Object::PKCS15Object(Channel *channel,
+		const ByteArray &selectResponse) :
+		FileObject(channel, selectResponse)
 	{
 	}
 
@@ -41,7 +43,7 @@ namespace smartcard_service_api
 	{
 	}
 
-	ByteArray PKCS15Object::getOctetStream(const ByteArray &data)
+	const ByteArray PKCS15Object::getOctetStream(const ByteArray &data)
 	{
 		ByteArray result;
 		SimpleTLV tlv(data);
@@ -56,13 +58,13 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("TAG_OCTET_STREAM not found");
+				_ERR("TAG_OCTET_STREAM not found");
 			}
 			tlv.returnToParentTLV();
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("TAG_SEQUENCE not found");
+			_ERR("TAG_SEQUENCE not found");
 		}
 
 		return result;

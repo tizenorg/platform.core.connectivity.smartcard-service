@@ -30,10 +30,10 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class PKCS15ODF: public PKCS15Object
+	class PKCS15ODF : public PKCS15Object
 	{
 	private:
-		bool parseData(ByteArray data);
+		bool parseData(const ByteArray &data);
 		PKCS15DODF *dodf;
 
 	public:
@@ -44,7 +44,7 @@ namespace smartcard_service_api
 
 //		PKCS15ODF();
 		PKCS15ODF(Channel *channel);
-		PKCS15ODF(Channel *channel, ByteArray selectResponse);
+		PKCS15ODF(Channel *channel, const ByteArray &selectResponse);
 		~PKCS15ODF();
 
 		int getPuKDFPath(ByteArray &path);

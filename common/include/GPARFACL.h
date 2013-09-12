@@ -14,40 +14,39 @@
  * limitations under the License.
  */
 
+#ifndef GPARFACL_H_
+#define GPARFACL_H_
+
 /* standard library header */
 
 /* SLP library header */
 
 /* local header */
-#include "Debug.h"
-#include "ProviderHelper.h"
+#include "smartcard-types.h"
+#ifdef __cplusplus
+#include "AccessControlList.h"
+#include "PKCS15.h"
+#endif /* __cplusplus */
 
+#ifdef __cplusplus
 namespace smartcard_service_api
 {
-//	ProviderHelper::ProviderHelper()
-//	{
-//	}
-
-	ProviderHelper::ProviderHelper(Channel *channel)
+	class GPARFACL : public AccessControlList
 	{
-		this->channel = NULL;
+	private:
+		ByteArray refreshTag;
 
-		if (channel == NULL)
-		{
-			SCARD_DEBUG_ERR("invalid channel");
-			return;
-		}
+		int loadAccessControl(Channel *channel, PKCS15DODF *dodf);
+		int loadRules(Channel *channel, const ByteArray &path);
+		int loadAccessConditions(Channel *channel, const ByteArray &aid, const ByteArray &path);
 
-		this->channel = channel;
-	}
+	public:
+		GPARFACL();
+		~GPARFACL();
 
-	ProviderHelper::~ProviderHelper()
-	{
-	}
-
-	Channel *ProviderHelper::getChannel()
-	{
-		return channel;
-	}
+		int loadACL(Channel *channel);
+	};
 
 } /* namespace smartcard_service_api */
+#endif /* __cplusplus */
+#endif /* GPARFACL_H_ */

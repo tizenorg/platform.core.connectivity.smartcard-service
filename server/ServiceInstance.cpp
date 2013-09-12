@@ -26,7 +26,23 @@
 
 namespace smartcard_service_api
 {
-	unsigned int ServiceInstance::openSession(Terminal *terminal, vector<ByteArray> &certHashes, void *caller)
+	ServiceInstance::ServiceInstance(ClientInstance *parent) :
+		parent(parent)
+	{
+		handle = IntegerHandle::assignHandle();
+	}
+
+	ServiceInstance::~ServiceInstance()
+	{
+		closeSessions();
+
+		if (handle != IntegerHandle::INVALID_HANDLE) {
+			IntegerHandle::releaseHandle(handle);
+			handle = IntegerHandle::INVALID_HANDLE;
+		}
+	}
+
+	unsigned int ServiceInstance::openSession(Terminal *terminal, const vector<ByteArray> &certHashes, void *caller)
 	{
 		unsigned int handle = IntegerHandle::assignHandle();
 
@@ -96,7 +112,7 @@ namespace smartcard_service_api
 		mapSessions.clear();
 	}
 
-	unsigned int ServiceInstance::openChannel(unsigned int session, int channelNum, ByteArray response)
+	unsigned int ServiceInstance::openChannel(unsigned int session, int channelNum, const ByteArray &response)
 	{
 		Terminal *terminal = getTerminal(session);
 		ServerChannel *channel = NULL;
@@ -114,7 +130,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("alloc failed");
+			_ERR("alloc failed");
 		}
 
 		return handle;

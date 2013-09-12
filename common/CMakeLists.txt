@@ -10,12 +10,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} SRCS)
 
 #IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
-#        SET(CMAKE_BUILD_TYPE "Debug")
+#	SET(CMAKE_BUILD_TYPE "Debug")
 #ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 #MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_common REQUIRED dlog glib-2.0 aul libssl pkgmgr pkgmgr-info)
+pkg_check_modules(pkgs_common REQUIRED glib-2.0 gio-unix-2.0 dlog aul libssl pkgmgr pkgmgr-info)
 
 MESSAGE("${LIB_NAME} ld flag : ${pkgs_common_LDFLAGS}")
 
@@ -24,13 +24,11 @@ FOREACH(flag ${pkgs_common_CFLAGS})
 	SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} ${flag}")
 ENDFOREACH(flag)
 
-#SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} -finstrument-functions")
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS}")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} -finstrument-functions")
 #SET(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 #SET(CMAKE_C_FLAGS_RELEASE "-O2")
 
-#SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} -finstrument-functions -std=c++0x")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXXFLAGS}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXXFLAGS} -finstrument-functions -std=c++0x")
 #SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 #SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
@@ -40,8 +38,6 @@ IF("${ARCH}" STREQUAL "arm")
 	ADD_DEFINITIONS("-DTARGET")
 	MESSAGE("add -DTARGET")
 ENDIF("${ARCH}" STREQUAL "arm")
-
-MESSAGE("CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 
 ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DSLP_DEBUG")
@@ -57,25 +53,20 @@ SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES VERSION ${VERSION})
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_common_LDFLAGS})
 
-SET(EXPORT_HEADER 
+SET(EXPORT_HEADER
+	include/smartcard-types.h
 	include/Debug.h
 	include/Exception.h
 	include/ByteArray.h
 	include/Lock.h
-	include/Synchronous.h	
+	include/Synchronous.h
 	include/TerminalInterface.h
 	include/Terminal.h
 	include/SignatureHelper.h
-	include/GPSEACL.h
 )
 
-CONFIGURE_FILE(
-     ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc
-    @ONLY
-)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${LIB_NAME}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${LIB_INSTALL_DIR})
 FOREACH(hfile ${EXPORT_HEADER})
-        INSTALL(FILES ${hfile} DESTINATION include/${LIB_NAME})
+	INSTALL(FILES ${hfile} DESTINATION include/${LIB_NAME})
 ENDFOREACH(hfile)

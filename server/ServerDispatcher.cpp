@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <stdio.h>
 #include <string.h>
@@ -24,6 +25,7 @@
 #include "Debug.h"
 #include "Exception.h"
 #include "ServerDispatcher.h"
+#include "ServerIPC.h"
 #include "ServerResource.h"
 #include "ServerSEService.h"
 #include "ServerChannel.h"
@@ -34,11 +36,11 @@ namespace smartcard_service_api
 {
 	ServerDispatcher::ServerDispatcher():DispatcherHelper()
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		runDispatcherThread();
 
-		SCARD_END();
+		_END();
 	}
 
 	ServerDispatcher::~ServerDispatcher()
@@ -59,13 +61,13 @@ namespace smartcard_service_api
 
 		if (data == NULL)
 		{
-			SCARD_DEBUG_ERR("dispatcher instance is null");
+			_ERR("dispatcher instance is null");
 			return NULL;
 		}
 
 		if (msg == NULL)
 		{
-			SCARD_DEBUG_ERR("message is null");
+			_ERR("message is null");
 			return NULL;
 		}
 
@@ -77,12 +79,13 @@ namespace smartcard_service_api
 		/* handle message */
 		case Message::MSG_REQUEST_READERS :
 			{
-				SCARD_DEBUG("[MSG_REQUEST_READERS]");
+				_INFO("[MSG_REQUEST_READERS]");
 
 				int count = 0;
 				Message response(*msg);
 				ByteArray info;
 				ClientInstance *instance = NULL;
+				ServiceInstance *service = NULL;
 
 				response.param1 = 0;
 				response.param2 = 0;
@@ -96,16 +99,17 @@ namespace smartcard_service_api
 					if (instance->getPID() == -1)
 					{
 						instance->setPID(msg->error);
-						SCARD_DEBUG_ERR("update PID [%d]", msg->error);
+						_INFO("update PID [%d]", msg->error);
 
 						/* generate certification hashes */
 						instance->generateCertificationHashes();
 					}
 
 					/* create service */
-					if (resource->createService(socket, (unsigned long)msg->userParam) != NULL)
+					if ((service = resource->createService(socket)) != NULL)
 					{
 						response.error = SCARD_ERROR_OK;
+						response.param2 = service->getHandle();
 
 						if ((count = resource->getReadersInformation(info)) > 0)
 						{
@@ -114,25 +118,25 @@ namespace smartcard_service_api
 						}
 						else
 						{
-							SCARD_DEBUG("no secure elements");
+							_INFO("no secure elements");
 						}
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("createClient failed");
+						_ERR("createClient failed");
 
 						response.error = SCARD_ERROR_UNAVAILABLE;
 					}
 				}
 				else
 				{
-					SCARD_DEBUG("client doesn't exist, socket [%d]", socket);
+					_ERR("client doesn't exist, socket [%d]", socket);
 
 					response.error = SCARD_ERROR_UNAVAILABLE;
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -140,14 +144,14 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				SCARD_DEBUG("[MSG_REQUEST_SHUTDOWN]");
+				_INFO("[MSG_REQUEST_SHUTDOWN]");
 
 				response.error = SCARD_ERROR_OK;
 
-				resource->removeService(socket, msg->error/* service context */);
+				resource->removeService(socket, msg->param1);
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -156,7 +160,7 @@ namespace smartcard_service_api
 				Message response(*msg);
 				unsigned int handle = IntegerHandle::INVALID_HANDLE;
 
-				SCARD_DEBUG("[MSG_REQUEST_OPEN_SESSION]");
+				_INFO("[MSG_REQUEST_OPEN_SESSION]");
 
 				if (resource->isValidReaderHandle(msg->param1))
 				{
@@ -169,20 +173,20 @@ namespace smartcard_service_api
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("createSession failed [%d]", handle);
+						_ERR("createSession failed [%d]", handle);
 						response.error = SCARD_ERROR_OUT_OF_MEMORY;
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("request invalid reader handle [%d]", msg->param1);
+					_ERR("request invalid reader handle [%d]", msg->param1);
 					response.error = SCARD_ERROR_ILLEGAL_PARAM;
 				}
 
 				response.param1 = handle;
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -190,7 +194,7 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				SCARD_DEBUG("[MSG_REQUEST_CLOSE_SESSION]");
+				_INFO("[MSG_REQUEST_CLOSE_SESSION]");
 
 				response.param1 = 0;
 				response.error = SCARD_ERROR_OK;
@@ -201,7 +205,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -209,11 +213,11 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				SCARD_DEBUG("[MSG_REQUEST_OPEN_CHANNEL]");
+				_INFO("[MSG_REQUEST_OPEN_CHANNEL]");
 
 				response.param1 = IntegerHandle::INVALID_HANDLE;
 				response.param2 = 0;
-				response.data.releaseBuffer();
+				response.data.clear();
 
 				try
 				{
@@ -234,13 +238,13 @@ namespace smartcard_service_api
 						}
 						else
 						{
-							SCARD_DEBUG_ERR("IS IT POSSIBLE??????????????????");
+							_ERR("IS IT POSSIBLE??????????????????");
 							response.error = SCARD_ERROR_UNKNOWN;
 						}
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("channel is null.");
+						_ERR("channel is null.");
 
 						/* set error value */
 						response.error = SCARD_ERROR_UNAVAILABLE;
@@ -252,7 +256,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -260,13 +264,13 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				SCARD_DEBUG("[MSG_REQUEST_GET_CHANNEL_COUNT]");
+				_INFO("[MSG_REQUEST_GET_CHANNEL_COUNT]");
 
 				response.error = SCARD_ERROR_OK;
 				response.param1 = resource->getChannelCount(socket, msg->error/* service context */, msg->param1);
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -274,7 +278,7 @@ namespace smartcard_service_api
 			{
 				Message response(*msg);
 
-				SCARD_DEBUG("[MSG_REQUEST_CLOSE_CHANNEL]");
+				_INFO("[MSG_REQUEST_CLOSE_CHANNEL]");
 
 				response.error = SCARD_ERROR_OK;
 
@@ -284,7 +288,7 @@ namespace smartcard_service_api
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -295,7 +299,7 @@ namespace smartcard_service_api
 				ByteArray result;
 				ServiceInstance *client = NULL;
 
-				SCARD_DEBUG("[MSG_REQUEST_GET_ATR]");
+				_INFO("[MSG_REQUEST_GET_ATR]");
 
 				if ((client = resource->getService(socket, msg->error/* service context */)) != NULL)
 				{
@@ -310,25 +314,25 @@ namespace smartcard_service_api
 						}
 						else
 						{
-							SCARD_DEBUG_ERR("transmit failed [%d]", rv);
+							_ERR("transmit failed [%d]", rv);
 
 							response.error = rv;
 						}
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("getTerminal failed : socket [%d], context [%d], session [%d]", socket, msg->error/* service context */, msg->param1);
+						_ERR("getTerminal failed : socket [%d], context [%d], session [%d]", socket, msg->error/* service context */, msg->param1);
 						response.error = SCARD_ERROR_UNAVAILABLE;
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("getClient failed : socket [%d], context [%d], session [%d]", socket, msg->error/* service context */, msg->param1);
+					_ERR("getClient failed : socket [%d], context [%d], session [%d]", socket, msg->error/* service context */, msg->param1);
 					response.error = SCARD_ERROR_UNAVAILABLE;
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
@@ -339,7 +343,7 @@ namespace smartcard_service_api
 				ByteArray result;
 				Channel *channel = NULL;
 
-				SCARD_DEBUG("[MSG_REQUEST_TRANSMIT]");
+				_INFO("[MSG_REQUEST_TRANSMIT]");
 
 				if ((channel = resource->getChannel(socket, msg->error/* service context */, msg->param1)) != NULL)
 				{
@@ -350,40 +354,40 @@ namespace smartcard_service_api
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("transmit failed [%d]", rv);
+						_ERR("transmit failed [%d]", rv);
 
 						response.error = rv;
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("invalid handle : socket [%d], context [%d], channel [%d]", socket, msg->error/* service context */, msg->param1);
+					_ERR("invalid handle : socket [%d], context [%d], channel [%d]", socket, msg->error/* service context */, msg->param1);
 					response.error = SCARD_ERROR_UNAVAILABLE;
 				}
 
 				/* response to client */
-				ServerIPC::getInstance()->sendMessage(socket, &response);
+				ServerIPC::getInstance()->sendMessage(socket, response);
 			}
 			break;
 
 		case Message::MSG_OPERATION_RELEASE_CLIENT :
 			{
-				SCARD_DEBUG("[MSG_OPERATION_RELEASE_CLIENT]");
+				_INFO("[MSG_OPERATION_RELEASE_CLIENT]");
 
 				resource->removeClient(msg->param1);
-				SCARD_DEBUG("remain client [%d]", resource->getClientCount());
+				_DBG("remain client [%d]", resource->getClientCount());
 			}
 #ifdef USE_AUTOSTART
 			if (resource->getClientCount() == 0)
 			{
-				SCARD_DEBUG("There is no client. shutting down service");
+				_INFO("There is no client. shutting down service");
 				g_main_loop_quit((GMainLoop *)resource->getMainLoopInstance());
 			}
 #endif
 			break;
 
 		default :
-			SCARD_DEBUG("unknown message [%s], socket [%d]", msg->toString(), socket);
+			_DBG("unknown message [%s], socket [%d]", msg->toString().c_str(), socket);
 			break;
 		}
 
@@ -391,3 +395,4 @@ namespace smartcard_service_api
 	}
 
 } /* namespace smartcard_service_api */
+#endif

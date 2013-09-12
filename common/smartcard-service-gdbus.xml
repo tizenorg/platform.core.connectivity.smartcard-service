@@ -1,0 +1,105 @@
+<!--
+  org.tizen.SmartcardService
+-->
+
+<node>
+  <interface name="org.tizen.SmartcardService.SeService">
+    <!--
+      SeService
+    -->
+    <method name="SeService">
+      <arg type="i" name="result" direction="out" />
+      <arg type="u" name="handle" direction="out" />
+      <arg type="a(us)" name="readers" direction="out" />
+    </method>
+
+    <!--
+      shutdown
+    -->
+    <method name="shutdown">
+      <arg type="u" name="service_id" direction="in" />
+      <arg type="i" name="result" direction="out" />
+    </method>
+
+    <!--
+      ReaderInserted
+    -->
+    <signal name="ReaderInserted">
+      <arg type="u" name="reader_id" />
+      <arg type="s" name="reader_name" />
+    </signal>
+
+    <!--
+      ReaderRemoved
+    -->
+    <signal name="ReaderRemoved">
+      <arg type="u" name="reader_id" />
+      <arg type="s" name="reader_name" />
+    </signal>
+  </interface>
+
+  <interface name="org.tizen.SmartcardService.Reader">
+    <!--
+      openSession
+    -->
+    <method name="openSession">
+      <arg type="u" name="service_id" direction="in" />
+      <arg type="u" name="reader_id" direction="in" />
+      <arg type="i" name="result" direction="out" />
+      <arg type="u" name="handle" direction="out" />
+    </method>
+  </interface>
+
+  <interface name="org.tizen.SmartcardService.Session">
+    <!--
+      getATR
+    -->
+    <method name="getATR">
+      <arg type="u" name="service_id" direction="in" />
+      <arg type="u" name="session_id" direction="in" />
+      <arg type="i" name="result" direction="out" />
+      <arg type="a(y)" name="atr" direction="out" />
+    </method>
+    <!--
+      openChannel
+    -->
+    <method name="openChannel">
+      <arg type="u" name="service_id" direction="in" />
+      <arg type="u" name="session_id" direction="in" />
+      <arg type="u" name="type" direction="in" />
+      <arg type="a(y)" name="aid" direction="in" />
+      <arg type="i" name="result" direction="out" />
+      <arg type="u" name="handle" direction="out" />
+      <arg type="a(y)" name="select_response" direction="out" />
+    </method>
+    <!--
+      closeSession
+    -->
+    <method name="closeSession">
+      <arg type="u" name="service_id" direction="in" />
+      <arg type="u" name="session_id" direction="in" />
+      <arg type="i" name="result" direction="out" />
+    </method>
+  </interface>
+
+  <interface name="org.tizen.SmartcardService.Channel">
+    <!--
+      transmit
+    -->
+    <method name="transmit">
+      <arg type="u" name="service_id" direction="in" />
+      <arg type="u" name="channel_id" direction="in" />
+      <arg type="a(y)" name="command" direction="in" />
+      <arg type="i" name="result" direction="out" />
+      <arg type="a(y)" name="response" direction="out" />
+    </method>
+    <!--
+      closeChannel
+    -->
+    <method name="closeChannel">
+      <arg type="u" name="service_id" direction="in" />
+      <arg type="u" name="channel_id" direction="in" />
+      <arg type="i" name="result" direction="out" />
+    </method>
+  </interface>
+</node>

@@ -26,54 +26,29 @@
 #include "Debug.h"
 #include "ServerSEService.h"
 #include "ServerReader.h"
-#include "GPSEACL.h"
+#include "GPACE.h"
 
 namespace smartcard_service_api
 {
-	ServerReader::ServerReader(ServerSEService *seService, char *name, Terminal *terminal) :
-		ReaderHelper()
+	ServerReader::ServerReader(ServerSEService *seService,
+		const char *name, Terminal *terminal) : ReaderHelper()
 	{
-		unsigned int length = 0;
-
-		acList = NULL;
-
-		if (seService == NULL || name == NULL || strlen(name) == 0 || terminal == NULL)
+		if (seService == NULL || name == NULL ||
+			strlen(name) == 0 || terminal == NULL)
 		{
-			SCARD_DEBUG_ERR("invalid param");
+			_ERR("invalid param");
 
 			return;
 		}
 
 		this->terminal = terminal;
 		this->seService = seService;
-
-		length = strlen(name);
-		length = (length < sizeof(this->name)) ? length : sizeof(this->name);
-		memcpy(this->name, name, length);
-
-		/* open admin channel */
-		adminChannel = new ServerChannel(NULL, NULL, 0, terminal);
-		if (adminChannel == NULL)
-		{
-			SCARD_DEBUG_ERR("alloc failed");
-		}
+		this->name = name;
 	}
 
 	ServerReader::~ServerReader()
 	{
 		closeSessions();
-
-		if (acList != NULL)
-		{
-			delete acList;
-			acList = NULL;
-		}
-
-		if (adminChannel != NULL)
-		{
-			delete adminChannel;
-			adminChannel = NULL;
-		}
 	}
 
 	void ServerReader::closeSessions()
@@ -90,25 +65,6 @@ namespace smartcard_service_api
 		sessions.clear();
 	}
 
-	AccessControlList *ServerReader::getAccessControlList()
-	{
-		if (acList == NULL)
-		{
-			/* load access control */
-			acList = new GPSEACL();
-			if (acList != NULL)
-			{
-				acList->loadACL(adminChannel);
-			}
-			else
-			{
-				SCARD_DEBUG_ERR("alloc failed");
-			}
-		}
-
-		return acList;
-	}
-
 	ServerSession *ServerReader::openSessionSync()
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
@@ -117,7 +73,7 @@ namespace smartcard_service_api
 		return openSessionSync(temp, NULL);
 	}
 
-	ServerSession *ServerReader::openSessionSync(vector<ByteArray> &certHashes, void *caller)
+	ServerSession *ServerReader::openSessionSync(const vector<ByteArray> &certHashes, void *caller)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
 		ServerSession *session = NULL;

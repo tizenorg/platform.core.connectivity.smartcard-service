@@ -27,25 +27,15 @@
 
 namespace smartcard_service_api
 {
+	static unsigned char path_efdir[] = { 0x2f, 0x00 };
+	static ByteArray PATH_EFDIR(ARRAY_AND_SIZE(path_efdir));
+
 	EFDIR::EFDIR(Channel *channel) : FileObject(channel)
 	{
-		unsigned char path[] = { 0x2f, 0x00 };
-		ByteArray dirPath(ARRAY_AND_SIZE(path));
-		int ret;
-
-		ret = select(dirPath, false);
-		if (ret == FileObject::SUCCESS)
-		{
-			SCARD_DEBUG("response : %s", selectResponse.toString());
-		}
-		else
-		{
-			SCARD_DEBUG_ERR("EFDIR select failed, [%d]", ret);
-		}
 	}
 
-	EFDIR::EFDIR(Channel *channel, ByteArray selectResponse)
-		: FileObject(channel, selectResponse)
+	EFDIR::EFDIR(Channel *channel, const ByteArray &selectResponse) :
+		FileObject(channel, selectResponse)
 	{
 	}
 
@@ -53,7 +43,20 @@ namespace smartcard_service_api
 	{
 	}
 
-	ByteArray EFDIR::parseRecord(Record &record, ByteArray &aid)
+	int EFDIR::select()
+	{
+		int ret;
+
+		ret = FileObject::select(PATH_EFDIR, false);
+		if (ret < SCARD_ERROR_OK)
+		{
+			_ERR("EFDIR select failed, [%d]", ret);
+		}
+
+		return ret;
+	}
+
+	const ByteArray EFDIR::parseRecord(const Record &record, const ByteArray &aid)
 	{
 		bool matched = false;
 		ByteArray result;
@@ -83,18 +86,18 @@ namespace smartcard_service_api
 
 			if (matched == true)
 			{
-				SCARD_DEBUG("Found!! : path %s", result.toString());
+				_DBG("Found!! : path %s", result.toString().c_str());
 			}
 			else
 			{
-				result.setBuffer(NULL, 0);
+				result.clear();
 			}
 		}
 
 		return result;
 	}
 
-	ByteArray EFDIR::getPathByAID(ByteArray &aid)
+	const ByteArray EFDIR::getPathByAID(const ByteArray &aid)
 	{
 		ByteArray result;
 		Record record;
@@ -107,7 +110,7 @@ namespace smartcard_service_api
 			if (status >= 0)
 			{
 				result = parseRecord(record, aid);
-				if (result.getLength() > 0)
+				if (result.size() > 0)
 					break;
 			}
 		}

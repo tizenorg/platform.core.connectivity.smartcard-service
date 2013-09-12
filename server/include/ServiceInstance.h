@@ -34,34 +34,33 @@ namespace smartcard_service_api
 	class ServiceInstance
 	{
 	private:
-		unsigned int context;
+		unsigned int handle;
 		ClientInstance *parent;
 		map<unsigned int, pair<ServerSession *, Terminal *> > mapSessions; /* session unique id <-> terminal instance map */
 		map<unsigned int, pair<unsigned int, ServerChannel *> > mapChannels; /* channel unique id <-> (session unique id, channel instance) map */
 
 	public:
-		ServiceInstance(ClientInstance *parent, unsigned int context)
-		{
-			this->parent = parent;
-			this->context = context;
-		}
-		~ServiceInstance() { closeSessions(); };
+		ServiceInstance(ClientInstance *parent);
+		~ServiceInstance();
 
-		inline bool operator ==(const unsigned int &context) const { return (this->context == context); }
+		inline unsigned int getHandle() { return handle; }
+
+		inline bool operator ==(const unsigned int &handle) const { return (this->handle == handle); }
 		inline bool isVaildSessionHandle(unsigned int handle) { return (mapSessions.find(handle) != mapSessions.end()); }
 		inline bool isVaildChannelHandle(unsigned int handle) { return (mapChannels.find(handle) != mapChannels.end()); }
 		inline ClientInstance *getParent() { return parent; }
 
-		unsigned int openSession(Terminal *terminal, vector<ByteArray> &certHashes, void *caller);
+		unsigned int openSession(Terminal *terminal, const vector<ByteArray> &certHashes, void *caller);
 		ServerSession *getSession(unsigned int session);
 		void closeSession(unsigned int session);
 		void closeSessions();
 
 		Terminal *getTerminal(unsigned int session);
 
-		unsigned int openChannel(unsigned int session, int channelNum, ByteArray response = ByteArray::EMPTY);
+		unsigned int openChannel(unsigned int session, int channelNum, const ByteArray &response = ByteArray::EMPTY);
 		ServerChannel *getChannel(/*unsigned int session, */unsigned int channel);
 		unsigned int getChannelCountBySession(unsigned int session);
+
 		void closeChannel(unsigned int channel);
 		void closeChannelsBySession(unsigned int session);
 		void closeChannels();

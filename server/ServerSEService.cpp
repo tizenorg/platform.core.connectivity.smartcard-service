@@ -26,14 +26,17 @@
 
 /* local header */
 #include "Debug.h"
-#include "Message.h"
 #include "TerminalInterface.h"
-#include "ServerSEService.h"
+#ifndef USE_GDBUS
+#include "Message.h"
+#include "ServerIPC.h"
+#endif
 #include "ServerResource.h"
+#include "ServerSEService.h"
 
 namespace smartcard_service_api
 {
-#define OMAPI_SE_PATH LIBPATH"/se"
+#define OMAPI_SE_PATH "/usr/lib/se"
 
 	ServerSEService::ServerSEService():SEServiceHelper()
 	{
@@ -62,16 +65,16 @@ namespace smartcard_service_api
 			terminal = (Terminal *)createInstance();
 			if (terminal != NULL)
 			{
-				SCARD_DEBUG("terminal [%p]", terminal);
+				_DBG("terminal [%p]", terminal);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("terminal is null");
+				_ERR("terminal is null");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("create_instance is null [%d]", errno);
+			_ERR("create_instance is null [%d]", errno);
 		}
 
 		return terminal;
@@ -90,11 +93,11 @@ namespace smartcard_service_api
 			terminal = createInstance(libHandle);
 			if (terminal != NULL)
 			{
-				SCARD_DEBUG("SE info : [%s] [%s]", library, terminal->getName());
+				_DBG("SE info : [%s] [%s]", library, terminal->getName());
 
 				libraries.push_back(libHandle);
 
-				pair<char *, Terminal *> newPair(terminal->getName(), terminal);
+				pair<string, Terminal *> newPair(terminal->getName(), terminal);
 				mapTerminals.insert(newPair);
 
 				if (terminal->isSecureElementPresence() == true)
@@ -102,33 +105,33 @@ namespace smartcard_service_api
 					ServerReader *reader = new ServerReader(this, terminal->getName(), terminal);
 					if (reader != NULL)
 					{
-						SCARD_DEBUG("register success [%s]", terminal->getName());
+						_DBG("register success [%s]", terminal->getName());
 
 						readers.push_back(reader);
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("ServerReader alloc failed [%s]", terminal->getName());
+						_ERR("ServerReader alloc failed [%s]", terminal->getName());
 						/* throw exception */
 					}
 				}
 				else
 				{
-					SCARD_DEBUG("SE is not ready [%s]", terminal->getName());
+					_DBG("SE is not ready [%s]", terminal->getName());
 				}
 
 				result = true;
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("createInstance failed [%s]", library);
+				_ERR("createInstance failed [%s]", library);
 
 				dlclose(libHandle);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("it is not se file [%s] [%d]", library, errno);
+			_ERR("it is not se file [%s] [%d]", library, errno);
 		}
 
 		return result;
@@ -154,8 +157,6 @@ namespace smartcard_service_api
 					libHandle = NULL;
 
 					snprintf(fullPath, sizeof(fullPath), "%s/%s", OMAPI_SE_PATH, entry->d_name);
-
-					SCARD_DEBUG("se name [%s]", fullPath);
 
 					result = appendSELibrary(fullPath);
 				}
@@ -189,17 +190,20 @@ namespace smartcard_service_api
 
 	bool ServerSEService::dispatcherCallback(void *message, int socket)
 	{
+#ifndef USE_GDBUS
 		int count;
 		ByteArray info;
 		Message *msg = (Message *)message;
 		Message response(*msg);
 		ServerResource &resource = ServerResource::getInstance();
+		ServiceInstance *service;
 
-		if (resource.createService(socket, msg->error) != NULL)
+		if ((service = resource.createService(socket)) != NULL)
 		{
-			SCARD_DEBUG_ERR("client added : pid [%d]", msg->error);
+			_ERR("client added : pid [%d]", msg->error);
 
 			response.error = SCARD_ERROR_OK;
+			response.param2 = service->getHandle();
 
 			if ((count = resource.getReadersInformation(info)) > 0)
 			{
@@ -208,46 +212,55 @@ namespace smartcard_service_api
 			}
 			else
 			{
-				SCARD_DEBUG("no secure elements");
+				_DBG("no secure elements");
 				response.param1 = 0;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("createClient failed");
+			_ERR("createClient failed");
 
 			response.error = SCARD_ERROR_OUT_OF_MEMORY;
 		}
 
 		/* response to client */
-		ServerIPC::getInstance()->sendMessage(socket, &response);
-
+		ServerIPC::getInstance()->sendMessage(socket, response);
+#endif
 		return false;
 	}
 
-	void ServerSEService::terminalCallback(void *terminal, int event, int error, void *user_param)
+	void ServerSEService::terminalCallback(const void *terminal, int event, int error, void *user_param)
 	{
-		Message msg;
-//		Terminal *term = NULL;
-
 		switch (event)
 		{
 		case Terminal::NOTIFY_SE_AVAILABLE :
-			/* send all client to refresh reader */
-			msg.message = msg.MSG_NOTIFY_SE_INSERTED;
-			msg.data.setBuffer((unsigned char *)terminal,
-				strlen((char *)terminal) + 1);
+			{
+#ifndef USE_GDBUS
+				Message msg;
 
-			ServerResource::getInstance().sendMessageToAllClients(msg);
+				/* send all client to refresh reader */
+				msg.message = msg.MSG_NOTIFY_SE_INSERTED;
+				msg.data.assign((unsigned char *)terminal,
+					strlen((char *)terminal) + 1);
+
+				ServerResource::getInstance().sendMessageToAllClients(msg);
+#endif
+			}
 			break;
 
 		case Terminal::NOTIFY_SE_NOT_AVAILABLE :
-			/* send all client to refresh reader */
-			msg.message = msg.MSG_NOTIFY_SE_REMOVED;
-			msg.data.setBuffer((unsigned char *)terminal,
-				strlen((char *)terminal) + 1);
+			{
+#ifndef USE_GDBUS
+				Message msg;
 
-			ServerResource::getInstance().sendMessageToAllClients(msg);
+				/* send all client to refresh reader */
+				msg.message = msg.MSG_NOTIFY_SE_REMOVED;
+				msg.data.assign((unsigned char *)terminal,
+					strlen((char *)terminal) + 1);
+
+				ServerResource::getInstance().sendMessageToAllClients(msg);
+#endif
+			}
 			break;
 
 		default :

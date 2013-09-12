@@ -31,7 +31,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class PKCS15Object: public FileObject
+	class PKCS15Object : public FileObject
 	{
 	protected:
 		map<unsigned int, ByteArray> dataList;
@@ -41,16 +41,15 @@ namespace smartcard_service_api
 		static const unsigned int TAG_SEQUENCE = (unsigned int)0x30;
 		static const unsigned int TAG_OCTET_STREAM = (unsigned int)0x04;
 
-//		PKCS15Object();
 		PKCS15Object(Channel *channel);
-		PKCS15Object(Channel *channel, ByteArray selectResponse);
+		PKCS15Object(Channel *channel, const ByteArray &selectResponse);
 		~PKCS15Object();
 
-		int decodePath(ByteArray path, PKCS15Path &result);
-		int getPath(unsigned int type, PKCS15Path &result);
-		int getPaths(vector<PKCS15Path> &paths);
+		int decodePath(const ByteArray &path, PKCS15Path &result);
+		int getPath(unsigned int type, PKCS15Path &result) const;
+		int getPaths(vector<PKCS15Path> &paths) const;
 
-		static ByteArray getOctetStream(const ByteArray &data);
+		static const ByteArray getOctetStream(const ByteArray &data);
 	};
 
 } /* namespace smartcard_service_api */

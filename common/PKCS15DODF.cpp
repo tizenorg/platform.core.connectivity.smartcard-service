@@ -25,62 +25,59 @@
 
 namespace smartcard_service_api
 {
-//	PKCS15DODF::PKCS15DODF():PKCS15Object()
-//	{
-//
-//	}
-
-	PKCS15DODF::PKCS15DODF(unsigned int fid, Channel *channel):PKCS15Object(channel)
+	PKCS15DODF::PKCS15DODF(unsigned int fid, Channel *channel) :
+		PKCS15Object(channel)
 	{
 		int ret = 0;
 
-		if ((ret = select(fid)) == 0)
+		if ((ret = select(fid)) >= SCARD_ERROR_OK)
 		{
 			ByteArray dodfData, extra;
 
-			SCARD_DEBUG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString().c_str());
 
 			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), dodfData)) == 0)
 			{
-				SCARD_DEBUG("odfData : %s", dodfData.toString());
+				_DBG("odfData : %s", dodfData.toString().c_str());
 
 				parseData(dodfData);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("readBinary failed, [%d]", ret);
+				_ERR("readBinary failed, [%d]", ret);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select failed, [%d]", ret);
+			_ERR("select failed, [%d]", ret);
 		}
 	}
 
-	PKCS15DODF::PKCS15DODF(ByteArray path, Channel *channel):PKCS15Object(channel)
+	PKCS15DODF::PKCS15DODF(const ByteArray &path, Channel *channel) :
+		PKCS15Object(channel)
 	{
 		int ret = 0;
 
-		if ((ret = select(path)) == 0)
+		if ((ret = select(path)) >= SCARD_ERROR_OK)
 		{
 			ByteArray dodfData, extra;
 
-			SCARD_DEBUG("response : %s", selectResponse.toString());
+			_DBG("response : %s", selectResponse.toString().c_str());
 
 			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), dodfData)) == 0)
 			{
-				SCARD_DEBUG("dodfData : %s", dodfData.toString());
+				_DBG("dodfData : %s", dodfData.toString().c_str());
 
 				parseData(dodfData);
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("readBinary failed, [%d]", ret);
+				_ERR("readBinary failed, [%d]", ret);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select failed, [%d]", ret);
+			_ERR("select failed, [%d]", ret);
 		}
 	}
 
@@ -88,7 +85,7 @@ namespace smartcard_service_api
 	{
 	}
 
-	bool PKCS15DODF::parseData(ByteArray data)
+	bool PKCS15DODF::parseData(const ByteArray &data)
 	{
 		bool result = false;
 		SimpleTLV tlv(data);
@@ -101,28 +98,27 @@ namespace smartcard_service_api
 				{
 					PKCS15OID oid(tlv.getValue());
 
-					SCARD_DEBUG("OID DataObject");
+					_DBG("OID DataObject : %s", oid.getOID().toString().c_str());
 
-					pair<ByteArray, PKCS15OID> newPair(oid.getOID(), oid);
-					mapOID.insert(newPair);
+					mapOID.insert(make_pair(oid.getOID(), oid));
 				}
 				break;
 
 			default :
-				SCARD_DEBUG("Unknown tlv : t [%X], l [%d], v %s", tlv.getTag(), tlv.getLength(), tlv.getValue().toString());
+				_DBG("Unknown tlv : t [%X], l [%d], v %s", tlv.getTag(), tlv.size(), tlv.getValue().toString().c_str());
 				break;
 			}
 		}
 
-		SCARD_DEBUG("dataList.size() = %d", mapOID.size());
+		_INFO("dataList.size() = %d", mapOID.size());
 
 		return result;
 	}
 
-	int PKCS15DODF::searchOID(ByteArray oid, ByteArray &data)
+	int PKCS15DODF::searchOID(const ByteArray &oid, ByteArray &data) const
 	{
 		int result = -1;
-		map<ByteArray, PKCS15OID>::iterator item;
+		map<ByteArray, PKCS15OID>::const_iterator item;
 
 		item = mapOID.find(oid);
 		if (item != mapOID.end())

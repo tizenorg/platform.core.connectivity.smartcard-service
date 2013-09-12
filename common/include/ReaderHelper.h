@@ -19,6 +19,7 @@
 
 /* standard library header */
 #include <vector>
+#include <string>
 
 /* SLP library header */
 
@@ -32,23 +33,26 @@ namespace smartcard_service_api
 {
 	class SEServiceHelper;
 
-	typedef void (*openSessionCallback)(SessionHelper *session, int error, void *userData);
+	typedef void (*openSessionCallback)(SessionHelper *session, int error,
+		void *userData);
 
 	class ReaderHelper : public Synchronous
 	{
 	protected:
-		char name[30];
-		vector<SessionHelper *> sessions;
 		SEServiceHelper *seService;
+		string name;
 		bool present;
+		vector<SessionHelper *> sessions;
 
-		ReaderHelper();
+		ReaderHelper() : seService(NULL), present(false) {}
+		ReaderHelper(const char *name) : seService(NULL), name(name),
+			present(false) {}
 		virtual ~ReaderHelper() {}
 
 	public:
-		inline const char *getName() { return name; }
-		inline SEServiceHelper *getSEService() { return seService; }
-		inline bool isSecureElementPresent() { return present; }
+		inline const char *getName() const { return name.c_str(); }
+		inline SEServiceHelper *getSEService() const { return seService; }
+		inline bool isSecureElementPresent() const { return present; }
 
 		virtual void closeSessions()
 			throw(ErrorIO &, ErrorIllegalState &) = 0;

@@ -23,8 +23,8 @@ namespace smartcard_service_api
 {
 	class Serializable
 	{
-		virtual ByteArray serialize() = 0;
-		virtual void deserialize(ByteArray buffer) = 0;
+		virtual const ByteArray serialize() const = 0;
+		virtual void deserialize(const ByteArray &buffer) = 0;
 	};
 
 } /* namespace smartcard_service_api */

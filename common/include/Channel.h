@@ -30,9 +30,9 @@ namespace smartcard_service_api
 {
 	class SessionHelper;	/* explicit declaration */
 
-	typedef void (*transmitCallback)(unsigned char *buffer, unsigned int length,
-		int error, void *userParam);
-	typedef void (*closeCallback)(int error, void *userParam);
+	typedef void (*transmitCallback)(unsigned char *buffer,
+		unsigned int length, int error, void *userParam);
+	typedef void (*closeChannelCallback)(int error, void *userParam);
 
 	class Channel : public Synchronous
 	{
@@ -41,10 +41,10 @@ namespace smartcard_service_api
 		SessionHelper *session;
 		int channelNum;
 
-		Channel() : Synchronous() { channelNum = -1; }
-		Channel(SessionHelper *session) : Synchronous() { this->session = session; }
+		Channel() : session(NULL), channelNum(-1) {}
+		Channel(SessionHelper *session) : session(session), channelNum(-1) {}
 
-		inline void setSelectResponse(ByteArray &response) { selectResponse = response; }
+		inline void setSelectResponse(const ByteArray &response) { selectResponse = response; }
 
 	public :
 		virtual ~Channel() {};
@@ -52,17 +52,17 @@ namespace smartcard_service_api
 		inline bool isBasicChannel() const throw() { return (channelNum == 0); }
 		inline bool isClosed() const throw() { return (channelNum < 0); }
 
-		inline ByteArray getSelectResponse() const throw() { return selectResponse; }
+		inline const ByteArray getSelectResponse() const throw() { return selectResponse; }
 		inline SessionHelper *getSession() const throw() { return session; }
 
-		virtual int close(closeCallback callback, void *userParam) = 0;
-		virtual int transmit(ByteArray command, transmitCallback callback, void *userData) = 0;
+		virtual int close(closeChannelCallback callback, void *userParam) = 0;
+		virtual int transmit(const ByteArray &command, transmitCallback callback, void *userData) = 0;
 
 		virtual void closeSync()
 			throw(ExceptionBase &, ErrorIO &, ErrorSecurity &,
 			ErrorIllegalState &, ErrorIllegalParameter &) = 0;
 
-		virtual int transmitSync(ByteArray command, ByteArray &result)
+		virtual int transmitSync(const ByteArray &command, ByteArray &result)
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &) = 0;
 	};

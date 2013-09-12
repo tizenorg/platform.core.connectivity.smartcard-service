@@ -15,8 +15,9 @@
  */
 
 /* standard library header */
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <sstream>
 
 /* SLP library header */
 
@@ -26,32 +27,27 @@
 
 namespace smartcard_service_api
 {
-	void TLVHelper::initialize(TLVHelper *parent)
+	TLVHelper::TLVHelper() : currentTLV(this), parentTLV(NULL),
+		childTLV(NULL), offset(0), currentT(0), currentL(0)
 	{
-		parentTLV = parent;
-		childTLV = NULL;
-		currentTLV = this;
-		offset = 0;
-		currentT = 0;
-		currentL = 0;
 	}
 
-	TLVHelper::TLVHelper()
+	TLVHelper::TLVHelper(TLVHelper *parent) : currentTLV(this),
+		parentTLV(parent), childTLV(NULL),
+		offset(0), currentT(0), currentL(0)
 	{
-		initialize();
 	}
 
-	TLVHelper::TLVHelper(TLVHelper *parent)
-	{
-		initialize(parent);
-	}
-
-	TLVHelper::TLVHelper(const ByteArray &array)
+	TLVHelper::TLVHelper(const ByteArray &array) : currentTLV(this),
+		parentTLV(NULL), childTLV(NULL),
+		offset(0), currentT(0), currentL(0)
 	{
 		setTLVBuffer(array);
 	}
 
-	TLVHelper::TLVHelper(const ByteArray &array, TLVHelper *parent)
+	TLVHelper::TLVHelper(const ByteArray &array, TLVHelper *parent) :
+		currentTLV(this), parentTLV(NULL), childTLV(NULL),
+		offset(0), currentT(0), currentL(0)
 	{
 		setTLVBuffer(array, parent);
 	}
@@ -62,17 +58,22 @@ namespace smartcard_service_api
 
 	bool TLVHelper::setTLVBuffer(const ByteArray &array, TLVHelper *parent)
 	{
-		initialize(parent);
-
-		if (array.getLength() == 0)
+		if (array.size() == 0)
 			return false;
+
+		currentTLV = this;
+		parentTLV = parent;
+		childTLV = NULL;
+		offset = 0;
+		currentT = 0;
+		currentL = 0;
 
 		tlvBuffer = array;
 
 		return true;
 	}
 
-	bool TLVHelper::setTLVBuffer(unsigned char *buffer, unsigned int length, TLVHelper *parent)
+	bool TLVHelper::setTLVBuffer(const unsigned char *buffer, unsigned int length, TLVHelper *parent)
 	{
 		return setTLVBuffer(ByteArray(buffer, length), parent);
 	}
@@ -84,7 +85,7 @@ namespace smartcard_service_api
 
 		currentT = 0;
 		currentL = 0;
-		currentV.releaseBuffer();
+		currentV.clear();
 
 		if (isEndOfBuffer())
 			return false;
@@ -103,7 +104,7 @@ namespace smartcard_service_api
 
 		if (currentL > 0)
 		{
-			if (currentL > (tlvBuffer.getLength() - (offset + temp)))
+			if (currentL > (tlvBuffer.size() - (offset + temp)))
 				return false;
 
 			/* V */
@@ -118,20 +119,17 @@ namespace smartcard_service_api
 		return true;
 	}
 
-	const char *TLVHelper::toString()
+	const string TLVHelper::toString() const
 	{
-		memset(strBuffer, 0, sizeof(strBuffer));
+		stringstream ss;
 
-		if (currentL == 0)
+		ss << "T [" << getTag() << "], L [" << size() << "]";
+		if (currentL > 0)
 		{
-			snprintf(strBuffer, sizeof(strBuffer), "T [%X], L [%d]", getTag(), getLength());
-		}
-		else
-		{
-			snprintf(strBuffer, sizeof(strBuffer), "T [%X], L [%d], V %s", getTag(), getLength(), getValue().toString());
+			ss << ", V " << getValue().toString();
 		}
 
-		return strBuffer;
+		return ss.str();
 	}
 
 	TLVHelper *TLVHelper::getParentTLV()
@@ -144,7 +142,7 @@ namespace smartcard_service_api
 		bool result = false;
 		TLVHelper *temp = NULL;
 
-		if (getLength() >= 2)
+		if (size() >= 2)
 		{
 			temp = currentTLV->getChildTLV(getValue());
 
@@ -161,8 +159,6 @@ namespace smartcard_service_api
 	bool TLVHelper::returnToParentTLV()
 	{
 		bool result = true;
-
-//		SCARD_DEBUG("current [%p], parent [%p]", currentTLV, currentTLV->getParentTLV());
 
 		if (currentTLV->getParentTLV() != NULL)
 		{

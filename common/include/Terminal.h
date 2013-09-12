@@ -27,10 +27,10 @@
 
 namespace smartcard_service_api
 {
-	typedef void (*terminalNotificationCallback)(void *terminal, int event, int error, void *user_param);
+	typedef void (*terminalNotificationCallback)(const void *terminal, int event, int error, void *user_param);
 
-	typedef void (*terminalTransmitCallback)(unsigned char *buffer, unsigned int length, int error, void *userParam);
-	typedef void (*terminalGetATRCallback)(unsigned char *buffer, unsigned int length, int error, void *userParam);
+	typedef void (*terminalTransmitCallback)(const unsigned char *buffer, unsigned int length, int error, void *userParam);
+	typedef void (*terminalGetATRCallback)(const unsigned char *buffer, unsigned int length, int error, void *userParam);
 
 	class Terminal : public Synchronous
 	{
@@ -43,27 +43,24 @@ namespace smartcard_service_api
 		static const int NOTIFY_SE_AVAILABLE = 1;
 		static const int NOTIFY_SE_NOT_AVAILABLE = -1;
 
-		Terminal()
-		{
-			statusCallback = NULL;
-			initialized = false;
-			name = NULL;
-		}
+		Terminal() : statusCallback(NULL),
+			initialized(false), name(NULL) {}
+
 		virtual ~Terminal() {}
 
 		virtual bool initialize() = 0;
 		virtual void finalize() = 0;
-		inline bool isInitialized() { return initialized; }
+		inline bool isInitialized() const { return initialized; }
 
-		inline char *getName() { return name; }
+		inline const char *getName() const { return name; }
 		inline void setStatusCallback(terminalNotificationCallback callback) { statusCallback = callback; }
 
-		virtual bool isSecureElementPresence() = 0;
+		virtual bool isSecureElementPresence() const = 0;
 
-		virtual int transmitSync(ByteArray command, ByteArray &result) = 0;
+		virtual int transmitSync(const ByteArray &command, ByteArray &result) = 0;
 		virtual int getATRSync(ByteArray &atr) = 0;
 
-		virtual int transmit(ByteArray command, terminalTransmitCallback callback, void *userData) = 0;
+		virtual int transmit(const ByteArray &command, terminalTransmitCallback callback, void *userData) = 0;
 		virtual int getATR(terminalGetATRCallback callback, void *userData) = 0;
 	};
 

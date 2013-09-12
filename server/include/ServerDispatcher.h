@@ -16,7 +16,7 @@
 
 #ifndef SERVERDISPATCHER_H_
 #define SERVERDISPATCHER_H_
-
+#ifndef USE_GDBUS
 /* standard library header */
 
 /* SLP library header */
@@ -41,4 +41,5 @@ namespace smartcard_service_api
 	};
 
 } /* namespace smartcard_service_api */
+#endif /* USE_GDBUS */
 #endif /* SERVERDISPATCHER_H_ */

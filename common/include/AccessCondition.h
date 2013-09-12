@@ -18,8 +18,8 @@
 #define ACCESSCONDITION_H_
 
 /* standard library header */
-#include <vector>
 #include <map>
+#include <vector>
 
 /* SLP library header */
 
@@ -30,39 +30,30 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class APDUAccessRule
+	class AccessRule
 	{
 	private :
-		bool permission;
-		map<ByteArray, ByteArray> mapApduFilters;
+		bool apduRule;
+		bool nfcRule;
+		vector<pair<ByteArray, ByteArray> > listFilters;
 
 	public :
-		APDUAccessRule()
+		AccessRule() : apduRule(true), nfcRule(true) {}
+
+		inline void setAPDUAccessRule(bool rule) { apduRule = rule; }
+		inline void setNFCAccessRule(bool rule) { nfcRule = rule; }
+
+		void addAPDUAccessRule(const ByteArray &apdu,
+			const ByteArray &mask);
+
+		inline bool isAuthorizedAccess(void) const
 		{
-			permission = true;
+			return (apduRule || (listFilters.size() > 0));
 		}
+		bool isAuthorizedAPDUAccess(const ByteArray &command) const;
+		bool isAuthorizedNFCAccess(void) const;
 
-		void loadAPDUAccessRule(const ByteArray &data);
-		bool isAuthorizedAccess(const ByteArray &command);
-
-		void printAPDUAccessRules();
-	};
-
-	class NFCAccessRule
-	{
-	private :
-		bool permission;
-
-	public :
-		NFCAccessRule()
-		{
-			permission = true;
-		}
-
-		void loadNFCAccessRule(const ByteArray &data);
-		bool isAuthorizedAccess(void);
-
-		void printNFCAccessRules();
+		friend class AccessCondition;
 	};
 
 	class AccessCondition
@@ -70,21 +61,33 @@ namespace smartcard_service_api
 	private :
 		bool permission;
 		ByteArray aid;
-		vector<ByteArray> hashes;
-		APDUAccessRule apduRule;
-		NFCAccessRule nfcRule;
+		map<ByteArray, AccessRule> mapRules;
 
 	public :
-		AccessCondition() : permission(false)
-		{
-		}
+		AccessCondition() : permission(false) {}
 
-		void loadAccessCondition(ByteArray &aid, ByteArray &data);
-		bool isAuthorizedAccess(ByteArray &certHash);
-		bool isAuthorizedAPDUAccess(ByteArray &command);
-		bool isAuthorizedNFCAccess();
+		inline void setAID(const ByteArray &aid) { this->aid = aid; }
+		inline const ByteArray getAID() const { return aid; }
+		inline void setAccessCondition(bool rule) { permission = rule; }
+		void addAccessRule(const ByteArray &hash);
 
-		void printAccessConditions();
+		void setAPDUAccessRule(const ByteArray &certHash, bool rule);
+		void addAPDUAccessRule(const ByteArray &certHash,
+			const ByteArray &apdu, const ByteArray &mask);
+		void addAPDUAccessRule(const ByteArray &certHash,
+			const ByteArray &rule);
+
+		void setNFCAccessRule(const ByteArray &certHash, bool rule);
+
+		bool isAuthorizedAccess(const ByteArray &certHash) const;
+		bool isAuthorizedAPDUAccess(const ByteArray &certHash,
+			const ByteArray &command) const;
+		bool isAuthorizedNFCAccess(const ByteArray &certHash) const;
+
+		AccessRule *getAccessRule(const ByteArray &certHash);
+		const AccessRule *getAccessRule(const ByteArray &certHash) const;
+
+		friend class AccessControlList;
 	};
 
 } /* namespace smartcard_service_api */

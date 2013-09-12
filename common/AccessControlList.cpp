@@ -23,19 +23,19 @@
 #include "Debug.h"
 #include "AccessControlList.h"
 #include "PKCS15.h"
-#include "AccessCondition.h"
 
 namespace smartcard_service_api
 {
-	const unsigned char aid_all[] = { 0x00, 0x00 };
-	const unsigned char aid_default[] = { 0x00, 0x01 };
+	const unsigned char all_se_apps[] = { 0x00, 0x00 };
+	const unsigned char default_se_app[] = { 0x00, 0x01 };
+	const unsigned char all_device_apps[] = { 0x00, 0x02 };
 
-	ByteArray AccessControlList::AID_ALL(ARRAY_AND_SIZE(aid_all));
-	ByteArray AccessControlList::AID_DEFAULT(ARRAY_AND_SIZE(aid_default));
+	ByteArray AccessControlList::ALL_SE_APPS(ARRAY_AND_SIZE(all_se_apps));
+	ByteArray AccessControlList::DEFAULT_SE_APP(ARRAY_AND_SIZE(default_se_app));
+	ByteArray AccessControlList::ALL_DEVICE_APPS(ARRAY_AND_SIZE(all_device_apps));
 
-	AccessControlList::AccessControlList()
+	AccessControlList::AccessControlList() : allGranted(false)
 	{
-		allGranted = false;
 	}
 
 	AccessControlList::~AccessControlList()
@@ -49,82 +49,176 @@ namespace smartcard_service_api
 		allGranted = false;
 	}
 
-	bool AccessControlList::isAuthorizedAccess(ByteArray aid, ByteArray certHash, bool update)
+	AccessCondition &AccessControlList::getAccessCondition(const ByteArray &aid)
+	{
+		map<ByteArray, AccessCondition>::iterator item;
+
+		item = mapConditions.find(aid);
+		if (item == mapConditions.end())
+		{
+			AccessCondition condition;
+			pair<ByteArray, AccessCondition> temp(aid, condition);
+			mapConditions.insert(temp);
+
+			item = mapConditions.find(aid);
+		}
+
+		return item->second;
+	}
+
+	const AccessRule *AccessControlList::findAccessRule(const ByteArray &aid,
+		const ByteArray &hash) const
+	{
+		const AccessRule *result = NULL;
+		map<ByteArray, AccessCondition>::const_iterator item;
+
+		item = mapConditions.find(aid);
+		if (item != mapConditions.end()) {
+			result = item->second.getAccessRule(hash);
+		}
+
+		return result;
+	}
+
+	bool AccessControlList::isAuthorizedAccess(const ByteArray &aid,
+		const ByteArray &certHash) const
+	{
+		vector<ByteArray> hashes;
+
+		hashes.push_back(certHash);
+
+		return isAuthorizedAccess(aid, hashes);
+	}
+
+	bool AccessControlList::isAuthorizedAccess(const unsigned char *aidBuffer,
+		unsigned int aidLength, const unsigned char *certHashBuffer,
+		unsigned int certHashLength) const
+	{
+		ByteArray aid(aidBuffer, aidLength);
+		ByteArray certHash(certHashBuffer, certHashLength);
+
+		return isAuthorizedAccess(aid, certHash);
+	}
+
+	bool AccessControlList::isAuthorizedAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes) const
+	{
+		return isAuthorizedAccess(aid, certHashes, ByteArray::EMPTY);
+	}
+
+	bool AccessControlList::isAuthorizedAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes, const ByteArray &command) const
 	{
 		bool result = allGranted;
-		map<ByteArray, AccessCondition>::iterator iterMap;
+		vector<ByteArray>::const_reverse_iterator item;
+		const AccessRule *rule = NULL;
 
-		if (result == false)
-		{
-			SCARD_DEBUG("aid : %s", aid.toString());
-			SCARD_DEBUG("hash : %s", certHash.toString());
+		if (result == true) {
+			goto END;
+		}
 
-			/* null aid means default applet */
-			if (aid.isEmpty() == true)
-			{
-				aid = AID_DEFAULT;
-			}
-
-			/* first.. find hashes matched with aid */
-			if ((iterMap = mapConditions.find(aid)) != mapConditions.end())
-			{
-				result = iterMap->second.isAuthorizedAccess(certHash);
-			}
-			/* finally.. find hashes in 'all' list */
-			else if ((iterMap = mapConditions.find(AID_ALL)) != mapConditions.end())
-			{
-				result = iterMap->second.isAuthorizedAccess(certHash);
+		/* Step A, find with aid and cert hashes */
+		for (item = certHashes.rbegin(); item != certHashes.rend(); item++) {
+			rule = findAccessRule(aid, *item);
+			if (rule != NULL) {
+				if (command.isEmpty()) {
+					result = rule->isAuthorizedAccess();
+				} else {
+					result = rule->isAuthorizedAPDUAccess(command);
+				}
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), (*item).toString().c_str());
+				goto END;
 			}
 		}
 
+		/* Step B, find with aid and ALL_DEVICES_APPS */
+		rule = findAccessRule(aid, ALL_DEVICE_APPS);
+		if (rule != NULL) {
+			if (command.isEmpty()) {
+				result = rule->isAuthorizedAccess();
+			} else {
+				result = rule->isAuthorizedAPDUAccess(command);
+			}
+			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), ALL_DEVICE_APPS.toString().c_str());
+			goto END;
+		}
+
+		/* Step C, find with ALL_SE_APPS and hashes */
+		for (item = certHashes.rbegin(); item != certHashes.rend(); item++) {
+			rule = findAccessRule(ALL_SE_APPS, *item);
+			if (rule != NULL) {
+				if (command.isEmpty()) {
+					result = rule->isAuthorizedAccess();
+				} else {
+					result = rule->isAuthorizedAPDUAccess(command);
+				}
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString().c_str());
+				goto END;
+			}
+		}
+
+		/* Step D, find with ALL_SE_APPS and ALL_DEVICES_APPS */
+		rule = findAccessRule(ALL_SE_APPS, ALL_DEVICE_APPS);
+		if (rule != NULL) {
+			if (command.isEmpty()) {
+				result = rule->isAuthorizedAccess();
+			} else {
+				result = rule->isAuthorizedAPDUAccess(command);
+			}
+			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", "All device applications");
+		}
+
+END :
 		return result;
 	}
 
-	bool AccessControlList::isAuthorizedAccess(ByteArray aid, ByteArray certHash)
+	bool AccessControlList::isAuthorizedNFCAccess(const ByteArray &aid,
+		const vector<ByteArray> &certHashes) const
 	{
-		return isAuthorizedAccess(aid, certHash, true);
-	}
+		bool result = allGranted;
+		vector<ByteArray>::const_reverse_iterator item;
+		const AccessRule *rule = NULL;
 
-	bool AccessControlList::isAuthorizedAccess(unsigned char *aidBuffer, unsigned int aidLength, unsigned char *certHashBuffer, unsigned int certHashLength)
-	{
-		return isAuthorizedAccess(ByteArray(aidBuffer, aidLength), ByteArray(certHashBuffer, certHashLength), true);
-	}
+		if (result == true) {
+			goto END;
+		}
 
-	bool AccessControlList::isAuthorizedAccess(ByteArray aid, vector<ByteArray> &certHashes)
-	{
-		bool result;
-		size_t i;
-
-		result = allGranted;
-
-		if (result == false)
-		{
-			for (i = 0; result == false && i < certHashes.size(); i++)
-			{
-				result = isAuthorizedAccess(aid, certHashes[i], false);
+		/* Step A, find with aid and cert hashes */
+		for (item = certHashes.rbegin(); item != certHashes.rend(); item++) {
+			rule = findAccessRule(aid, *item);
+			if (rule != NULL) {
+				result = rule->isAuthorizedNFCAccess();
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), (*item).toString().c_str());
+				goto END;
 			}
 		}
 
+		/* Step B, find with aid and ALL_DEVICES_APPS */
+		rule = findAccessRule(aid, ALL_DEVICE_APPS);
+		if (rule != NULL) {
+			result = rule->isAuthorizedNFCAccess();
+			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", aid.toString().c_str(), "All device applications");
+			goto END;
+		}
+
+		/* Step C, find with ALL_SE_APPS and hashes */
+		for (item = certHashes.rbegin(); item != certHashes.rend(); item++) {
+			rule = findAccessRule(ALL_SE_APPS, *item);
+			if (rule != NULL) {
+				result = rule->isAuthorizedNFCAccess();
+				_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", (*item).toString().c_str());
+				goto END;
+			}
+		}
+
+		/* Step D, find with ALL_SE_APPS and ALL_DEVICES_APPS */
+		rule = findAccessRule(ALL_SE_APPS, ALL_DEVICE_APPS);
+		if (rule != NULL) {
+			result = rule->isAuthorizedNFCAccess();
+			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", "All device applications");
+		}
+
+END :
 		return result;
 	}
-
-	void AccessControlList::printAccessControlList()
-	{
-		ByteArray temp;
-
-		/* release map and vector */
-		map<ByteArray, AccessCondition>::iterator iterMap;
-
-		SCARD_DEBUG("================ Certification Hashes ==================");
-		for (iterMap = mapConditions.begin(); iterMap != mapConditions.end(); iterMap++)
-		{
-			temp = iterMap->first;
-
-			SCARD_DEBUG("+ aid : %s", (temp == AID_DEFAULT) ? "DEFAULT" : (temp == AID_ALL) ? "ALL" : temp.toString());
-
-			iterMap->second.printAccessConditions();
-		}
-		SCARD_DEBUG("========================================================");
-	}
-
 } /* namespace smartcard_service_api */

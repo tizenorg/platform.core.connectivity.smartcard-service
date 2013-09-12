@@ -42,7 +42,7 @@ namespace smartcard_service_api
 	protected:
 		void closeSync()
 			throw(ErrorIO &, ErrorIllegalState &);
-		int transmitSync(ByteArray command, ByteArray &result)
+		int transmitSync(const ByteArray &command, ByteArray &result)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 
 	public:
@@ -51,8 +51,8 @@ namespace smartcard_service_api
 		int getChannelNumber() { return channelNum; }
 		Terminal *getTerminal() { return terminal; }
 
-		int close(closeCallback callback, void *userParam) { return -1; }
-		int transmit(ByteArray command, transmitCallback callback, void *userParam) { return -1; };
+		int close(closeChannelCallback callback, void *userParam) { return -1; }
+		int transmit(const ByteArray &command, transmitCallback callback, void *userParam) { return -1; };
 
 		friend class ServerReader;
 		friend class ServerSession;

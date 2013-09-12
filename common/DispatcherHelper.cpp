@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <stdio.h>
 #include <string.h>
@@ -60,7 +61,7 @@ namespace smartcard_service_api
 		}
 	}
 
-	void DispatcherHelper::pushMessage(DispatcherMsg *msg)
+	void DispatcherHelper::pushMessage(const DispatcherMsg &msg)
 	{
 		DispatcherMsg *pushMsg = new DispatcherMsg(msg);
 
@@ -117,17 +118,17 @@ namespace smartcard_service_api
 
 			if ((ret = pthread_create(&dispatcherThread, &attr, &DispatcherHelper::_dispatcherThreadFunc, this)) != 0)
 			{
-				SCARD_DEBUG_ERR("pthread_create failed [%d]", ret);
+				_ERR("pthread_create failed [%d]", ret);
 			}
 			else
 			{
-				SCARD_DEBUG("pthread_create success");
+				_DBG("pthread_create success");
 				result = true;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG("thread already start");
+			_DBG("thread already start");
 			result = true;
 		}
 
@@ -144,3 +145,4 @@ namespace smartcard_service_api
 	}
 
 } /* namespace smartcard_service_api */
+#endif

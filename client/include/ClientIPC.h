@@ -16,7 +16,7 @@
 
 #ifndef CLIENTIPC_H_
 #define CLIENTIPC_H_
-
+#ifndef USE_GDBUS
 /* standard library header */
 #ifdef USE_AUTOSTART
 #include <dbus/dbus-glib.h>
@@ -51,8 +51,9 @@ namespace smartcard_service_api
 
 	public:
 		static ClientIPC &getInstance();
-		bool sendMessage(Message *msg);
+		bool sendMessage(const Message &msg);
 	};
 
 } /* namespace open_mobile_api */
+#endif /* USE_GDBUS */
 #endif /* CLIENTIPC_H_ */

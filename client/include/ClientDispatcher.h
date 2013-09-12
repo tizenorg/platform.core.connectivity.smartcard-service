@@ -16,7 +16,7 @@
 
 #ifndef CLIENTDISPATCHER_H_
 #define CLIENTDISPATCHER_H_
-
+#ifndef USE_GDBUS
 /* standard library header */
 #include <map>
 
@@ -34,7 +34,7 @@ namespace smartcard_service_api
 	class ClientDispatcher: public DispatcherHelper
 	{
 	private:
-		map<void *, SEService *> mapSESerivces;
+		map<unsigned int, SEService *> mapSESerivces;
 
 		ClientDispatcher();
 		~ClientDispatcher();
@@ -44,9 +44,10 @@ namespace smartcard_service_api
 	public:
 		static ClientDispatcher &getInstance();
 
-		bool addSEService(void *context, SEService *service);
-		void removeSEService(void *context);
+		bool addSEService(unsigned int handle, SEService *service);
+		void removeSEService(unsigned int handle);
 	};
 
 } /* namespace open_mobile_api */
+#endif /* USE_GDBUS */
 #endif /* CLIENTDISPATCHER_H_ */

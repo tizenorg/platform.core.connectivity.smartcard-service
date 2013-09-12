@@ -31,13 +31,19 @@ namespace smartcard_service_api
 	{
 	public:
 		/* base64 method */
-		static bool encodeBase64String(const ByteArray &buffer, ByteArray &result, bool newLineChar = false);
-		static bool decodeBase64String(const char *buffer, ByteArray &result, bool newLineChar = true);
-		static bool decodeBase64String(const ByteArray &buffer, ByteArray &result, bool newLineChar = true);
+		static bool encodeBase64String(const ByteArray &buffer,
+			ByteArray &result, bool newLineChar = false);
+		static bool decodeBase64String(const char *buffer,
+			ByteArray &result, bool newLineChar = true);
+		static bool decodeBase64String(const ByteArray &buffer,
+			ByteArray &result, bool newLineChar = true);
 
 		/* digest method */
-		static bool digestBuffer(const char *algorithm, const uint8_t *buffer, const uint32_t length, ByteArray &result);
-		static bool digestBuffer(const char *algorithm, const ByteArray &buffer, ByteArray &result);
+		static bool digestBuffer(const char *algorithm,
+			const uint8_t *buffer, uint32_t length,
+			ByteArray &result);
+		static bool digestBuffer(const char *algorithm,
+			const ByteArray &buffer, ByteArray &result);
 	};
 
 } /* namespace smartcard_service_api */

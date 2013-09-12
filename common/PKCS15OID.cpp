@@ -26,7 +26,7 @@
 
 namespace smartcard_service_api
 {
-	PKCS15OID::PKCS15OID(ByteArray data)
+	PKCS15OID::PKCS15OID(const ByteArray &data)
 	{
 		parseOID(data);
 	}
@@ -35,26 +35,25 @@ namespace smartcard_service_api
 	{
 	}
 
-	bool PKCS15OID::parseOID(ByteArray data)
+	bool PKCS15OID::parseOID(const ByteArray &data)
 	{
 		bool result = false;
 		SimpleTLV tlv(data);
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		while (tlv.decodeTLV() == true)
 		{
 			switch (tlv.getTag())
 			{
 			case PKCS15::TAG_SEQUENCE :
-				if (tlv.getLength() > 0)
+				if (tlv.size() > 0)
 				{
 					/* common object attribute */
 					tlv.enterToValueTLV();
 					if (tlv.decodeTLV() == true && tlv.getTag() == 0x0C) /* ?? */
 					{
 						name = tlv.getValue();
-						SCARD_DEBUG("name : %s", name.toString());
 					}
 					tlv.returnToParentTLV();
 				}
@@ -62,12 +61,12 @@ namespace smartcard_service_api
 				{
 					/* common object attribute */
 					/* if you want to use this value, add member variable and parse here */
-//					SCARD_DEBUG_ERR("common object attribute is empty");
+//					_ERR("common object attribute is empty");
 				}
 				break;
 
 			case 0xA0 : /* CHOICE 0 : External Oid??? */
-				SCARD_DEBUG_ERR("oid doesn't exist");
+				_ERR("oid doesn't exist");
 				break;
 
 			case 0xA1 : /* CHOICE 1 : OidDO */
@@ -83,11 +82,11 @@ namespace smartcard_service_api
 					{
 						oid = tlv.getValue();
 
-						SCARD_DEBUG("oid : %s", oid.toString());
+						_DBG("oid : %s", oid.toString().c_str());
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("oid is empty");
+						_ERR("oid is empty");
 					}
 
 					/* path */
@@ -95,49 +94,33 @@ namespace smartcard_service_api
 					{
 						path = SimpleTLV::getOctetString(tlv.getValue());
 
-						SCARD_DEBUG("path : %s", path.toString());
+						_DBG("path : %s", path.toString().c_str());
 
 						result = true;
 					}
 					else
 					{
-						SCARD_DEBUG_ERR("sequence is empty");
+						_ERR("sequence is empty");
 					}
 
 					tlv.returnToParentTLV();
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("common dataobject attribute is empty");
+					_ERR("common dataobject attribute is empty");
 				}
 				tlv.returnToParentTLV();
 
 				break;
 
 			default :
-				SCARD_DEBUG_ERR("Unknown tag : 0x%02X", tlv.getTag());
+				_ERR("Unknown tag : 0x%02X", tlv.getTag());
 				break;
 			}
 		}
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}
-
-	ByteArray PKCS15OID::getOID()
-	{
-		return oid;
-	}
-
-	ByteArray PKCS15OID::getName()
-	{
-		return name;
-	}
-
-	ByteArray PKCS15OID::getPath()
-	{
-		return path;
-	}
-
 } /* namespace smartcard_service_api */

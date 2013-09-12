@@ -18,7 +18,9 @@
 #define CLIENTCHANNEL_H_
 
 /* standard library header */
-
+#ifdef USE_GDBUS
+#include <gio/gio.h>
+#endif
 /* SLP library header */
 
 /* local header */
@@ -36,32 +38,42 @@ namespace smartcard_service_api
 	private:
 		void *context;
 		void *handle;
+#ifdef USE_GDBUS
+		void *proxy;
+#else
 		/* temporary data for sync function */
 		int error;
 		ByteArray response;
-
+#endif
 		ClientChannel(void *context, Session *session, int channelNum,
-			ByteArray selectResponse, void *handle);
+			const ByteArray &selectResponse, void *handle);
 		~ClientChannel();
 
+#ifdef USE_GDBUS
+		static void channel_transmit_cb(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+		static void channel_close_cb(GObject *source_object,
+			GAsyncResult *res, gpointer user_data);
+#else
 		static bool dispatcherCallback(void *message);
-
+#endif
 	public:
-		int close(closeCallback callback, void *userParam);
-		int transmit(ByteArray command, transmitCallback callback,
+		int close(closeChannelCallback callback, void *userParam);
+		int transmit(const ByteArray &command, transmitCallback callback,
 			void *userParam);
 
 		void closeSync()
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorSecurity &, ErrorIllegalParameter &);
-		int transmitSync(ByteArray command, ByteArray &result)
+		int transmitSync(const ByteArray &command, ByteArray &result)
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
+#ifndef USE_GDBUS
 		friend class ClientDispatcher;
+#endif
 		friend class Session;
 	};
-
 } /* namespace smartcard_service_api */
 #endif /* __cplusplus */
 

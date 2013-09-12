@@ -34,7 +34,7 @@ namespace smartcard_service_api
 		int status;
 		ByteArray dataField;
 
-		static int parseStatusWord(unsigned char *sw);
+		static int parseStatusWord(const unsigned char *sw);
 
 	public:
 		static const int SUCCESS = 0;
@@ -63,15 +63,15 @@ namespace smartcard_service_api
 		~ResponseHelper();
 
 		bool setResponse(const ByteArray &response);
-		int getStatus();
-		unsigned char getSW1();
-		unsigned char getSW2();
+		inline int getStatus() const { return status; }
+		inline unsigned char getSW1() const { return sw[0]; }
+		inline unsigned char getSW2() const { return sw[1]; }
 
 //		char *getErrorString();
-		ByteArray getDataField();
+		inline const ByteArray getDataField() const { return dataField; }
 
 		static int getStatus(const ByteArray &response);
-		static ByteArray getDataField(const ByteArray &response);
+		static const ByteArray getDataField(const ByteArray &response);
 //		static char *getErrorString();
 	};
 
@@ -145,30 +145,30 @@ namespace smartcard_service_api
 		~APDUCommand();
 
 		bool setCommand(unsigned char cla, unsigned char ins, unsigned char p1,
-			unsigned char p2, ByteArray commandData, unsigned int maxResponseSize);
+			unsigned char p2, const ByteArray &commandData, unsigned int maxResponseSize);
 		bool setCommand(const ByteArray &command);
 
 		bool setChannel(int type, int channelNum);
 
 		void setCLA(unsigned char cla);
-		unsigned char getCLA();
+		unsigned char getCLA() const;
 
 		void setINS(unsigned char ins);
-		unsigned char getINS();
+		unsigned char getINS() const;
 
 		void setP1(unsigned char p1);
-		unsigned char getP1();
+		unsigned char getP1() const;
 
 		void setP2(unsigned char p2);
-		unsigned char getP2();
+		unsigned char getP2() const;
 
 		void setCommandData(const ByteArray &data);
-		ByteArray getCommandData();
+		const ByteArray getCommandData() const;
 
 		void setMaxResponseSize(unsigned int maxResponseSize);
-		unsigned int getMaxResponseSize();
+		unsigned int getMaxResponseSize() const;
 
-		bool getBuffer(ByteArray &array);
+		bool getBuffer(ByteArray &array) const;
 	};
 
 	class APDUHelper
@@ -186,7 +186,8 @@ namespace smartcard_service_api
 		static const int COMMAND_WRITE_BINARY = 10;
 		static const int COMMAND_WRITE_RECORD = 11;
 
-		static ByteArray generateAPDU(int command, int channel, ByteArray data);
+		static const ByteArray generateAPDU(int command,
+			int channel, const ByteArray &data);
 	};
 
 } /* namespace smartcard_service_api */

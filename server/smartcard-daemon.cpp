@@ -20,14 +20,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <glib.h>
+#include <glib-object.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <signal.h>
-#ifdef __cplusplus
 #include <vector>
-#endif /* __cplusplus */
-#ifdef USE_AUTOSTART
+#if defined(USE_AUTOSTART) && !defined(USE_GDBUS)
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-bindings.h>
 #endif
@@ -38,19 +37,23 @@
 #include "Debug.h"
 #include "ServerIPC.h"
 #include "ServerResource.h"
+#ifdef USE_GDBUS
+#include "smartcard-service-gdbus.h"
+#include "ServerGDBus.h"
+#else
 #ifdef USE_AUTOSTART
 #include "SmartcardDbus.h"
 #include "smartcard-service-binding.h"
 #endif
+#endif
 
 /* definition */
-#ifdef __cplusplus
 using namespace std;
 using namespace smartcard_service_api;
-#endif /* __cplusplus */
 
 /* global variable */
-#ifdef USE_AUTOSTART
+GMainLoop *main_loop = NULL;
+#if defined(USE_AUTOSTART) && !defined(USE_GDBUS)
 GObject *object = NULL;
 DBusGConnection *connection = NULL;
 #endif
@@ -98,6 +101,32 @@ static void daemonize(void)
 }
 #endif
 
+#ifdef USE_GDBUS
+static void _bus_acquired_cb(GDBusConnection *connection,
+	const gchar *path, gpointer user_data)
+{
+	_DBG("bus path : %s", path);
+
+	ServerResource::getInstance();
+
+	ServerGDBus::getInstance().init();
+}
+
+static void _name_acquired_cb(GDBusConnection *connection,
+	const gchar *name, gpointer user_data)
+{
+	_DBG("name : %s", name);
+}
+
+static void _name_lost_cb(GDBusConnection *connnection,
+	const gchar *name, gpointer user_data)
+{
+	_DBG("name : %s", name);
+
+	ServerGDBus::getInstance().deinit();
+}
+
+#else
 #ifdef USE_AUTOSTART
 G_DEFINE_TYPE(Smartcard_Service, smartcard_service, G_TYPE_OBJECT)
 
@@ -114,26 +143,26 @@ G_STMT_END
 
 GQuark smartcard_service_error_quark(void)
 {
-	SCARD_DEBUG("smartcard_service_error_quark entered");
+	_DBG("smartcard_service_error_quark entered");
 
 	return g_quark_from_static_string("smartcard_service_error");
 }
 
 static void smartcard_service_init(Smartcard_Service *smartcard_service)
 {
-	SCARD_DEBUG("smartcard_service_init entered");
+	_DBG("smartcard_service_init entered");
 }
 
 static void smartcard_service_class_init(Smartcard_ServiceClass *smartcard_service_class)
 {
-	SCARD_DEBUG("smartcard_service_class_init entered");
+	_DBG("smartcard_service_class_init entered");
 
 	dbus_g_object_type_install_info(SMARTCARD_SERVICE_TYPE, &dbus_glib_smartcard_service_object_info);
 }
 
 gboolean smartcard_service_launch(Smartcard_Service *smartcard_service, guint *result_val, GError **error)
 {
-	SCARD_DEBUG("smartcard_service_launch entered");
+	_DBG("smartcard_service_launch entered");
 
 	return TRUE;
 }
@@ -144,7 +173,7 @@ static void _initialize_dbus()
 	DBusGProxy *proxy = NULL;
 	guint ret = 0;
 
-	SCARD_BEGIN();
+	_BEGIN();
 
 	g_type_init();
 
@@ -160,7 +189,7 @@ static void _initialize_dbus()
 		{
 			if (!org_freedesktop_DBus_request_name(proxy, SMARTCARD_SERVICE_NAME, 0, &ret, &error))
 			{
-				SCARD_DEBUG_ERR("Unable to register service: %s", error->message);
+				_ERR("Unable to register service: %s", error->message);
 				g_error_free(error);
 			}
 
@@ -168,73 +197,93 @@ static void _initialize_dbus()
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("dbus_g_proxy_new_for_name failed");
+			_ERR("dbus_g_proxy_new_for_name failed");
 		}
 	}
 	else
 	{
-		SCARD_DEBUG_ERR("ERROR: Can't get on system bus [%s]", error->message);
+		_ERR("ERROR: Can't get on system bus [%s]", error->message);
 		g_error_free(error);
 	}
 
-	SCARD_END();
+	_END();
 }
 
 static void _finalize_dbus()
 {
-	SCARD_BEGIN();
+	_BEGIN();
 
 	dbus_g_connection_unregister_g_object(connection, object);
 	g_object_unref(object);
 
-	SCARD_END();
+	_END();
 }
+#endif
 #endif
 
 static void __sighandler(int sig)
 {
-	SCARD_DEBUG("signal!! [%d]", sig);
+	_DBG("signal!! [%d]", sig);
 
+#ifdef USE_GDBUS
+#else
 #ifdef USE_AUTOSTART
 	_finalize_dbus();
 #endif
+#endif
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-	GMainLoop *loop = NULL;
-
+#ifdef USE_GDBUS
+	guint id = 0;
+#endif
 	signal(SIGTERM, &__sighandler);
 
 #ifndef USE_AUTOSTART
 	daemonize();
 #endif
 
-	if (!g_thread_supported())
-	{
+	if (!g_thread_supported()) {
 		g_thread_init(NULL);
 	}
 
-	loop = g_main_new(TRUE);
+	g_type_init();
 
-#ifdef __cplusplus
-	ServerResource::getInstance().setMainLoopInstance(loop);
+	main_loop = g_main_new(TRUE);
+
+#ifdef USE_GDBUS
+	id = g_bus_own_name(G_BUS_TYPE_SYSTEM,
+			"org.tizen.SmartcardService",
+			G_BUS_NAME_OWNER_FLAGS_NONE,
+			_bus_acquired_cb,
+			_name_acquired_cb,
+			_name_lost_cb,
+			NULL,
+			NULL);
+#else
 	ServerIPC::getInstance()->createListenSocket();
-#else /* __cplusplus */
-	server_resource_set_main_loop_instance(loop);
-	server_ipc_create_listen_socket();
-#endif /* __cplusplus */
-
 #ifdef USE_AUTOSTART
 	_initialize_dbus();
 #endif
-	g_main_loop_run(loop);
+#endif
+	g_main_loop_run(main_loop);
 
+#ifdef USE_GDBUS
+	if (id)
+		g_bus_unown_name(id);
+#else
 #ifdef USE_AUTOSTART
 	_finalize_dbus();
+#endif
 #endif
 	/* release secure element.. (pure virtual function problem..) */
 	ServerResource::getInstance().unloadSecureElements();
 
 	return 0;
+}
+
+void smartcard_daemon_exit()
+{
+	g_main_loop_quit(main_loop);
 }

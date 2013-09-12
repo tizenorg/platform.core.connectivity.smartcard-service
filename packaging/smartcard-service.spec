@@ -1,69 +1,83 @@
+# FOR COMMENTING DEFINITION, MUST USE %% instead of %
+%global use_autostart "-DUSE_AUTOSTART=1"
+%global use_gdbus "-DUSE_GDBUS=1"
+#%%global test_client "-DTEST_CLIENT=1"
+
 Name:       smartcard-service
 Summary:    Smartcard Service FW
-Version:    0.1.19
-Release:    1
+Version:    0.1.22
+Release:    0
 Group:      libs
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
-#Source1:    smartcard-service-server.init
-Source1001:	%{name}.manifest
-Source1002:	%{name}-devel.manifest
-Source1003:	smartcard-service-common.manifest
-Source1004:	smartcard-service-common-devel.manifest
-Source1005:	smartcard-service-server.manifest
-
+%if 0%{!?use_autostart:1}
+Source1:    smartcard-service-server.init
+%endif
+BuildRequires: cmake
 BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(gio-unix-2.0)
 BuildRequires: pkgconfig(security-server)
 BuildRequires: pkgconfig(dlog)
-BuildRequires: pkgconfig(vconf)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(libssl)
-BuildRequires: pkgconfig(dbus-glib-1)
 BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: pkgconfig(pkgmgr-info)
-BuildRequires: cmake
-BuildRequires: gettext-tools
+%if 0%{!?use_gdbus:1}
+BuildRequires: pkgconfig(dbus-glib-1)
+%endif
+# for gdbus
+%if 0%{?use_gdbus:1}
+BuildRequires: python
+BuildRequires: python-xml
+%endif
 
 Requires(post):   /sbin/ldconfig
-Requires(post):   /usr/bin/vconftool
-requires(postun): /sbin/ldconfig
+Requires(postun): /sbin/ldconfig
+Requires:         smartcard-service-common = %{version}-%{release}
+
 
 %description
 Smartcard Service FW.
 
+
 %prep
 %setup -q
-cp %{SOURCE1001} %{SOURCE1002} %{SOURCE1003} %{SOURCE1004} %{SOURCE1005} .
+
 
 %package    devel
-Summary:    Smartcard service
+Summary:    smartcard service
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
+
 
 %description devel
 smartcard service.
 
+
 %package -n smartcard-service-common
-Summary:    Common smartcard service
+Summary:    common smartcard service
 Group:      Development/Libraries
-Requires:   %{name} = %{version}-%{release}
+
 
 %description -n smartcard-service-common
 common smartcard service.
 
+
 %package -n smartcard-service-common-devel
-Summary:    Common smartcard service
+Summary:    common smartcard service
 Group:      Development/Libraries
-Requires:   %{name} = %{version}-%{release}
 Requires:   smartcard-service-common = %{version}-%{release}
+
 
 %description -n smartcard-service-common-devel
 common smartcard service.
 
+
 %package -n smartcard-service-server
-Summary:    Server smartcard service
+Summary:    server smartcard service
 Group:      Development/Libraries
-Requires:   %{name} = %{version}-%{release}
+Requires:   smartcard-service-common = %{version}-%{release}
+
 
 %description -n smartcard-service-server
 smartcard service.
@@ -72,49 +86,63 @@ smartcard service.
 %build
 mkdir obj-arm-limux-qnueabi
 cd obj-arm-limux-qnueabi
-%cmake .. -DUSE_AUTOSTART=1 # daemon will be started when client makes instance by DBUS
+%cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix} %{?use_autostart} %{?use_gdbus} %{?test_client}
+#make %{?jobs:-j%jobs}
+
 
 %install
 cd obj-arm-limux-qnueabi
 %make_install
-%__mkdir -p  %{buildroot}/etc/init.d/
-%__mkdir -p  %{buildroot}/etc/rc.d/rc3.d/
-%__mkdir -p  %{buildroot}/etc/rc.d/rc5.d/
+%if 0%{!?use_autostart:1}
+	%__mkdir -p  %{buildroot}/etc/init.d/
+	%__mkdir -p  %{buildroot}/etc/rc.d/rc3.d/
+	%__mkdir -p  %{buildroot}/etc/rc.d/rc5.d/
+	%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
+	chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
+%endif
+mkdir -p %{buildroot}/usr/share/license
+cp -af %{_builddir}/%{name}-%{version}/packaging/%{name} %{buildroot}/usr/share/license/
+cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-common %{buildroot}/usr/share/license/
+cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buildroot}/usr/share/license/
+
 
 %post
 /sbin/ldconfig
-ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc3.d/S79smartcard-service-server
-ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc5.d/S79smartcard-service-server
+%if 0%{!?use_autostart:1}
+	ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc3.d/S79smartcard-service-server
+	ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc5.d/S79smartcard-service-server
+%endif
+
 
 %postun
 /sbin/ldconfig
-rm -f /etc/rc.d/rc3.d/S79smartcard-service-server
-rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
-
-
-%post -n smartcard-service-common
-/sbin/ldconfig
-
-%postun -n smartcard-service-common
-/sbin/ldconfig
+%if 0%{!?use_autostart:1}
+	rm -f /etc/rc.d/rc3.d/S79smartcard-service-server
+	rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
+%endif
 
 
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsmartcard-service.so.*
+%{_datadir}/license/%{name}
+
 
 %files  devel
-%manifest %{name}-devel.manifest
+%manifest smartcard-service-devel.manifest
 %defattr(-,root,root,-)
-%{_includedir}/smartcard-service/*
+%{_includedir}/%{name}/*
 %{_libdir}/libsmartcard-service.so
-%{_libdir}/pkgconfig/smartcard-service.pc
+%{_libdir}/pkgconfig/%{name}.pc
+
 
 %files -n smartcard-service-common
 %manifest smartcard-service-common.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsmartcard-service-common.so.*
+%{_datadir}/license/smartcard-service-common
+
 
 %files -n smartcard-service-common-devel
 %manifest smartcard-service-common-devel.manifest
@@ -123,9 +151,18 @@ rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 %{_libdir}/libsmartcard-service-common.so
 %{_libdir}/pkgconfig/smartcard-service-common.pc
 
+
 %files -n smartcard-service-server
 %manifest smartcard-service-server.manifest
 %defattr(-,root,root,-)
 %{_bindir}/smartcard-daemon
-/usr/share/dbus-1/services/org.tizen.smartcard_service.service
-
+%{_datadir}/packages/smartcard-service-server.xml
+%if 0%{?test_client:1}
+	%{_bindir}/smartcard-test-client
+%endif
+%if 0%{?use_autostart:1}
+	%{_datadir}/dbus-1/services/org.tizen.smartcard_service.service
+%else
+	%{_sysconfdir}/init.d/smartcard-service-server
+%endif
+%{_datadir}/license/smartcard-service-server

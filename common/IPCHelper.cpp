@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +40,7 @@
 #include "IPCHelper.h"
 
 #ifdef USE_UNIX_DOMAIN
-#define SCARD_SERVER_DOMAIN "/tmp/omapi-server-domain"
+#define SCARD_SERVER_DOMAIN "/tmp/smartcard-server-domain"
 #endif /* USE_UNIX_DOMAIN */
 
 static void setNonBlockSocket(int socket)
@@ -52,7 +53,7 @@ static void setNonBlockSocket(int socket)
 
 	if (fcntl(socket, F_SETFL, flags) < 0)
 	{
-		/* SCARD_DEBUG_ERR("fcntl, executing nonblock error"); */
+		/* _ERR("fcntl, executing nonblock error"); */
 	}
 }
 
@@ -78,11 +79,11 @@ namespace smartcard_service_api
 		IPCHelper *helper = (IPCHelper *)data;
 		gboolean result = FALSE;
 
-		SCARD_DEBUG("channel [%p], condition [%d], data [%p]", channel, condition, data);
+		_DBG("channel [%p], condition [%d], data [%p]", channel, condition, data);
 
 		if (helper == NULL)
 		{
-			SCARD_DEBUG_ERR("ipchelper is null");
+			_ERR("ipchelper is null");
 			return result;
 		}
 
@@ -117,7 +118,7 @@ namespace smartcard_service_api
 		ipcSocket = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (ipcSocket == -1)
 		{
-			SCARD_DEBUG_ERR("get socket is failed");
+			_ERR("get socket is failed");
 			return false;
 		}
 
@@ -128,19 +129,19 @@ namespace smartcard_service_api
 
 		if (bind(ipcSocket, (struct sockaddr *)&saddrun_rv, sizeof(saddrun_rv)) < 0)
 		{
-			SCARD_DEBUG_ERR("bind is failed \n");
+			_ERR("bind is failed");
 			goto ERROR;
 		}
 
 		if (chmod(SCARD_SERVER_DOMAIN, 0777) < 0)
 		{
-			SCARD_DEBUG_ERR("can not change permission of UNIX DOMAIN file");
+			_ERR("can not change permission of UNIX DOMAIN file");
 			goto ERROR;
 		}
 
 		if (listen(ipcSocket, IPC_SERVER_MAX_CLIENT) < 0)
 		{
-			SCARD_DEBUG_ERR("listen is failed \n");
+			_ERR("listen is failed");
 			goto ERROR;
 		}
 
@@ -148,13 +149,13 @@ namespace smartcard_service_api
 		{
 			if ((watchId = g_io_add_watch(ioChannel, condition, &IPCHelper::channelCallbackFunc, this)) < 1)
 			{
-				SCARD_DEBUG_ERR(" g_io_add_watch is failed \n");
+				_ERR(" g_io_add_watch is failed");
 				goto ERROR;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR(" g_io_channel_unix_new is failed \n");
+			_ERR(" g_io_channel_unix_new is failed");
 			goto ERROR;
 		}
 
@@ -165,7 +166,7 @@ namespace smartcard_service_api
 		gid = security_server_get_gid("smartcard-service");
 		if(gid == 0)
 		{
-			SCARD_DEBUG("get gid from security server is failed. this object is not allowed by security server");
+			_DBG("get gid from security server is failed. this object is not allowed by security server");
 			goto ERROR;
 		}
 
@@ -178,11 +179,11 @@ namespace smartcard_service_api
 		}
 #endif
 
-		SCARD_DEBUG("server ipc is initialized");
+		_INFO("server ipc is initialized");
 
 		return true;
 ERROR :
-		SCARD_DEBUG_ERR("error while initializing server ipc");
+		_ERR("error while initializing server ipc");
 
 		destroyListenSocket();
 
@@ -203,11 +204,11 @@ ERROR :
 
 			for (i = 0; i < events; i++)
 			{
-				SCARD_DEBUG("pollEvents[%d].events [%X]", i, pollEvents[i].events);
+				_DBG("pollEvents[%d].events [%X]", i, pollEvents[i].events);
 
 				if ((pollEvents[i].events & EPOLLHUP) || (pollEvents[i].events & EPOLLERR))
 				{
-					SCARD_DEBUG_ERR("connection is closed");
+					_ERR("connection is closed");
 					result = 0;
 					break;
 				}
@@ -220,13 +221,13 @@ ERROR :
 		}
 		else if (errno == EINTR)
 		{
-			SCARD_DEBUG_ERR("epoll_wait interrupted");
+			_ERR("epoll_wait interrupted");
 		}
 		else
 		{
 			char buffer[1024];
 
-			SCARD_DEBUG_ERR("epoll_wait failed, errno [%d], %s", errno, strerror_r(errno, buffer, sizeof(buffer)));
+			_ERR("epoll_wait failed, errno [%d], %s", errno, strerror_r(errno, buffer, sizeof(buffer)));
 		}
 #else
 		if (select(ipcSocket + 1, &fdSetRead, NULL, NULL, NULL) > 0)
@@ -240,30 +241,30 @@ ERROR :
 				{
 					if (val == 0)
 					{
-						SCARD_DEBUG("socket is readable");
+						_DBG("socket is readable");
 						result = 1;
 					}
 					else
 					{
-						SCARD_DEBUG("socket is not available. maybe disconnected");
+						_DBG("socket is not available. maybe disconnected");
 						result = 0;
 					}
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("getsockopt failed, errno [%d]", errno);
+					_ERR("getsockopt failed, errno [%d]", errno);
 					result = errno;
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("FD_ISSET false!!! what's wrong");
+				_ERR("FD_ISSET false!!! what's wrong");
 				result = -1;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("select failed [%d]", errno);
+			_ERR("select failed [%d]", errno);
 			result = errno;
 		}
 #endif
@@ -282,7 +283,7 @@ ERROR :
 		sigemptyset(&newmask);
 		sigaddset(&newmask, SIGTERM);
 		pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
-		SCARD_DEBUG("sighandler is registered");
+		_DBG("sighandler is registered");
 
 		pthread_mutex_lock(&g_client_lock);
 		pthread_cond_signal ((pthread_cond_t *) data);
@@ -312,7 +313,7 @@ ERROR :
 			}
 		}
 
-		SCARD_DEBUG("threadRead is terminated");
+		_INFO("threadRead is terminated");
 
 		return (void *)NULL;
 	}
@@ -326,7 +327,7 @@ ERROR :
 		int result = 0;
 		char err[200] = { 0, };
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if (ipcSocket >= 0)
 			return true;
@@ -341,12 +342,12 @@ ERROR :
 		ipcSocket = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (ipcSocket == -1)
 		{
-			SCARD_DEBUG_ERR("get socket is failed [%d, %s]",
+			_ERR("get socket is failed [%d, %s]",
 				errno, strerror_r(errno, err, sizeof(err)));
 			goto ERROR;
 		}
 
-		SCARD_DEBUG("socket is created");
+		_DBG("socket is created");
 
 		::setNonBlockSocket(ipcSocket);
 
@@ -357,7 +358,7 @@ ERROR :
 
 		if ((result = connect(ipcSocket, (struct sockaddr *)&saddrun_rv, len_saddr)) < 0)
 		{
-			SCARD_DEBUG_ERR("connect failed [%d, %s]",
+			_ERR("connect failed [%d, %s]",
 				errno, strerror_r(errno, err, sizeof(err)));
 			goto ERROR;
 		}
@@ -366,7 +367,7 @@ ERROR :
 #ifdef USE_IPC_EPOLL
 		if((fdPoll = epoll_create1(EPOLL_CLOEXEC)) == -1)
 		{
-			SCARD_DEBUG_ERR("epoll_create1 failed [%d, %s]",
+			_ERR("epoll_create1 failed [%d, %s]",
 				errno, strerror_r(errno, err, sizeof(err)));
 			goto ERROR;
 		}
@@ -374,7 +375,7 @@ ERROR :
 		pollEvents = (struct epoll_event *)calloc(EPOLL_SIZE, sizeof(struct epoll_event));
 		if (pollEvents == NULL)
 		{
-			SCARD_DEBUG_ERR("alloc failed");
+			_ERR("alloc failed");
 			goto ERROR;
 		}
 
@@ -396,7 +397,7 @@ ERROR :
 		if (pthread_create(&readThread, NULL, &IPCHelper::threadRead, this) != 0)
 #endif
 		{
-			SCARD_DEBUG_ERR("pthread_create is failed");
+			_ERR("pthread_create is failed");
 			goto ERROR;
 		}
 
@@ -409,32 +410,32 @@ ERROR :
 		{
 			if ((watchId = g_io_add_watch(ioChannel, condition, &IPCHelper::channelCallbackFunc, this)) < 1)
 			{
-				SCARD_DEBUG_ERR(" g_io_add_watch is failed");
+				_ERR(" g_io_add_watch is failed");
 				goto ERROR;
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR(" g_io_channel_unix_new is failed");
+			_ERR(" g_io_channel_unix_new is failed");
 			goto ERROR;
 		}
 #endif
 		pthread_mutex_unlock(&ipcLock);
 
-		SCARD_DEBUG("connecting success");
+		_INFO("connecting success");
 
-		SCARD_END();
+		_END();
 
 		return true;
 
 ERROR :
-		SCARD_DEBUG_ERR("error while initializing client ipc");
+		_ERR("error while initializing client ipc");
 
 		destroyConnectSocket();
 
 		pthread_mutex_unlock(&ipcLock);
 
-		SCARD_END();
+		_END();
 
 		return false;
 	}
@@ -516,26 +517,26 @@ ERROR :
 		}
 	}
 
-	bool IPCHelper::sendMessage(int socket, Message *msg)
+	bool IPCHelper::sendMessage(int socket, const Message &msg)
 	{
 		ByteArray stream;
 		unsigned int length = 0;
 
-		stream = msg->serialize();
-		length = stream.getLength();
+		stream = msg.serialize();
+		length = stream.size();
 
-		SCARD_DEBUG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
-			socket, msg->message, stream.getLength());
+		_DBG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
+			socket, msg.message, stream.size());
 
 		return sendMessage(socket, stream);
 	}
 
-	bool IPCHelper::sendMessage(int socket, ByteArray &buffer)
+	bool IPCHelper::sendMessage(int socket, const ByteArray &buffer)
 	{
 		bool result = false;
 		unsigned int length = 0;
 
-		length = buffer.getLength();
+		length = buffer.size();
 
 		if (length > 0)
 		{
@@ -564,12 +565,12 @@ ERROR :
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("send failed, sentBytes [%d]", sentBytes);
+				_ERR("send failed, sentBytes [%d]", sentBytes);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("stream length is zero");
+			_ERR("stream length is zero");
 		}
 
 		return result;
@@ -585,10 +586,10 @@ ERROR :
 		ByteArray buffer;
 		Message *msg = NULL;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		buffer = retrieveBuffer(socket);
-		if (buffer.getLength() > 0)
+		if (buffer.size() > 0)
 		{
 			msg = new Message();
 			if (msg != NULL)
@@ -597,26 +598,26 @@ ERROR :
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("alloc failed");
+				_ERR("alloc failed");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("retrieveBuffer failed ");
+			_ERR("retrieveBuffer failed ");
 		}
 
-		SCARD_END();
+		_END();
 
 		return msg;
 	}
 
-	ByteArray IPCHelper::retrieveBuffer(int socket)
+	const ByteArray IPCHelper::retrieveBuffer(int socket)
 	{
 		ByteArray buffer;
 		unsigned int length = 0;
 		int readBytes = 0;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		/* read 4 bytes (length) */
 		pthread_mutex_lock(&ipcLock);
@@ -647,28 +648,28 @@ ERROR :
 					while (current < length);
 					pthread_mutex_unlock(&ipcLock);
 
-					SCARD_DEBUG("<<<[RETRIEVE]<<< socket [%d], msg_length [%d]", socket, length);
+					_DBG("<<<[RETRIEVE]<<< socket [%d], msg_length [%d]", socket, length);
 
-					buffer.setBuffer(temp, length);
+					buffer.assign(temp, length);
 
 					delete []temp;
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("allocation failed");
+					_ERR("allocation failed");
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("invalid length, socket = [%d], msg_length = [%d]", socket, length);
+				_ERR("invalid length, socket = [%d], msg_length = [%d]", socket, length);
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("failed to recv length, socket = [%d], readBytes [%d]", socket, readBytes);
+			_ERR("failed to recv length, socket = [%d], readBytes [%d]", socket, readBytes);
 		}
 
-		SCARD_END();
+		_END();
 
 		return buffer;
 	}
@@ -679,3 +680,4 @@ ERROR :
 	}
 
 } /* namespace smartcard_service_api */
+#endif

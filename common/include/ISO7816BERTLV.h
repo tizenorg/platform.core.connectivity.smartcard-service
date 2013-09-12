@@ -27,11 +27,9 @@
 
 namespace smartcard_service_api
 {
-	class ISO7816BERTLV: public TLVHelper
+	class ISO7816BERTLV : public TLVHelper
 	{
 	private:
-//		ISO7816BERTLV child;
-
 		unsigned char firstByte;
 		unsigned int tagClass;
 		unsigned int encoding;
@@ -39,22 +37,22 @@ namespace smartcard_service_api
 		ISO7816BERTLV(TLVHelper *parent);
 		ISO7816BERTLV(const ByteArray &array, TLVHelper *parent);
 
-		int decodeTag(unsigned char *buffer);
-		int decodeLength(unsigned char *buffer);
-		int decodeValue(unsigned char *buffer);
+		int decodeTag(const unsigned char *buffer);
+		int decodeLength(const unsigned char *buffer);
+		int decodeValue(const unsigned char *buffer);
 
-		TLVHelper *getChildTLV(ByteArray data);
+		TLVHelper *getChildTLV(const ByteArray &data);
 
 	public:
 		ISO7816BERTLV();
 		ISO7816BERTLV(const ByteArray &array);
 		~ISO7816BERTLV();
 
-		unsigned int getClass();
-		unsigned int getEncoding();
+		unsigned int getClass() const;
+		unsigned int getEncoding() const;
 
-		static ByteArray encode(unsigned int tagClass, unsigned int encoding, unsigned int tag, ByteArray buffer);
-		static ByteArray encode(unsigned int tagClass, unsigned int encoding, unsigned int tag, unsigned char *buffer, unsigned int length);
+		static const ByteArray encode(unsigned int tagClass, unsigned int encoding, unsigned int tag, const ByteArray &buffer);
+		static const ByteArray encode(unsigned int tagClass, unsigned int encoding, unsigned int tag, unsigned char *buffer, unsigned int length);
 	};
 
 } /* namespace smartcard_service_api */

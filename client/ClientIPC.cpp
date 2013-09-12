@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef USE_GDBUS
 /* standard library header */
 #include <sys/socket.h>
 #include <unistd.h>
@@ -30,7 +31,7 @@
 
 namespace smartcard_service_api
 {
-	ClientIPC::ClientIPC():IPCHelper()
+	ClientIPC::ClientIPC() : IPCHelper()
 	{
 #ifdef USE_AUTOSTART
 		_launch_daemon();
@@ -47,16 +48,16 @@ namespace smartcard_service_api
 			{
 				int error;
 
-				if ((error = security_server_request_cookie(buffer, length))
+				if ((error = security_server_request_cookie((char *)buffer, length))
 					== SECURITY_SERVER_API_SUCCESS)
 				{
-					cookie.setBuffer(buffer, length);
+					cookie.assign(buffer, length);
 
-					SCARD_DEBUG("cookie : %s", cookie.toString());
+					_DBG("cookie : %s", cookie.toString().c_str());
 				}
 				else
 				{
-					SCARD_DEBUG_ERR("security_server_request_cookie failed [%d]", error);
+					_ERR("security_server_request_cookie failed [%d]", error);
 				}
 
 				delete []buffer;
@@ -64,7 +65,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("security_server_get_cookie_size failed");
+			_ERR("security_server_get_cookie_size failed");
 		}
 #endif
 	}
@@ -86,7 +87,7 @@ namespace smartcard_service_api
 		DBusGConnection *connection;
 		GError *error = NULL;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 		dbus_g_thread_init();
 
@@ -106,30 +107,30 @@ namespace smartcard_service_api
 				if (dbus_g_proxy_call(proxy, "launch", &error, G_TYPE_INVALID,
 					G_TYPE_INT, &result, G_TYPE_INVALID) == false)
 				{
-					SCARD_DEBUG_ERR("org_tizen_smartcard_service_launch failed");
+					_ERR("org_tizen_smartcard_service_launch failed");
 					if (error != NULL)
 					{
-						SCARD_DEBUG_ERR("message : [%s]", error->message);
+						_ERR("message : [%s]", error->message);
 						g_error_free(error);
 					}
 				}
 			}
 			else
 			{
-				SCARD_DEBUG_ERR("ERROR: Can't make dbus proxy");
+				_ERR("ERROR: Can't make dbus proxy");
 			}
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("ERROR: Can't get on system bus [%s]", error->message);
+			_ERR("ERROR: Can't get on system bus [%s]", error->message);
 			g_error_free(error);
 		}
 
-		SCARD_END();
+		_END();
 	}
 #endif
 
-	bool ClientIPC::sendMessage(Message *msg)
+	bool ClientIPC::sendMessage(const Message &msg)
 	{
 		ByteArray stream;
 		unsigned int length;
@@ -138,21 +139,21 @@ namespace smartcard_service_api
 			return false;
 
 #ifdef SECURITY_SERVER
-		stream = cookie + msg->serialize();
+		stream = cookie + msg.serialize();
 #else
-		stream = msg->serialize();
+		stream = msg.serialize();
 #endif
-		length = stream.getLength();
+		length = stream.size();
 
-		SCARD_DEBUG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
-			ipcSocket, msg->message, stream.getLength());
+		_DBG(">>>[SEND]>>> socket [%d], msg [%d], length [%d]",
+			ipcSocket, msg.message, stream.size());
 
 		return IPCHelper::sendMessage(ipcSocket, stream);
 	}
 
 	int ClientIPC::handleIOErrorCondition(void *channel, GIOCondition condition)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		if (dispatcher != NULL)
 		{
@@ -169,19 +170,19 @@ namespace smartcard_service_api
 #endif
 		}
 
-		SCARD_END();
+		_END();
 
 		return FALSE;
 	}
 
 	int ClientIPC::handleInvalidSocketCondition(void *channel, GIOCondition condition)
 	{
-		SCARD_BEGIN();
+		_BEGIN();
 
 		/* finalize context */
 		destroyConnectSocket();
 
-		SCARD_END();
+		_END();
 
 		return FALSE;
 	}
@@ -190,7 +191,7 @@ namespace smartcard_service_api
 	{
 		int result = FALSE;
 
-		SCARD_BEGIN();
+		_BEGIN();
 
 #ifndef CLIENT_IPC_THREAD
 		if (channel == ioChannel)
@@ -198,13 +199,13 @@ namespace smartcard_service_api
 #endif
 			Message *msg = NULL;
 
-			SCARD_DEBUG("message from server to client socket");
+			_DBG("message from server to client socket");
 
 			/* read message */
 			msg = retrieveMessage();
 			if (msg != NULL)
 			{
-				DispatcherMsg dispMsg(msg);
+				DispatcherMsg dispMsg(*msg);
 
 				/* set peer socket */
 				dispMsg.setPeerSocket(ipcSocket);
@@ -234,13 +235,13 @@ namespace smartcard_service_api
 		}
 		else
 		{
-			SCARD_DEBUG_ERR("Unknown channel event [%p]", channel);
+			_ERR("Unknown channel event [%p]", channel);
 		}
 #endif
 
-		SCARD_END();
+		_END();
 
 		return result;
 	}
-
 } /* namespace open_mobile_api */
+#endif /* USE_GDBUS */

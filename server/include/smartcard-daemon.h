@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Samsung Electronics Co., Ltd All Rights Reserved
+ * Copyright (c) 2012, 2013 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
-/* standard library header */
-#include <stdio.h>
-#include <string.h>
+#ifndef SMARTCARD_DAEMON_H_
+#define SMARTCARD_DAEMON_H_
 
-/* SLP library header */
+void smartcard_daemon_exit();
 
-/* local header */
-#include "Debug.h"
-#include "ReaderHelper.h"
-
-namespace smartcard_service_api
-{
-	ReaderHelper::ReaderHelper() : seService(NULL), present(false)
-	{
-		memset(name, 0, sizeof(name));
-	}
-} /* namespace smartcard_service_api */
+#endif /* SMARTCARD_DAEMON_H_ */

@@ -26,13 +26,13 @@
 
 namespace smartcard_service_api
 {
-	class NumberStream: public ByteArray
+	class NumberStream : public ByteArray
 	{
 	public:
 		NumberStream(const ByteArray &T);
 
-		unsigned int getBigEndianNumber();
-		unsigned int getLittleEndianNumber();
+		unsigned int getBigEndianNumber() const;
+		unsigned int getLittleEndianNumber() const;
 
 		static unsigned int getBigEndianNumber(const ByteArray &T);
 		static unsigned int getLittleEndianNumber(const ByteArray &T);

@@ -29,12 +29,12 @@ namespace smartcard_service_api
 
 	public:
 		Record() : id(0) {}
-		Record(unsigned int id, ByteArray buffer)
-			: id(id), data(buffer) {};
+		Record(unsigned int id, const ByteArray &buffer) : id(id),
+			data(buffer) {};
 		~Record() {}
 
-		inline unsigned int getID() { return id; }
-		inline ByteArray getData() { return data; }
+		inline unsigned int getID() const { return id; }
+		inline const ByteArray getData() const { return data; }
 	};
 
 } /* namespace smartcard_service_api */

@@ -31,22 +31,23 @@ namespace smartcard_service_api
 	private :
 		ByteArray path;
 		int index;
-		int length;
+		size_t length;
 
-		bool parseData(ByteArray &data);
+		bool parseData(const ByteArray &data);
 
 	public:
 		PKCS15Path();
-		PKCS15Path(ByteArray &data);
-		PKCS15Path(ByteArray path, int index);
-		PKCS15Path(unsigned char *path, unsigned int length, int index);
+		PKCS15Path(const ByteArray &data);
+		PKCS15Path(const ByteArray &path, int index);
+		PKCS15Path(const unsigned char *path,
+			size_t length, int index);
 		~PKCS15Path();
 
-		int getPath(ByteArray &path);
-		bool hasIndexLength();
-		int getIndex();
-		unsigned int getLength();
-		int encode(ByteArray &result);
+		inline const ByteArray getPath() const { return path; }
+		inline bool hasIndexLength() const { return (length != 0); }
+		inline int getIndex() const { return index; }
+		inline size_t size() const { return length; }
+		int encode(ByteArray &result) const;
 	};
 
 } /* namespace smartcard_service_api */
