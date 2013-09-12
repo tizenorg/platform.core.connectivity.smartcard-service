@@ -30,7 +30,7 @@
 #ifdef __cplusplus
 namespace smartcard_service_api
 {
-	class GPACE : public AccessControlList
+	class EXPORT GPACE : public AccessControlList
 	{
 	private :
 		AccessControlList *acl;

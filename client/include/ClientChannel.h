@@ -18,7 +18,9 @@
 #define CLIENTCHANNEL_H_
 
 /* standard library header */
+#ifdef USE_AUTOSTART
 #include <gio/gio.h>
+#endif
 
 /* SLP library header */
 
@@ -42,12 +44,12 @@ namespace smartcard_service_api
 		ClientChannel(void *context, Session *session, int channelNum,
 			const ByteArray &selectResponse, void *handle);
 		~ClientChannel();
-
+#ifdef USE_AUTOSTART
 		static void channel_transmit_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
 		static void channel_close_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
-
+#endif
 	public:
 		int close(closeChannelCallback callback, void *userParam);
 		int transmit(const ByteArray &command,

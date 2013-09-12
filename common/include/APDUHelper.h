@@ -26,7 +26,7 @@
 
 namespace smartcard_service_api
 {
-	class ResponseHelper
+	class EXPORT ResponseHelper
 	{
 	private:
 		ByteArray response;
@@ -75,7 +75,7 @@ namespace smartcard_service_api
 //		static char *getErrorString();
 	};
 
-	class APDUCommand
+	class EXPORT APDUCommand
 	{
 	private:
 		typedef struct _command_header_t
@@ -171,7 +171,7 @@ namespace smartcard_service_api
 		bool getBuffer(ByteArray &array) const;
 	};
 
-	class APDUHelper
+	class EXPORT APDUHelper
 	{
 	public:
 		static const int COMMAND_OPEN_LOGICAL_CHANNEL = 1;

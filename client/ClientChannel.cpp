@@ -55,14 +55,6 @@ namespace smartcard_service_api
 		this->selectResponse = selectResponse;
 		this->context = context;
 
-		/* initialize client */
-		if (!g_thread_supported())
-		{
-			g_thread_init(NULL);
-		}
-
-		g_type_init();
-
 		/* init default context */
 		GError *error = NULL;
 

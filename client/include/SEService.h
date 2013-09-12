@@ -18,8 +18,10 @@
 #define SESERVICE_H_
 
 /* standard library header */
+#ifdef USE_AUTOSTART
 #include <glib.h>
 #include <gio/gio.h>
+#endif
 
 /* SLP library header */
 
@@ -49,8 +51,9 @@ namespace smartcard_service_api
 
 		void addReader(unsigned int handle, const char *name);
 		bool parseReaderInformation(unsigned int count, const ByteArray &data);
+#ifdef USE_AUTOSTART
 		bool parseReaderInformation(GVariant *variant);
-
+#endif
 		bool _initialize()
 			throw(ErrorIO &);
 		bool initialize(void *context, serviceConnected handler)
@@ -59,7 +62,7 @@ namespace smartcard_service_api
 			throw(ErrorIO &, ErrorIllegalParameter &);
 		SEService *initializeSync(void *context, serviceConnected handler)
 			throw(ErrorIO &, ErrorIllegalParameter &);
-
+#ifdef USE_AUTOSTART
 		static void reader_inserted(GObject *source_object,
 			guint reader_id, gchar *reader_name,
 			gpointer user_data);
@@ -70,7 +73,7 @@ namespace smartcard_service_api
 			GAsyncResult *res, gpointer user_data);
 		static void se_service_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
-
+#endif
 	public:
 		SEService(void *user_data, serviceConnected handler)
 			throw(ErrorIO &, ErrorIllegalParameter &);

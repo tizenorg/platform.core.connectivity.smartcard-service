@@ -394,6 +394,7 @@ namespace smartcard_service_api
 		}
 		else
 		{
+			/* empty file, it means deny for all application */
 			_INFO("access denied for all applications, aid : %s", condition.getAID().toString().c_str());
 
 			condition.setAccessCondition(false);

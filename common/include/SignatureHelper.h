@@ -35,7 +35,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class SignatureHelper
+	class EXPORT SignatureHelper
 	{
 	public:
 		static int getPackageName(int pid, char *package, size_t length);

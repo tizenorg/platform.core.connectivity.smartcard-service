@@ -3,16 +3,21 @@
 #%%global test_client "-DTEST_CLIENT=1"
 
 Name:       smartcard-service
-Summary:    Smartcard Service FW
-Version:    0.1.22
+Summary:    Smartcard Service
+Version:    0.1.27
 Release:    0
-Group:      libs
+Group:      Network & Connectivity/Service
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 %if 0%{!?use_autostart:1}
 Source1:    smartcard-service-server.init
 %endif
 BuildRequires: cmake
+Source1001:	%{name}.manifest
+Source1002:	%{name}-devel.manifest
+Source1003:	smartcard-service-common.manifest
+Source1004:	smartcard-service-common-devel.manifest
+Source1005:	smartcard-service-server.manifest
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(gio-unix-2.0)
 BuildRequires: pkgconfig(security-server)
@@ -30,61 +35,54 @@ Requires:         smartcard-service-common = %{version}-%{release}
 
 
 %description
-Smartcard Service FW.
+A library for Smartcard applications.
 
 
 %prep
 %setup -q
+cp %{SOURCE1001} %{SOURCE1002} %{SOURCE1003} %{SOURCE1004} %{SOURCE1005} .
 
 
 %package    devel
-Summary:    smartcard service
-Group:      Development/Libraries
+Summary:    Smartcard service
+Group:      Network & Connectivity/Development
 Requires:   %{name} = %{version}-%{release}
 
-
 %description devel
-smartcard service.
+For developing Smartcard applications.
 
 
 %package -n smartcard-service-common
-Summary:    common smartcard service
-Group:      Development/Libraries
-
+Summary:    Common smartcard service
+Group:      Network & Connectivity/Service
 
 %description -n smartcard-service-common
-common smartcard service.
+Common smartcard service for developing internally
 
 
 %package -n smartcard-service-common-devel
-Summary:    common smartcard service
-Group:      Development/Libraries
+Summary:    Common smartcard service
+Group:      Network & Connectivity/Development
 Requires:   smartcard-service-common = %{version}-%{release}
 
-
 %description -n smartcard-service-common-devel
-common smartcard service.
+For developing smartcard services internally.
 
 
 %package -n smartcard-service-server
-Summary:    server smartcard service
-Group:      Development/Libraries
+Summary:    Smartcard service server
+Group:      Network & Connectivity/Service
 Requires:   smartcard-service-common = %{version}-%{release}
 
-
 %description -n smartcard-service-server
-smartcard service.
+Server for smartcard service
 
 
 %build
-mkdir obj-arm-limux-qnueabi
-cd obj-arm-limux-qnueabi
-%cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix} %{?use_autostart} %{?use_gdbus} %{?test_client}
-#make %{?jobs:-j%jobs}
-
+MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
+%cmake . %{?use_autostart} %{?test_client} -DFULLVER=%{version} -DMAJORVER=${MAJORVER}
 
 %install
-cd obj-arm-limux-qnueabi
 %make_install
 %if 0%{!?use_autostart:1}
 	%__mkdir -p  %{buildroot}/etc/init.d/
@@ -93,11 +91,6 @@ cd obj-arm-limux-qnueabi
 	%__cp -af %SOURCE1 %{buildroot}/etc/init.d/smartcard-service-server
 	chmod 755 %{buildroot}/etc/init.d/smartcard-service-server
 %endif
-mkdir -p %{buildroot}/usr/share/license
-cp -af %{_builddir}/%{name}-%{version}/packaging/%{name} %{buildroot}/usr/share/license/
-cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-common %{buildroot}/usr/share/license/
-cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buildroot}/usr/share/license/
-
 
 %post
 /sbin/ldconfig
@@ -106,7 +99,6 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 	ln -sf /etc/init.d/smartcard-service-server /etc/rc.d/rc5.d/S79smartcard-service-server
 %endif
 
-
 %postun
 /sbin/ldconfig
 %if 0%{!?use_autostart:1}
@@ -114,12 +106,18 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 	rm -f /etc/rc.d/rc5.d/S79smartcard-service-server
 %endif
 
+%post -n smartcard-service-common
+/sbin/ldconfig
+
+%postun -n smartcard-service-common
+/sbin/ldconfig
+
 
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsmartcard-service.so.*
-%{_datadir}/license/%{name}
+%license LICENSE.APLv2
 
 
 %files  devel
@@ -134,7 +132,7 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 %manifest smartcard-service-common.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsmartcard-service-common.so.*
-%{_datadir}/license/smartcard-service-common
+%license LICENSE.APLv2
 
 
 %files -n smartcard-service-common-devel
@@ -158,4 +156,4 @@ cp -af %{_builddir}/%{name}-%{version}/packaging/smartcard-service-server %{buil
 %else
 	%{_sysconfdir}/init.d/smartcard-service-server
 %endif
-%{_datadir}/license/smartcard-service-server
+%license LICENSE.APLv2

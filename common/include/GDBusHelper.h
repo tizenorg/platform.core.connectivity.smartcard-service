@@ -31,7 +31,7 @@ namespace smartcard_service_api
 		void *user_param;
 	};
 
-	class GDBusHelper
+	class EXPORT GDBusHelper
 	{
 	public :
 		static void convertVariantToByteArray(GVariant *var,

@@ -157,16 +157,15 @@ namespace smartcard_service_api
 		const gchar *interface_name, const gchar *signal_name,
 		GVariant *parameters, gpointer user_data)
 	{
-		GVariantIter *iter;
 		gchar *name;
 		gchar *old_owner;
 		gchar *new_owner;
 
-		iter = g_variant_iter_new(parameters);
-
-		g_variant_iter_next(iter, "s", &name);
-		g_variant_iter_next(iter, "s", &old_owner);
-		g_variant_iter_next(iter, "s", &new_owner);
+		g_variant_get(parameters,
+			"(sss)",
+			&name,
+			&old_owner,
+			&new_owner);
 
 		name_owner_changed((GDBusProxy *)connection,
 			name, old_owner, new_owner, user_data);

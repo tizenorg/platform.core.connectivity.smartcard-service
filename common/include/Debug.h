@@ -23,6 +23,10 @@
 /* SLP library header */
 #include "dlog.h"
 
+#ifndef EXPORT
+#define EXPORT __attribute__((visibility("default")))
+#endif
+
 /* local header */
 
 #define COLOR_BLACK	"\033[0;30m"

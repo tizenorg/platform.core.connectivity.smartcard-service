@@ -18,7 +18,9 @@
 #define SESSION_H_
 
 /* standard library header */
+#ifdef USE_AUTOSTART
 #include <gio/gio.h>
+#endif
 
 /* SLP library header */
 
@@ -48,12 +50,14 @@ namespace smartcard_service_api
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
+#ifdef USE_AUTOSTART
 		static void session_get_atr_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
 		static void session_open_channel_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
 		static void session_close_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
+#endif
 
 	public:
 		void closeChannels()

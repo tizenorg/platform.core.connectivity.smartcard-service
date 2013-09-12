@@ -260,8 +260,6 @@ namespace smartcard_service_api
 
 		_BEGIN();
 
-		g_type_init();
-
 		/* init default context */
 		GError *error = NULL;
 

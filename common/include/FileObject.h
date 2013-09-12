@@ -32,7 +32,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class FileObject : public ProviderHelper
+	class EXPORT FileObject : public ProviderHelper
 	{
 	private:
 		FCI fci;

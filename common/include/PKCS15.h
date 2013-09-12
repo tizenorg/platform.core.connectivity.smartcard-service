@@ -30,7 +30,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class PKCS15: public PKCS15Object
+	class EXPORT PKCS15: public PKCS15Object
 	{
 	private:
 		map<unsigned int, ByteArray> recordElement;

@@ -22,10 +22,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-/* SLP library header */
-
-/* local header */
-//#include "Serializable.h"
+#include "Debug.h"
 
 #define ARRAY_AND_SIZE(x) (uint8_t *)(&x), sizeof(x)
 
@@ -33,7 +30,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class ByteArray //: public Serializable
+	class EXPORT ByteArray //: public Serializable
 	{
 	protected:
 		uint8_t *buffer;

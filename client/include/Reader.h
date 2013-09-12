@@ -18,8 +18,10 @@
 #define READER_H_
 
 /* standard library header */
+#ifdef USE_AUTOSTART
 #include <glib.h>
 #include <gio/gio.h>
+#endif
 
 /* SLP library header */
 
@@ -44,8 +46,10 @@ namespace smartcard_service_api
 		~Reader();
 
 		inline void unavailable() { present = false; }
+#ifdef USE_AUTOSTART
 		static void reader_open_session_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
+#endif
 
 	public:
 		void closeSessions()
