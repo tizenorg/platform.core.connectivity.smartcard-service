@@ -17,13 +17,9 @@
 #ifndef PKCS15OBJECT_H_
 #define PKCS15OBJECT_H_
 
-/* standard library header */
 #include <map>
 #include <vector>
 
-/* SLP library header */
-
-/* local header */
 #include "FileObject.h"
 #include "PKCS15Path.h"
 

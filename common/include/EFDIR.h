@@ -17,12 +17,8 @@
 #ifndef EFDIR_H_
 #define EFDIR_H_
 
-/* standard library header */
 #include <vector>
 
-/* SLP library header */
-
-/* local header */
 #include "FileObject.h"
 
 using namespace std;

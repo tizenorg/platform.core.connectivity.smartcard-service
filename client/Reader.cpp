@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-/* SLP library header */
-
-/* local header */
 #include "Debug.h"
 #include "Reader.h"
 #include "Session.h"

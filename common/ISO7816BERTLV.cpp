@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <stdio.h>
 #include <string.h>
 
-/* SLP library header */
-
-/* local header */
 #include "ISO7816BERTLV.h"
 
 namespace smartcard_service_api

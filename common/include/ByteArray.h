@@ -17,7 +17,6 @@
 #ifndef BYTEARRAY_H_
 #define BYTEARRAY_H_
 
-/* standard library header */
 #include <string>
 #include <stdint.h>
 #include <stddef.h>

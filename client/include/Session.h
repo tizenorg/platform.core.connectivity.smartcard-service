@@ -17,14 +17,10 @@
 #ifndef SESSION_H_
 #define SESSION_H_
 
-/* standard library header */
 #ifdef USE_AUTOSTART
 #include <gio/gio.h>
 #endif
 
-/* SLP library header */
-
-/* local header */
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "SessionHelper.h"
@@ -35,7 +31,7 @@ namespace smartcard_service_api
 {
 	class Reader;
 
-	class Session : public SessionHelper
+	class EXPORT Session : public SessionHelper
 	{
 	private:
 		void *context;

@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <cstdio>
 #include <cstring>
 #include <sstream>
 
-/* SLP library header */
-
-/* local header */
 #include "Debug.h"
 #include "FCI.h"
 #include "SimpleTLV.h"

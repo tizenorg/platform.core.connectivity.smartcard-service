@@ -17,17 +17,11 @@
 #ifndef SESERVICELISTENER_H_
 #define SESERVICELISTENER_H_
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
-
 namespace smartcard_service_api
 {
 	class SEServiceHelper;
 
-	class SEServiceListener
+	class EXPORT SEServiceListener
 	{
 	public:
 		virtual void serviceConnected(SEServiceHelper *service,

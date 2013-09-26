@@ -17,18 +17,13 @@
 #ifndef SIGNATUREHELPER_H_
 #define SIGNATUREHELPER_H_
 
-/* standard library header */
 #ifdef __cplusplus
 #include <vector>
-#endif /* __cplusplus */
-
-/* SLP library header */
-
-/* local header */
-#include "smartcard-types.h"
-#ifdef __cplusplus
 #include "ByteArray.h"
 #endif /* __cplusplus */
+
+#include "smartcard-types.h"
+#include "Debug.h"
 
 #ifdef __cplusplus
 using namespace std;

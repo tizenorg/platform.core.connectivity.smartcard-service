@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <stdio.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
-/* SLP library header */
-
-/* local header */
 #include "Debug.h"
 #include "ByteArray.h"
 #include "OpensslHelper.h"

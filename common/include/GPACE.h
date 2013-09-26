@@ -17,11 +17,6 @@
 #ifndef GPACE_H_
 #define GPACE_H_
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "AccessControlList.h"

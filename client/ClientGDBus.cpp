@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <glib.h>
 
-/* SLP library header */
-
-/* local header */
 #include "smartcard-types.h"
 #include "Debug.h"
 #include "ByteArray.h"

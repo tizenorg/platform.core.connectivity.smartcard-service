@@ -17,11 +17,6 @@
 #ifndef TERMINAL_H_
 #define TERMINAL_H_
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
 #include "ByteArray.h"
 #include "Synchronous.h"
 
@@ -32,7 +27,7 @@ namespace smartcard_service_api
 	typedef void (*terminalTransmitCallback)(const unsigned char *buffer, unsigned int length, int error, void *userParam);
 	typedef void (*terminalGetATRCallback)(const unsigned char *buffer, unsigned int length, int error, void *userParam);
 
-	class Terminal : public Synchronous
+	class EXPORT Terminal : public Synchronous
 	{
 	protected:
 		terminalNotificationCallback statusCallback;

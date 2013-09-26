@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <pthread.h>
 
-/* SLP library header */
-
-/* local header */
 #include "Debug.h"
 #include "ClientInstance.h"
 #include "ServerResource.h"

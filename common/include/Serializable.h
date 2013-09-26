@@ -21,7 +21,7 @@
 
 namespace smartcard_service_api
 {
-	class Serializable
+	class EXPORT Serializable
 	{
 		virtual const ByteArray serialize() const = 0;
 		virtual void deserialize(const ByteArray &buffer) = 0;

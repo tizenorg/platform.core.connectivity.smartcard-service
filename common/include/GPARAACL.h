@@ -17,11 +17,6 @@
 #ifndef GPARAACL_H_
 #define GPARAACL_H_
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "AccessControlList.h"

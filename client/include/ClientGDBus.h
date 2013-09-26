@@ -17,12 +17,8 @@
 #ifndef CLIENTGDBUS_H_
 #define CLIENTGDBUS_H_
 
-/* standard library header */
 #include <glib.h>
 
-/* SLP library header */
-
-/* local header */
 #include "GDBusHelper.h"
 #include "smartcard-service-gdbus.h"
 

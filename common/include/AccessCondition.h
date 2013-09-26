@@ -17,13 +17,9 @@
 #ifndef ACCESSCONDITION_H_
 #define ACCESSCONDITION_H_
 
-/* standard library header */
 #include <map>
 #include <vector>
 
-/* SLP library header */
-
-/* local header */
 #include "ByteArray.h"
 
 using namespace std;

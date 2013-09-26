@@ -17,13 +17,9 @@
 #ifndef READERHELPER_H_
 #define READERHELPER_H_
 
-/* standard library header */
 #include <vector>
 #include <string>
 
-/* SLP library header */
-
-/* local header */
 #include "Synchronous.h"
 #include "SessionHelper.h"
 
@@ -36,7 +32,7 @@ namespace smartcard_service_api
 	typedef void (*openSessionCallback)(SessionHelper *session, int error,
 		void *userData);
 
-	class ReaderHelper : public Synchronous
+	class EXPORT ReaderHelper : public Synchronous
 	{
 	protected:
 		SEServiceHelper *seService;

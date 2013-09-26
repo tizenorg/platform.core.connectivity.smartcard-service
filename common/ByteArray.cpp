@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
 #include <sstream>
 
-/* SLP library header */
-
-/* local header */
 #include "Debug.h"
 #include "ByteArray.h"
 

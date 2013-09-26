@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <unistd.h>
 #include <glib.h>
 #include <gio/gio.h>
@@ -22,12 +21,10 @@
 #include <string>
 #include <sys/socket.h>
 
-/* SLP library header */
 #ifdef USER_SPACE_SMACK
 #include "security-server.h"
 #endif
 
-/* local header */
 #include "smartcard-types.h"
 #include "Debug.h"
 #include "ByteArray.h"

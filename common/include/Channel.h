@@ -17,11 +17,6 @@
 #ifndef CHANNEL_H_
 #define CHANNEL_H_
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
 #include "Synchronous.h"
 #include "ByteArray.h"
 #include "Exception.h"
@@ -34,7 +29,7 @@ namespace smartcard_service_api
 		unsigned int length, int error, void *userParam);
 	typedef void (*closeChannelCallback)(int error, void *userParam);
 
-	class Channel : public Synchronous
+	class EXPORT Channel : public Synchronous
 	{
 	protected :
 		ByteArray selectResponse;

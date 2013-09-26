@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
 #include "PKCS15TokenInfo.h"
 
 namespace smartcard_service_api

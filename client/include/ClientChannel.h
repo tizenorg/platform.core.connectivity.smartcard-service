@@ -17,14 +17,10 @@
 #ifndef CLIENTCHANNEL_H_
 #define CLIENTCHANNEL_H_
 
-/* standard library header */
 #ifdef USE_AUTOSTART
 #include <gio/gio.h>
 #endif
 
-/* SLP library header */
-
-/* local header */
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "Channel.h"
@@ -34,7 +30,7 @@
 #ifdef __cplusplus
 namespace smartcard_service_api
 {
-	class ClientChannel: public Channel
+	class EXPORT ClientChannel: public Channel
 	{
 	private:
 		void *context;

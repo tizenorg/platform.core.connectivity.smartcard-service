@@ -17,17 +17,13 @@
 #ifndef DEBUG_H_
 #define DEBUG_H_
 
-/* standard library header */
 #include <iostream>
 
-/* SLP library header */
 #include "dlog.h"
 
 #ifndef EXPORT
 #define EXPORT __attribute__((visibility("default")))
 #endif
-
-/* local header */
 
 #define COLOR_BLACK	"\033[0;30m"
 #define COLOR_RED	"\033[0;31m"

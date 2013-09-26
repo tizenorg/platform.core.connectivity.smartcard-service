@@ -17,11 +17,7 @@
 #ifndef APDUHELPER_H_
 #define APDUHELPER_H_
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
+#include "Debug.h"
 #include "ByteArray.h"
 
 namespace smartcard_service_api

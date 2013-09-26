@@ -17,12 +17,8 @@
 #ifndef SESSIONHELPER_H_
 #define SESSIONHELPER_H_
 
-/* standard library header */
 #include <vector>
 
-/* SLP library header */
-
-/* local header */
 #include "Synchronous.h"
 #include "ByteArray.h"
 #include "Channel.h"
@@ -38,7 +34,7 @@ namespace smartcard_service_api
 	typedef void (*closeSessionCallback)(int error, void *userData);
 	typedef void (*getChannelCountCallback)(unsigned count, int error, void *userData);
 
-	class SessionHelper : public Synchronous
+	class EXPORT SessionHelper : public Synchronous
 	{
 	protected:
 		ReaderHelper *reader;

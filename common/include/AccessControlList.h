@@ -17,13 +17,9 @@
 #ifndef ACCESSCONTROLLIST_H_
 #define ACCESSCONTROLLIST_H_
 
-/* standard library header */
 #include <vector>
 #include <map>
 
-/* SLP library header */
-
-/* local header */
 #include "ByteArray.h"
 #include "Channel.h"
 #include "AccessCondition.h"

@@ -17,11 +17,6 @@
 #ifndef ISO7816BERTLV_H_
 #define ISO7816BERTLV_H_
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
 #include "ByteArray.h"
 #include "TLVHelper.h"
 

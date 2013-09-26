@@ -17,12 +17,8 @@
 #ifndef FILEOBJECT_H_
 #define FILEOBJECT_H_
 
-/* standard library header */
 #include <vector>
 
-/* SLP library header */
-
-/* local header */
 #include "ProviderHelper.h"
 #include "ByteArray.h"
 #include "FCI.h"

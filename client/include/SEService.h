@@ -17,15 +17,11 @@
 #ifndef SESERVICE_H_
 #define SESERVICE_H_
 
-/* standard library header */
 #ifdef USE_AUTOSTART
 #include <glib.h>
 #include <gio/gio.h>
 #endif
 
-/* SLP library header */
-
-/* local header */
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "SEServiceListener.h"
@@ -39,7 +35,7 @@ namespace smartcard_service_api
 {
 	typedef void (*serviceConnected)(SEServiceHelper *service, void *context);
 
-	class SEService : public SEServiceHelper
+	class EXPORT SEService : public SEServiceHelper
 	{
 	private:
 		unsigned int handle;

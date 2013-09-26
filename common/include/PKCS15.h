@@ -17,12 +17,8 @@
 #ifndef PKCS15_H_
 #define PKCS15_H_
 
-/* standard library header */
 #include <map>
 
-/* SLP library header */
-
-/* local header */
 #include "PKCS15Object.h"
 #include "PKCS15ODF.h"
 

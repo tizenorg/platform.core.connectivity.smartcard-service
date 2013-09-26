@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-/* standard library header */
 #include <stdio.h>
 
-/* SLP library header */
-
-/* local header */
 #include "Debug.h"
 #include "FileObject.h"
 #include "APDUHelper.h"

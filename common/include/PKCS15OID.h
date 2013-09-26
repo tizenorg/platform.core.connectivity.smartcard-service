@@ -17,11 +17,6 @@
 #ifndef PKCS15OID_H_
 #define PKCS15OID_H_
 
-/* standard library header */
-
-/* SLP library header */
-
-/* local header */
 #include "ByteArray.h"
 
 namespace smartcard_service_api

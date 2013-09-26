@@ -17,15 +17,11 @@
 #ifndef READER_H_
 #define READER_H_
 
-/* standard library header */
 #ifdef USE_AUTOSTART
 #include <glib.h>
 #include <gio/gio.h>
 #endif
 
-/* SLP library header */
-
-/* local header */
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "ReaderHelper.h"
@@ -35,7 +31,7 @@
 #ifdef __cplusplus
 namespace smartcard_service_api
 {
-	class Reader: public ReaderHelper
+	class EXPORT Reader: public ReaderHelper
 	{
 	private:
 		void *context;
