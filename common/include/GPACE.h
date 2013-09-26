@@ -17,6 +17,7 @@
 #ifndef GPACE_H_
 #define GPACE_H_
 
+#include "Debug.h"
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "AccessControlList.h"

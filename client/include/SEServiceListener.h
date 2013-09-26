@@ -17,6 +17,8 @@
 #ifndef SESERVICELISTENER_H_
 #define SESERVICELISTENER_H_
 
+#include "Debug.h"
+
 namespace smartcard_service_api
 {
 	class SEServiceHelper;

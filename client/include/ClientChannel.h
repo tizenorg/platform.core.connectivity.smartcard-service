@@ -21,6 +21,7 @@
 #include <gio/gio.h>
 #endif
 
+#include "Debug.h"
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "Channel.h"

@@ -17,6 +17,7 @@
 #ifndef SERIALIZABLE_H_
 #define SERIALIZABLE_H_
 
+#include "Debug.h"
 #include "ByteArray.h"
 
 namespace smartcard_service_api

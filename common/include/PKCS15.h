@@ -19,6 +19,7 @@
 
 #include <map>
 
+#include "Debug.h"
 #include "PKCS15Object.h"
 #include "PKCS15ODF.h"
 

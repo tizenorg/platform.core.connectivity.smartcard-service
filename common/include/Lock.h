@@ -19,6 +19,8 @@
 
 #include <pthread.h>
 
+#include "Debug.h"
+
 namespace smartcard_service_api
 {
 	class EXPORT Lock

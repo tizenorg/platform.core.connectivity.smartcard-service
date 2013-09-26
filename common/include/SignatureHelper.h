@@ -22,8 +22,8 @@
 #include "ByteArray.h"
 #endif /* __cplusplus */
 
-#include "smartcard-types.h"
 #include "Debug.h"
+#include "smartcard-types.h"
 
 #ifdef __cplusplus
 using namespace std;

@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "Debug.h"
 #include "ProviderHelper.h"
 #include "ByteArray.h"
 #include "FCI.h"

@@ -19,6 +19,7 @@
 
 #include <glib.h>
 
+#include "Debug.h"
 #include "ByteArray.h"
 
 namespace smartcard_service_api

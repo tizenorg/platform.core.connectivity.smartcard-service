@@ -17,6 +17,7 @@
 #ifndef CHANNEL_H_
 #define CHANNEL_H_
 
+#include "Debug.h"
 #include "Synchronous.h"
 #include "ByteArray.h"
 #include "Exception.h"

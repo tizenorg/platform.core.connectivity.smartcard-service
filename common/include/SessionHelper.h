@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "Debug.h"
 #include "Synchronous.h"
 #include "ByteArray.h"
 #include "Channel.h"

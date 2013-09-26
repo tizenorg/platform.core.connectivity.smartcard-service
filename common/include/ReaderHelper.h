@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 
+#include "Debug.h"
 #include "Synchronous.h"
 #include "SessionHelper.h"
 
