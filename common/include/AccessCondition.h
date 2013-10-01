@@ -55,16 +55,15 @@ namespace smartcard_service_api
 	class AccessCondition
 	{
 	private :
-		bool permission;
 		ByteArray aid;
 		map<ByteArray, AccessRule> mapRules;
 
 	public :
-		AccessCondition() : permission(false) {}
+		AccessCondition() {}
 
 		inline void setAID(const ByteArray &aid) { this->aid = aid; }
 		inline const ByteArray getAID() const { return aid; }
-		inline void setAccessCondition(bool rule) { permission = rule; }
+		void setAccessCondition(bool rule);
 		void addAccessRule(const ByteArray &hash);
 
 		void setAPDUAccessRule(const ByteArray &certHash, bool rule);

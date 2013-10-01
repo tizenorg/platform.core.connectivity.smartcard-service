@@ -105,13 +105,29 @@ namespace smartcard_service_api
 		mapRules.insert(item);
 	}
 
+	void AccessCondition::setAccessCondition(bool rule)
+	{
+		AccessRule *result;
+
+		result = getAccessRule(AccessControlList::ALL_DEVICE_APPS);
+		if (result == NULL) {
+			addAccessRule(AccessControlList::ALL_DEVICE_APPS);
+			result = getAccessRule(AccessControlList::ALL_DEVICE_APPS);
+			if (result == NULL)
+				return;
+		}
+
+		result->setAPDUAccessRule(rule);
+		result->setNFCAccessRule(rule);
+	}
+
 	bool AccessCondition::isAuthorizedAccess(const ByteArray &certHash) const
 	{
-		bool result = permission;
+		bool result = false;
 		const AccessRule *rule = getAccessRule(certHash);
 
 		if (rule != NULL) {
-			result = true;
+			result = rule->isAuthorizedAccess();
 		}
 
 		return result;
