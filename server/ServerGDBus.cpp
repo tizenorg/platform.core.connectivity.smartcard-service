@@ -856,12 +856,19 @@ namespace smartcard_service_api
 			if (terminal != NULL) {
 				int rv;
 
-				if ((rv = terminal->getATRSync(resp)) == 0) {
-					result = SCARD_ERROR_OK;
-				} else {
-					_ERR("getATRSync failed : name [%s], service_id [%d], session_id [%d]", name, service_id, session_id);
+				if (terminal->open() == true) {
+					rv = terminal->getATRSync(resp);
+					if (rv < SCARD_ERROR_OK) {
+						_ERR("getATRSync failed : name [%s], service_id [%d], session_id [%d]", name, service_id, session_id);
 
-					result = rv;
+						result = rv;
+					}
+
+					terminal->close();
+				} else {
+					_ERR("terminal->open failed");
+
+					result = SCARD_ERROR_UNAVAILABLE;
 				}
 			} else {
 				_ERR("getTerminal failed : name [%s], service_id [%d], session_id [%d]", name, service_id, session_id);

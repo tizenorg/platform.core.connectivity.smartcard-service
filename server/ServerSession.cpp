@@ -59,10 +59,16 @@ namespace smartcard_service_api
 		/* call get atr to terminal */
 		if (atr.isEmpty()) {
 			if (terminal != NULL) {
-				int error = terminal->getATRSync(atr);
+				if (terminal->open() == true) {
+					int error = terminal->getATRSync(atr);
 
-				if (error < SCARD_ERROR_OK) {
-					_ERR("getATRSync failed, [%d]", error);
+					if (error < SCARD_ERROR_OK) {
+						_ERR("getATRSync failed, [%d]", error);
+					}
+
+					terminal->close();
+				} else {
+					_ERR("terminal->open failed");
 				}
 			} else {
 				_ERR("terminal is null.");

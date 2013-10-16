@@ -336,10 +336,17 @@ namespace smartcard_service_api
 				session = service->getSession(sessionID);
 				if (terminal != NULL && session != NULL)
 				{
-					result = _createChannel(terminal, service, channelType, sessionID, aid);
-					if (result == IntegerHandle::INVALID_HANDLE)
-					{
-						_ERR("create channel failed [%d]", sessionID);
+					if (terminal->open() == true) {
+						result = _createChannel(terminal, service, channelType, sessionID, aid);
+						if (result == IntegerHandle::INVALID_HANDLE)
+						{
+							_ERR("create channel failed [%d]", sessionID);
+
+							terminal->close();
+						}
+					} else {
+						_ERR("terminal open failed");
+						throw ExceptionBase(SCARD_ERROR_UNAVAILABLE);
 					}
 				}
 				else
@@ -386,7 +393,19 @@ namespace smartcard_service_api
 
 		if ((instance = getService(name, handle)) != NULL)
 		{
+			ServerChannel *channel;
+			Terminal *terminal = NULL;
+
+			channel = instance->getChannel(channelID);
+			if (channel != NULL) {
+				terminal = channel->getTerminal();
+			}
+
 			instance->closeChannel(channelID);
+
+			if (terminal != NULL) {
+				terminal->close();
+			}
 		}
 		else
 		{
