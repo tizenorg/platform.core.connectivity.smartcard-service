@@ -4,7 +4,7 @@
 
 Name:       smartcard-service
 Summary:    Smartcard Service
-Version:    0.1.28
+Version:    0.1.29
 Release:    0
 Group:      Network & Connectivity/Service
 License:    Apache-2.0

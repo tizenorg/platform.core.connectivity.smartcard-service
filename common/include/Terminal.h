@@ -33,20 +33,25 @@ namespace smartcard_service_api
 	protected:
 		terminalNotificationCallback statusCallback;
 		bool initialized;
+		bool closed;
 		char *name;
 
 	public:
 		static const int NOTIFY_SE_AVAILABLE = 1;
 		static const int NOTIFY_SE_NOT_AVAILABLE = -1;
 
-		Terminal() : statusCallback(NULL),
-			initialized(false), name(NULL) {}
+		Terminal() : statusCallback(NULL), initialized(false),
+			closed(true), name(NULL) {}
 
 		virtual ~Terminal() {}
 
 		virtual bool initialize() = 0;
 		virtual void finalize() = 0;
 		inline bool isInitialized() const { return initialized; }
+
+		virtual bool open() = 0;
+		virtual void close() = 0;
+		inline bool isClosed() const { return closed; }
 
 		inline const char *getName() const { return name; }
 		inline void setStatusCallback(terminalNotificationCallback callback) { statusCallback = callback; }
