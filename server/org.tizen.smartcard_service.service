@@ -1,3 +1,4 @@
 [D-BUS Service]
 Name=org.tizen.SmartcardService
 Exec=/usr/bin/smartcard-daemon
+User=root

@@ -152,7 +152,7 @@ MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
 	%{_bindir}/smartcard-test-client
 %endif
 %if 0%{?use_autostart:1}
-	%{_datadir}/dbus-1/services/org.tizen.smartcard_service.service
+	%{_datadir}/dbus-1/system-services/org.tizen.smartcard_service.service
 %else
 	%{_sysconfdir}/init.d/smartcard-service-server
 %endif

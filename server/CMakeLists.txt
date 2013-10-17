@@ -18,6 +18,6 @@ TARGET_LINK_LIBRARIES(${DAEMON} ${pkgs_server_LDFLAGS} ${COMMON_LIB} dl)
 
 INSTALL(TARGETS ${DAEMON} DESTINATION bin)
 IF("${USE_AUTOSTART}" STREQUAL "1")
-	INSTALL(FILES org.tizen.smartcard_service.service DESTINATION share/dbus-1/services)
+	INSTALL(FILES org.tizen.smartcard_service.service DESTINATION share/dbus-1/system-services)
 ENDIF()
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/smartcard-service-server.xml DESTINATION share/packages)
