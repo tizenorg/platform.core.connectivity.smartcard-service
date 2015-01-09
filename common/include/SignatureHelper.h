@@ -22,6 +22,8 @@
 #include "ByteArray.h"
 #endif /* __cplusplus */
 
+#include <sys/types.h>
+
 #include "Debug.h"
 #include "smartcard-types.h"
 
@@ -34,10 +36,10 @@ namespace smartcard_service_api
 	{
 	public:
 		static int getPackageName(int pid, char *package, size_t length);
-		static const ByteArray getCertificationHash(const char *packageName);
+		static const ByteArray getCertificationHash(const char *packageName, uid_t uid);
 		static const ByteArray getCertificationHash(int pid);
 		static bool getCertificationHashes(int pid, vector<ByteArray> &certHashes);
-		static bool getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes);
+		static bool getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes, uid_t uid);
 	};
 
 } /* namespace smartcard_service_api */

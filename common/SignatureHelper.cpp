@@ -22,6 +22,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 /* SLP library header */
 #include "package-manager.h"
@@ -39,12 +40,27 @@
 
 namespace smartcard_service_api
 {
+	uid_t ProcGetUsrBypid(int pid)
+	{
+		char buf[255];
+		int ret;
+		uid_t uid;
+		struct stat dir_stats;
+		snprintf(buf, sizeof(buf), "/proc/%d", pid);
+		ret = stat(buf, &dir_stats);
+		if (ret < 0)
+			uid = (uid_t) - 1;
+		else
+			uid = dir_stats.st_uid;
+		return uid;
+	}
+
 	int SignatureHelper::getPackageName(int pid, char *package, size_t length)
 	{
 		return aul_app_get_pkgname_bypid(pid, package, length);
 	}
 
-	const ByteArray SignatureHelper::getCertificationHash(const char *packageName)
+	const ByteArray SignatureHelper::getCertificationHash(const char *packageName, uid_t uid)
 	{
 		ByteArray result;
 		int ret = 0;
@@ -68,7 +84,7 @@ namespace smartcard_service_api
 
 		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle)) == 0)
+			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle, uid)) == 0)
 			{
 				int type;
 
@@ -110,10 +126,11 @@ namespace smartcard_service_api
 		ByteArray result;
 		int error = 0;
 		char pkgName[256] = { 0, };
+		uid_t uid = ProcGetUsrBypid(pid);
 
 		if ((error = aul_app_get_pkgname_bypid(pid, pkgName, sizeof(pkgName))) == 0)
 		{
-			result = getCertificationHash(pkgName);
+			result = getCertificationHash(pkgName, uid);
 		}
 		else
 		{
@@ -128,10 +145,11 @@ namespace smartcard_service_api
 		bool result = false;
 		int error = 0;
 		char pkgName[256] = { 0, };
+		uid_t uid = ProcGetUsrBypid(pid);
 
 		if ((error = aul_app_get_pkgname_bypid(pid, pkgName, sizeof(pkgName))) == 0)
 		{
-			result = getCertificationHashes(pkgName, certHashes);
+			result = getCertificationHashes(pkgName, certHashes, uid);
 		}
 		else
 		{
@@ -141,7 +159,7 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	bool SignatureHelper::getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes)
+	bool SignatureHelper::getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes, uid_t uid)
 	{
 		bool result = false;
 		int ret = 0;
@@ -164,7 +182,7 @@ namespace smartcard_service_api
 
 		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle)) == 0)
+			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle, uid)) == 0)
 			{
 				int type;
 
@@ -265,7 +283,7 @@ ERROR :
 	return NULL;
 }
 
-EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, certiHash **hash)
+EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, uid_t uid, certiHash **hash)
 {
 	int ret = -1;
 	vector<ByteArray> hashes;
@@ -273,7 +291,7 @@ EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, 
 	if (packageName == NULL)
 		return ret;
 
-	if (SignatureHelper::getCertificationHashes(packageName, hashes) == true)
+	if (SignatureHelper::getCertificationHashes(packageName, hashes, uid) == true)
 	{
 		*hash = __signature_helper_vector_to_linked_list(hashes);
 		ret = 0;
