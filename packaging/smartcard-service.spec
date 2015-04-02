@@ -20,7 +20,6 @@ Source1004:	smartcard-service-common-devel.manifest
 Source1005:	smartcard-service-server.manifest
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(gio-unix-2.0)
-BuildRequires: pkgconfig(security-server)
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(libssl)

@@ -5,7 +5,7 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/common/include)
 
 AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/ SRCS)
 
-pkg_check_modules(pkgs_server REQUIRED glib-2.0 gio-2.0 gio-unix-2.0 security-server dlog)
+pkg_check_modules(pkgs_server REQUIRED glib-2.0 gio-2.0 gio-unix-2.0 dlog)
 FOREACH(flag ${pkgs_server_CFLAGS})
 	SET(EXTRA_CXXFLAGS "${EXTRA_CXXFLAGS} ${flag}")
 ENDFOREACH(flag)
