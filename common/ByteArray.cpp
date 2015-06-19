@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
 #include <sstream>
 
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "ByteArray.h"
 
@@ -296,7 +300,17 @@ namespace smartcard_service_api
 
 		return buffer[index];
 	}
+
 	const string ByteArray::toString() const
+	{
+#ifdef TO_STRING_ALL
+		return toString(true);
+#else
+		return toString(false);
+#endif
+	}
+
+	const string ByteArray::toString(bool entire) const
 	{
 		stringstream ss;
 
@@ -308,7 +322,7 @@ namespace smartcard_service_api
 			bool ellipsis = false;
 
 			count = length;
-			if (count > 20)
+			if (entire == false && count > 20)
 			{
 				count = 20;
 				ellipsis = true;
@@ -349,6 +363,8 @@ namespace smartcard_service_api
 			fwrite(buffer, 1, length, file);
 			fflush(file);
 			fclose(file);
+
+			SECURE_LOGD("file has written, file [%s], length[%d]", filePath, length);
 		}
 		else
 		{
@@ -357,4 +373,3 @@ namespace smartcard_service_api
 	}
 
 } /* namespace smartcard_service_api */
-

@@ -80,6 +80,68 @@ namespace smartcard_service_api
 		case (unsigned char)0x92 : /* extra information */
 			break;
 
+		/* Warning processing */
+		case (unsigned char)0x62 : /* State of non-volatile memory is unchanged (further qualification in SW2) */
+			break;
+
+		case (unsigned char)0x63 : /* State of non-volatile memory has changed (further qualification in SW2) */
+			break;
+
+#if 0
+		case (unsigned char)0x61 : /* SW2 encodes the number of data bytes still available */
+			break;
+
+
+		/* Execution error */
+		case (unsigned char)0x64 : /* State of non-volatile memory is unchanged (further qualification in SW2) */
+			result = -1;
+			break;
+
+		case (unsigned char)0x65 : /* State of non-volatile memory has changed (further qualification in SW2) */
+			result = -1;
+			break;
+
+		case (unsigned char)0x66 : /* Security-related issues */
+			result = -1;
+			break;
+
+		/* Checking error */
+		case (unsigned char)0x67 : /* SW2:00, Wrong length; no further indication */
+			result = -1;
+			break;
+
+		case (unsigned char)0x68 : /* Functions in CLA not supported (further qualification in SW2) */
+			result = -1;
+			break;
+
+		case (unsigned char)0x69 : /* Command not allowed (further qualification in SW2) */
+			result = -1;
+			break;
+
+		case (unsigned char)0x6A : /* Wrong parameters P1-P2 (further qualification in SW2) */
+			result = -1;
+			break;
+
+		case (unsigned char)0x6B : /* SW2:00, Wrong parameters P1-P2 */
+			result = -1;
+			break;
+
+		case (unsigned char)0x6C : /* Wrong Le field; SW2 encodes the exact number of available data bytes */
+			result = -1;
+			break;
+
+		case (unsigned char)0x6D : /* SW2:00, Instruction code not supported or invalid */
+			result = -1;
+			break;
+
+		case (unsigned char)0x6E : /* SW2:00, Class not supported */
+			result = -1;
+			break;
+
+		case (unsigned char)0x6F : /* SW2:00, No precise diagnosis */
+			result = -1;
+			break;
+#endif
 		default :
 			result *= -1;
 			break;
@@ -94,7 +156,9 @@ namespace smartcard_service_api
 
 		if (response.size() >= 2)
 		{
-			status = ResponseHelper::parseStatusWord(response.getBuffer((response.size() - 2)));
+			const uint8_t* buffer = response.getBuffer((response.size() - 2));
+			if(buffer != NULL)
+				status = ResponseHelper::parseStatusWord(buffer);
 		}
 
 		return status;
@@ -142,6 +206,7 @@ namespace smartcard_service_api
 	bool APDUCommand::setCommand(const ByteArray &command)
 	{
 		bool result = false;
+		const uint8_t *buffer;
 		uint32_t offset = 0;
 		uint32_t lengthSize = 1;
 
@@ -150,7 +215,13 @@ namespace smartcard_service_api
 			return false;
 		}
 
-		memcpy(&header, command.getBuffer(offset), sizeof(header));
+		buffer = command.getBuffer(offset);
+		if(buffer == NULL)
+		{
+			return false;
+		}
+
+		memcpy(&header, buffer, sizeof(header));
 		offset += sizeof(header);
 
 		if (isExtendedLength)
@@ -171,6 +242,9 @@ namespace smartcard_service_api
 			else
 			{
 				length = command.at(offset);
+				if (length == 0) {
+					length = 256;
+				}
 				offset += 1;
 			}
 
@@ -197,7 +271,7 @@ namespace smartcard_service_api
 			else
 			{
 				if (command.at(offset) == 0)
-					setMaxResponseSize(APDUCommand::LE_MAX);
+					setMaxResponseSize(256);
 				else
 					setMaxResponseSize(command.at(offset));
 
@@ -228,7 +302,6 @@ namespace smartcard_service_api
 			{
 			case INS_TERMINAL_PROFILE :
 			case INS_FETCH :
-			case INS_ENVELOPE :
 			case INS_TERMINAL_RESPONSE :
 				result = true;
 				break;
@@ -450,7 +523,7 @@ namespace smartcard_service_api
 		switch (command)
 		{
 		case COMMAND_OPEN_LOGICAL_CHANNEL :
-			apdu.setCommand(0, APDUCommand::INS_MANAGE_CHANNEL, 0, 0, ByteArray::EMPTY, APDUCommand::LE_MAX);
+			apdu.setCommand(0, APDUCommand::INS_MANAGE_CHANNEL, 0, 0, ByteArray::EMPTY, 1);
 			apdu.getBuffer(result);
 			break;
 
@@ -470,7 +543,7 @@ namespace smartcard_service_api
 			break;
 
 		case COMMAND_SELECT_BY_DF_NAME :
-			apdu.setCommand(0, APDUCommand::INS_SELECT_FILE, APDUCommand::P1_SELECT_BY_DF_NAME, APDUCommand::P2_SELECT_GET_FCP, data, 0);
+			apdu.setCommand(0, APDUCommand::INS_SELECT_FILE, APDUCommand::P1_SELECT_BY_DF_NAME, APDUCommand::P2_SELECT_GET_FCI, data, 0);
 			apdu.getBuffer(result);
 			break;
 

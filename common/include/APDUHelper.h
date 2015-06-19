@@ -17,12 +17,16 @@
 #ifndef APDUHELPER_H_
 #define APDUHELPER_H_
 
-#include "Debug.h"
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "ByteArray.h"
 
 namespace smartcard_service_api
 {
-	class EXPORT ResponseHelper
+	class ResponseHelper
 	{
 	private:
 		ByteArray response;
@@ -71,7 +75,7 @@ namespace smartcard_service_api
 //		static char *getErrorString();
 	};
 
-	class EXPORT APDUCommand
+	class APDUCommand
 	{
 	private:
 		typedef struct _command_header_t
@@ -130,6 +134,7 @@ namespace smartcard_service_api
 //		static const unsigned char P1_ = (unsigned char)0x;
 
 		static const unsigned char P2_SELECT_GET_FCP = (unsigned char)0x04;
+		static const unsigned char P2_SELECT_GET_FCI = (unsigned char)0x00;
 //		static const unsigned char P2_ = (unsigned char)0x;
 
 		static const unsigned char CLA_CHANNEL_STANDARD = (unsigned char)0x00;
@@ -167,7 +172,7 @@ namespace smartcard_service_api
 		bool getBuffer(ByteArray &array) const;
 	};
 
-	class EXPORT APDUHelper
+	class APDUHelper
 	{
 	public:
 		static const int COMMAND_OPEN_LOGICAL_CHANNEL = 1;

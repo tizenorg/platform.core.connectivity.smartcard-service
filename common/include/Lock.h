@@ -17,13 +17,16 @@
 #ifndef LOCK_H_
 #define LOCK_H_
 
-#include <pthread.h>
+/* standard library header */
 
-#include "Debug.h"
+/* SLP library header */
+
+/* local header */
+#include "pthread.h"
 
 namespace smartcard_service_api
 {
-	class EXPORT Lock
+	class Lock
 	{
 	public:
 		virtual ~Lock() {};
@@ -46,9 +49,9 @@ namespace smartcard_service_api
 #define TOKENPASTE(x, y) x ## y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
 #define SCOPE_LOCK(X) \
-	if (const AutoLockHelper& TOKENPASTE2(lock_, __LINE__) = makeAutoLock(X))
+	if (AutoLockHelper TOKENPASTE2(lock_, __LINE__) = makeAutoLock(X))
 
-	class EXPORT AutoLockHelper
+	class AutoLockHelper
 	{
 	public:
 		inline operator bool() const
@@ -58,7 +61,7 @@ namespace smartcard_service_api
 	};
 
 	template<typename T>
-	class EXPORT AutoLock : public AutoLockHelper
+	class AutoLock : public AutoLockHelper
 	{
 	private:
 		T *lock;

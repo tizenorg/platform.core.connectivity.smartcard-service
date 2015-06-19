@@ -17,10 +17,14 @@
 #ifndef CLIENTINSTANCE_H_
 #define CLIENTINSTANCE_H_
 
+/* standard library header */
 #include <map>
 #include <vector>
 #include <string>
 
+/* SLP library header */
+
+/* local header */
 #include "ServiceInstance.h"
 
 namespace smartcard_service_api

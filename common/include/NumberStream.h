@@ -17,6 +17,11 @@
 #ifndef NUMBERSTREAM_H_
 #define NUMBERSTREAM_H_
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "ByteArray.h"
 
 namespace smartcard_service_api

@@ -1,0 +1,13 @@
+# Package Information for pkg-config
+
+prefix=/usr
+exec_prefix=${prefix}/bin
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: smartcard-service-common
+Description: Make flags of Common library of Smartcard service
+Version: 1.0
+Requires: glib-2.0 dlog
+Libs: -L${libdir} -lsmartcard-service-common
+Cflags: -I${includedir}/smartcard-service-common

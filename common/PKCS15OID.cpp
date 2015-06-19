@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "PKCS15.h"
 #include "PKCS15OID.h"
@@ -49,6 +54,7 @@ namespace smartcard_service_api
 					if (tlv.decodeTLV() == true && tlv.getTag() == 0x0C) /* ?? */
 					{
 						name = tlv.getValue();
+						SECURE_LOGD("name : %s", name.toString().c_str());
 					}
 					tlv.returnToParentTLV();
 				}

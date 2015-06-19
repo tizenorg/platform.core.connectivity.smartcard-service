@@ -17,13 +17,16 @@
 #ifndef SYNCHRONOUS_H_
 #define SYNCHRONOUS_H_
 
+/* standard library header */
 #include <pthread.h>
 
-#include "Debug.h"
+/* SLP library header */
+
+/* local header */
 
 namespace smartcard_service_api
 {
-	class EXPORT Synchronous
+	class Synchronous
 	{
 	protected:
 		pthread_mutex_t syncMutex;

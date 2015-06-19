@@ -288,6 +288,13 @@ namespace smartcard_service_api
 		return (((instance = getService(name, handle)) != NULL) && (instance->isVaildSessionHandle(session)));
 	}
 
+	bool ServerResource::isValidChannelHandle(const char *name, unsigned int handle, unsigned int channel)
+	{
+		ServiceInstance *instance = NULL;
+
+		return (((instance = getService(name, handle)) != NULL) && (instance->isVaildChannelHandle(channel)));
+	}
+
 	unsigned int ServerResource::getChannelCount(const char *name, unsigned int handle, unsigned int sessionID)
 	{
 		unsigned int result = -1;
@@ -571,6 +578,9 @@ namespace smartcard_service_api
 
 		/* open channel */
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_OPEN_LOGICAL_CHANNEL, 0, ByteArray::EMPTY);
+
+		_DBG("command [%d] : %s", command.size(), command.toString().c_str());
+
 		rv = terminal->transmitSync(command, response);
 		if (rv == 0 && response.size() >= 2)
 		{
@@ -602,6 +612,9 @@ namespace smartcard_service_api
 
 		/* open channel */
 		command = APDUHelper::generateAPDU(APDUHelper::COMMAND_CLOSE_LOGICAL_CHANNEL, channelNum, ByteArray::EMPTY);
+
+		_DBG("command [%d] : %s", command.size(), command.toString().c_str());
+
 		rv = terminal->transmitSync(command, response);
 		if (rv == 0 && response.size() >= 2)
 		{
@@ -664,6 +677,12 @@ namespace smartcard_service_api
 		}
 
 		channel = service->getChannel(result);
+		if(channel == NULL)
+		{
+			_ERR("channel is null.");
+
+			 throw ExceptionBase(SCARD_ERROR_OUT_OF_MEMORY);
+		}
 
 		/* check */
 		if (_isAuthorizedAccess(channel, aid,
@@ -864,12 +883,13 @@ namespace smartcard_service_api
 						strncmp(entry->d_name, "..", 2) != 0)
 					{
 						char fullPath[1024];
-
 						/* TODO : need additional name rule :) */
 
 						/* append each files */
 						snprintf(fullPath, sizeof(fullPath),
 							"%s/%s", OMAPI_SE_PATH, entry->d_name);
+
+						SECURE_LOGD("se name [%s]", fullPath);
 
 						result = appendSELibrary(fullPath);
 					}
@@ -1107,56 +1127,128 @@ namespace smartcard_service_api
 		}
 	}
 
+	ServerChannel *ServerResource::createInternalChannel(Terminal *terminal,
+		int channelType)
+	{
+		int channelNum = 0;
+		ServerChannel *channel = NULL;
+
+		/* open logical channel */
+		if (channelType == 1)
+		{
+			channelNum = _openLogicalChannel(terminal);
+			if (channelNum > 0)
+			{
+				_DBG("channelNum [%d]", channelNum);
+			}
+			else
+			{
+				_ERR("_openLogicalChannel failed [%d]", channelNum);
+				throw ExceptionBase(SCARD_ERROR_NOT_ENOUGH_RESOURCE);
+			}
+		}
+
+		/* create channel instance */
+		channel = new ServerChannel(NULL, NULL, channelNum, terminal);
+
+		return channel;
+	}
+
 	bool ServerResource::isAuthorizedNFCAccess(Terminal *terminal,
 		const ByteArray &aid, const vector<ByteArray> &hashes)
 	{
 		bool result = false;
+		ServerChannel *channel;
 
 		if (terminal == NULL) {
 			return result;
 		}
 
-		int num = _openLogicalChannel(terminal);
-		if (num > 0) {
-			/* create channel instance */
-			ServerChannel *channel = new ServerChannel(NULL, NULL, num, terminal);
-			if (channel != NULL) {
-				AccessControlList *acl = getAccessControlList(channel);
-				if (acl == NULL) {
+		channel = createInternalChannel(terminal, 1);
+		if (channel != NULL) {
+			AccessControlList *acl = getAccessControlList(channel);
+			if (acl == NULL) {
 
-					/* load access control defined by Global Platform */
-					acl = new GPACE();
-					if (acl != NULL) {
-						int ret;
+				/* load access control defined by Global Platform */
+				acl = new GPACE();
+				if (acl != NULL) {
+					int ret;
 
-						ret = acl->loadACL(channel);
-						if (ret >= SCARD_ERROR_OK) {
-							addAccessControlList(channel, acl);
-						} else {
-							_ERR("unknown error, 0x%x", -ret);
-
-							delete acl;
-							acl = NULL;
-						}
+					ret = acl->loadACL(channel);
+					if (ret >= SCARD_ERROR_OK) {
+						addAccessControlList(channel, acl);
 					} else {
-						_ERR("alloc failed");
+						_ERR("unknown error, 0x%x", -ret);
+
+						delete acl;
+						acl = NULL;
 					}
 				} else {
-					acl->updateACL(channel);
+					_ERR("alloc failed");
 				}
-
-				if (acl != NULL) {
-					result = acl->isAuthorizedNFCAccess(aid, hashes);
-				} else {
-					_ERR("acl is null");
-				}
-
-				delete channel;
 			} else {
-				_ERR("alloc failed");
+				acl->updateACL(channel);
 			}
+
+			if (acl != NULL) {
+				result = acl->isAuthorizedNFCAccess(aid, hashes);
+			} else {
+				_ERR("acl is null");
+			}
+
+			delete channel;
 		} else {
-			_ERR("_openLogicalChannel failed");
+			_ERR("alloc failed");
+		}
+
+		return result;
+	}
+
+	bool ServerResource::isAuthorizedAccess(Terminal *terminal,
+		const ByteArray &aid, const vector<ByteArray> &hashes)
+	{
+		bool result = false;
+		ServerChannel *channel;
+
+		if (terminal == NULL) {
+			return result;
+		}
+
+		channel = createInternalChannel(terminal, 1);
+		if (channel != NULL) {
+			AccessControlList *acl = getAccessControlList(channel);
+			if (acl == NULL) {
+
+				/* load access control defined by Global Platform */
+				acl = new GPACE();
+				if (acl != NULL) {
+					int ret;
+
+					ret = acl->loadACL(channel);
+					if (ret >= SCARD_ERROR_OK) {
+						addAccessControlList(channel, acl);
+					} else {
+						_ERR("unknown error, 0x%x", -ret);
+
+						delete acl;
+						acl = NULL;
+					}
+				} else {
+					_ERR("alloc failed");
+				}
+			} else {
+				acl->updateACL(channel);
+			}
+
+			if (acl != NULL) {
+				result = acl->isAuthorizedAccess(aid, hashes);
+			} else {
+				_ERR("acl is null");
+			}
+
+			delete channel;
+		} else {
+			_ERR("alloc failed");
 		}
 
 		return result;

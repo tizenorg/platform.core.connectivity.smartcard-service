@@ -17,9 +17,12 @@
 #ifndef SESSIONHELPER_H_
 #define SESSIONHELPER_H_
 
+/* standard library header */
 #include <vector>
 
-#include "Debug.h"
+/* SLP library header */
+
+/* local header */
 #include "Synchronous.h"
 #include "ByteArray.h"
 #include "Channel.h"
@@ -35,7 +38,7 @@ namespace smartcard_service_api
 	typedef void (*closeSessionCallback)(int error, void *userData);
 	typedef void (*getChannelCountCallback)(unsigned count, int error, void *userData);
 
-	class EXPORT SessionHelper : public Synchronous
+	class SessionHelper : public Synchronous
 	{
 	protected:
 		ReaderHelper *reader;
@@ -83,6 +86,22 @@ namespace smartcard_service_api
 				ErrorIllegalParameter &, ErrorSecurity &) = 0;
 
 		virtual Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
+
+		virtual Channel *openBasicChannelSync(const ByteArray &aid, unsigned char P2)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
+
+		virtual Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length, unsigned char P2)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
+
+		virtual Channel *openLogicalChannelSync(const ByteArray &aid, unsigned char P2)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &) = 0;
+
+		virtual Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length, unsigned char P2)
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &) = 0;
 	};

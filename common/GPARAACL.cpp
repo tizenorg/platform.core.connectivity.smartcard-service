@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "GPARAACL.h"
 #include "GPARAM.h"
@@ -287,6 +292,8 @@ namespace smartcard_service_api
 			{
 				_INFO("access rules are not changed. skip update");
 			}
+
+			printAccessControlList();
 		} else {
 			_ERR("transmitSync failed, %x", result);
 		}

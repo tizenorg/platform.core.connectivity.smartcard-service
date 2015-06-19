@@ -115,6 +115,7 @@ namespace smartcard_service_api
 		unsigned int getChannelCount(const char *name, unsigned int handle, unsigned int sessionID);
 		void removeSession(const char *name, unsigned int handle, unsigned int session);
 		bool isValidSessionHandle(const char *name, unsigned int handle, unsigned int sessionID);
+		bool isValidChannelHandle(const char *name, unsigned int handle, unsigned int channelID);
 
 		unsigned int createChannel(const char *name, unsigned int handle,
 			unsigned int sessionID, int channelType, ByteArray aid)
@@ -127,8 +128,14 @@ namespace smartcard_service_api
 		AccessControlList *getAccessControlList(ServerChannel *channel);
 		bool isAuthorizedNFCAccess(Terminal *terminal, const ByteArray &aid,
 			const vector<ByteArray> &hashes);
+		bool isAuthorizedAccess(Terminal *terminal,
+			const ByteArray &aid, const vector<ByteArray> &hashes);
 
 		void finish();
+
+		/* FIXME ??? */
+		ServerChannel *createInternalChannel(Terminal *terminal,
+			int channelType);
 
 		friend void terminalCallback(void *terminal, int event, int error, void *user_param);
 	};

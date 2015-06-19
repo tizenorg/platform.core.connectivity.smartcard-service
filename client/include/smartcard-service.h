@@ -18,7 +18,9 @@
 #define SMARTCARD_SERVICE_H_
 
 #include "smartcard-types.h"
+#ifdef __cplusplus
 #include "Exception.h"
+#endif
 #include "SEService.h"
 #include "Reader.h"
 #include "Session.h"

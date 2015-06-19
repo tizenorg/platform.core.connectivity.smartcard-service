@@ -17,7 +17,11 @@
 #ifndef CHANNEL_H_
 #define CHANNEL_H_
 
-#include "Debug.h"
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Synchronous.h"
 #include "ByteArray.h"
 #include "Exception.h"
@@ -30,10 +34,11 @@ namespace smartcard_service_api
 		unsigned int length, int error, void *userParam);
 	typedef void (*closeChannelCallback)(int error, void *userParam);
 
-	class EXPORT Channel : public Synchronous
+	class Channel : public Synchronous
 	{
 	protected :
 		ByteArray selectResponse;
+		ByteArray transmitResponse;
 		SessionHelper *session;
 		int channelNum;
 
@@ -49,6 +54,7 @@ namespace smartcard_service_api
 		inline bool isClosed() const throw() { return (channelNum < 0); }
 
 		inline const ByteArray getSelectResponse() const throw() { return selectResponse; }
+		inline const ByteArray getTransmitResponse() const throw() { return transmitResponse; }
 		inline SessionHelper *getSession() const throw() { return session; }
 
 		virtual int close(closeChannelCallback callback, void *userParam) = 0;

@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <stdio.h>
+#include <glib.h>
 
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "FileObject.h"
 #include "APDUHelper.h"
@@ -101,10 +106,7 @@ namespace smartcard_service_api
 
 			ret = resp.getStatus();
 
-			if (setSelectResponse(result) == true)
-			{
-				opened = true;
-			}
+			setSelectResponse(result);
 		}
 		else
 		{
@@ -238,13 +240,19 @@ namespace smartcard_service_api
 		return 0;
 	}
 
+#define MAX_SINGLE_LEN	256
+
 	int FileObject::readBinary(unsigned int sfi, unsigned int offset, unsigned int length, ByteArray &result)
 	{
 		ByteArray command, response;
 		APDUCommand apdu;
 		int ret;
 
-		apdu.setCommand(0, APDUCommand::INS_READ_BINARY, offset, 0, ByteArray::EMPTY, length);
+		/* FIXME : fix calculating length */
+		apdu.setCommand(0, APDUCommand::INS_READ_BINARY,
+			(offset >> 8) & 0x7F, offset & 0x00FF,
+			ByteArray::EMPTY, (length > MAX_SINGLE_LEN - 1) ? 0 : length);
+
 		apdu.getBuffer(command);
 
 		ret = channel->transmitSync(command, response);
@@ -269,6 +277,23 @@ namespace smartcard_service_api
 		{
 			_ERR("select apdu is failed, rv [%d], length [%d]", ret, response.size());
 		}
+
+		return ret;
+	}
+
+	int FileObject::readBinary(unsigned int sfi, unsigned int length, ByteArray &result)
+	{
+		int ret;
+		size_t offset = 0;
+		ByteArray temp;
+
+		do {
+			ret = readBinary(sfi, offset, length - offset, temp);
+			if (ret >= SCARD_ERROR_OK) {
+				result += temp;
+				offset += temp.size();
+			}
+		} while (ret >= SCARD_ERROR_OK && offset < length);
 
 		return ret;
 	}
@@ -305,4 +330,32 @@ namespace smartcard_service_api
 
 		return ret;
 	}
+
+	int FileObject::writeBinary(unsigned int sfi, const ByteArray &data)
+	{
+		int result;
+		size_t offset = 0, len;
+		ByteArray temp;
+
+		do {
+			len = MIN(data.size() - offset, MAX_SINGLE_LEN);
+			temp.setBuffer(data.getBuffer(offset), len);
+			result = writeBinary(sfi, temp, offset, len);
+			if (result >= SCARD_ERROR_OK) {
+				offset += len;
+			}
+		} while (result >= SCARD_ERROR_OK && offset < data.size());
+
+		return result;
+	}
+
+	int FileObject::readBinaryAll(unsigned int sfi, ByteArray &result)
+	{
+		int ret;
+
+		ret = readBinary(sfi, getFCP()->getFileSize(), result);
+
+		return ret;
+	}
+
 } /* namespace smartcard_service_api */

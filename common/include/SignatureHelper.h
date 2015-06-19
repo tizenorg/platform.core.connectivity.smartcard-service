@@ -17,29 +17,32 @@
 #ifndef SIGNATUREHELPER_H_
 #define SIGNATUREHELPER_H_
 
+/* standard library header */
 #ifdef __cplusplus
 #include <vector>
-#include "ByteArray.h"
 #endif /* __cplusplus */
 
-#include <sys/types.h>
+/* SLP library header */
 
-#include "Debug.h"
+/* local header */
 #include "smartcard-types.h"
+#ifdef __cplusplus
+#include "ByteArray.h"
+#endif /* __cplusplus */
 
 #ifdef __cplusplus
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class EXPORT SignatureHelper
+	class SignatureHelper
 	{
 	public:
 		static int getPackageName(int pid, char *package, size_t length);
-		static const ByteArray getCertificationHash(const char *packageName, uid_t uid);
+		static const ByteArray getCertificationHash(const char *packageName);
 		static const ByteArray getCertificationHash(int pid);
 		static bool getCertificationHashes(int pid, vector<ByteArray> &certHashes);
-		static bool getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes, uid_t uid);
+		static bool getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes);
 	};
 
 } /* namespace smartcard_service_api */

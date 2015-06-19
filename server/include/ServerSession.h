@@ -67,6 +67,10 @@ namespace smartcard_service_api
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openBasicChannelSync(const ByteArray &aid, unsigned char P2)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length, unsigned char P2)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openBasicChannelSync(const ByteArray &aid, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length, void *caller)
@@ -75,6 +79,10 @@ namespace smartcard_service_api
 		Channel *openLogicalChannelSync(const ByteArray &aid)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openLogicalChannelSync(const ByteArray &aid, unsigned char P2)
+			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
+		Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length, unsigned char P2)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);
 		Channel *openLogicalChannelSync(const ByteArray &aid, void *caller)
 			throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &);

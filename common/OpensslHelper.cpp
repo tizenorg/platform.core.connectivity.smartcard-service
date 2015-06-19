@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <stdio.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "ByteArray.h"
 #include "OpensslHelper.h"
@@ -38,6 +42,9 @@ namespace smartcard_service_api
 		}
 
 		b64 = BIO_new(BIO_f_base64());
+		if(b64 == NULL)
+			return false;
+
 		bmem = BIO_new(BIO_s_mem());
 
 		if (newLineChar == false)
@@ -88,6 +95,12 @@ namespace smartcard_service_api
 			memset(temp, 0, length);
 
 			b64 = BIO_new(BIO_f_base64());
+			if(b64 == NULL)
+			{
+				delete []temp;
+				return false;
+			}
+
 			bmem = BIO_new_mem_buf((void *)buffer.getBuffer(), length);
 			if (newLineChar == false)
 				BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -96,12 +109,17 @@ namespace smartcard_service_api
 			length = BIO_read(bmem, temp, length);
 
 			BIO_free_all(bmem);
-
-			result.assign((unsigned char *)temp, length);
+			if(length > 0)
+			{
+				result.assign((unsigned char *)temp, length);
+				ret = true;
+			}
+			else
+			{
+				ret = false;
+			}
 
 			delete []temp;
-
-			ret = true;
 		}
 		else
 		{

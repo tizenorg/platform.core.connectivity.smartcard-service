@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "Reader.h"
 #include "Session.h"
@@ -235,16 +239,109 @@ namespace smartcard_service_api
 
 using namespace smartcard_service_api;
 
-EXTERN_API const char *reader_get_name(reader_h handle)
+EXTERN_API int reader_get_name(reader_h handle, char** reader_name)
 {
-	const char *name = NULL;
+	int result = SCARD_ERROR_OK;
 
 	READER_EXTERN_BEGIN;
-	name = reader->getName();
+
+	try
+	{
+		*reader_name = g_strdup(reader->getName());
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
 	READER_EXTERN_END;
 
-	return name;
+	return result;
 }
+
+EXTERN_API  int reader_is_secure_element_present(reader_h handle, bool* is_present)
+{
+	int result = SCARD_ERROR_OK;
+
+	READER_EXTERN_BEGIN;
+
+	try
+	{
+		*is_present = reader->isSecureElementPresent();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	READER_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int reader_open_session_sync(reader_h handle, int *session_handle)
+{
+	session_h session;
+	int result = SCARD_ERROR_OK;
+
+	READER_EXTERN_BEGIN;
+
+	try
+	{
+		session = (session_h)reader->openSessionSync();
+		//*session_handle = (int)session;
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+		*session_handle = 0;
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+		*session_handle = 0;
+	}
+
+	READER_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int reader_close_sessions(reader_h handle)
+{
+	int result = SCARD_ERROR_OK;
+
+	READER_EXTERN_BEGIN;
+
+	try
+	{
+		reader->closeSessions();
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	READER_EXTERN_END;
+
+	return result;
+}
+
 
 EXTERN_API se_service_h reader_get_se_service(reader_h handle)
 {
@@ -257,17 +354,6 @@ EXTERN_API se_service_h reader_get_se_service(reader_h handle)
 	return service;
 }
 
-EXTERN_API bool reader_is_secure_element_present(reader_h handle)
-{
-	bool result = false;
-
-	READER_EXTERN_BEGIN;
-	result = reader->isSecureElementPresent();
-	READER_EXTERN_END;
-
-	return result;
-}
-
 EXTERN_API int reader_open_session(reader_h handle, reader_open_session_cb callback, void *userData)
 {
 	int result = -1;
@@ -277,24 +363,6 @@ EXTERN_API int reader_open_session(reader_h handle, reader_open_session_cb callb
 	READER_EXTERN_END;
 
 	return result;
-}
-
-EXTERN_API session_h reader_open_session_sync(reader_h handle)
-{
-	session_h result = NULL;
-
-	READER_EXTERN_BEGIN;
-	result = (session_h)reader->openSessionSync();
-	READER_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API void reader_close_sessions(reader_h handle)
-{
-	READER_EXTERN_BEGIN;
-	reader->closeSessions();
-	READER_EXTERN_END;
 }
 
 EXTERN_API void reader_destroy_instance(reader_h handle)

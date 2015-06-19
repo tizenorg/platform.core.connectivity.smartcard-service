@@ -17,6 +17,11 @@
 #ifndef PKCS15TOKENINFO_H_
 #define PKCS15TOKENINFO_H_
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "PKCS15Object.h"
 
 namespace smartcard_service_api

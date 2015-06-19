@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "PKCS15DODF.h"
 #include "SimpleTLV.h"
@@ -31,9 +36,9 @@ namespace smartcard_service_api
 
 			_DBG("response : %s", selectResponse.toString().c_str());
 
-			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), dodfData)) == 0)
+			if ((ret = readBinaryAll(0, dodfData)) == 0)
 			{
-				_DBG("odfData : %s", dodfData.toString().c_str());
+				_DBG("dodfData : %s", dodfData.toString().c_str());
 
 				parseData(dodfData);
 			}
@@ -59,7 +64,7 @@ namespace smartcard_service_api
 
 			_DBG("response : %s", selectResponse.toString().c_str());
 
-			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), dodfData)) == 0)
+			if ((ret = readBinaryAll(0, dodfData)) == 0)
 			{
 				_DBG("dodfData : %s", dodfData.toString().c_str());
 

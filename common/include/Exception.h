@@ -20,7 +20,6 @@
 #include <exception>
 #include <stddef.h>
 
-#include "Debug.h"
 #include "smartcard-types.h"
 
 #define THROW_ERROR(errorCode) \
@@ -67,7 +66,7 @@
 
 namespace smartcard_service_api
 {
-	class EXPORT ExceptionBase : public std::exception
+	class ExceptionBase : public std::exception
 	{
 	protected :
 		int errorCode;
@@ -84,7 +83,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class EXPORT ErrorIO : public ExceptionBase
+	class ErrorIO : public ExceptionBase
 	{
 	private :
 		unsigned char sw[2];
@@ -131,7 +130,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class EXPORT ErrorSecurity : public ExceptionBase
+	class ErrorSecurity : public ExceptionBase
 	{
 	public :
 		ErrorSecurity(int errorCode) throw()
@@ -157,7 +156,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class EXPORT ErrorIllegalState : public ExceptionBase
+	class ErrorIllegalState : public ExceptionBase
 	{
 	public :
 		ErrorIllegalState(int errorCode) throw()
@@ -191,7 +190,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class EXPORT ErrorIllegalParameter : public ExceptionBase
+	class ErrorIllegalParameter : public ExceptionBase
 	{
 	public :
 		ErrorIllegalParameter(int errorCode) throw()
@@ -217,7 +216,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class EXPORT ThrowError
+	class ThrowError
 	{
 	public :
 		static void throwError(int errorCode)

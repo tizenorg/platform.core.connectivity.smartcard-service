@@ -17,6 +17,11 @@
 #ifndef PROVIDERHELPER_H_
 #define PROVIDERHELPER_H_
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Channel.h"
 
 namespace smartcard_service_api

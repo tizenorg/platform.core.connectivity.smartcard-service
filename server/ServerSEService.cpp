@@ -136,7 +136,6 @@ namespace smartcard_service_api
 	int ServerSEService::openSELibraries()
 	{
 		int result;
-		void *libHandle;
 		DIR *dir = NULL;
 		struct dirent *entry = NULL;
 
@@ -150,9 +149,10 @@ namespace smartcard_service_api
 
 					/* need additional name rule :) */
 					/* open each files */
-					libHandle = NULL;
 
 					snprintf(fullPath, sizeof(fullPath), "%s/%s", OMAPI_SE_PATH, entry->d_name);
+
+					SECURE_LOGD("se name [%s]", fullPath);
 
 					result = appendSELibrary(fullPath);
 				}
@@ -184,19 +184,58 @@ namespace smartcard_service_api
 		}
 	}
 
+#if 0
+	bool ServerSEService::isValidReaderHandle(void *handle)
+	{
+		bool result = false;
+		size_t i;
+
+		for (i = 0; i < readers.size(); i++)
+		{
+			if ((void *)readers[i] == handle)
+			{
+				result =  true;
+				break;
+			}
+		}
+
+		return false;
+	}
+#endif
+
 	void ServerSEService::terminalCallback(const void *terminal, int event, int error, void *user_param)
 	{
 		switch (event)
 		{
 		case Terminal::NOTIFY_SE_AVAILABLE :
 			{
-				// TODO: add right se reader
+				/* add right se reader */
+//				if ((term = ServerResource::getInstance().getTerminal((char *)terminal)) != NULL)
+//				{
+//					_DBG("terminal : [%s]", (char *)terminal);
+//
+//					term->initialize();
+//				}
+//				else
+//				{
+//					_DBG("unknown terminal : [%s]", (char *)terminal);
+//				}
 			}
 			break;
 
 		case Terminal::NOTIFY_SE_NOT_AVAILABLE :
 			{
-				// TODO: remove right se reader
+				/* remove right se reader */
+//				if ((term = ServerResource::getInstance().getTerminal((char *)terminal)) != NULL)
+//				{
+//					_DBG("terminal : [%s]", (char *)terminal);
+//
+//					term->finalize();
+//				}
+//				else
+//				{
+//					_DBG("unknown terminal : [%s]", (char *)terminal);
+//				}
 			}
 			break;
 

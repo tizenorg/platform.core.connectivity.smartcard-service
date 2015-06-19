@@ -22,10 +22,8 @@
 #include <list>
 #include <string>
 #include <vector>
-#include <sys/stat.h>
 
 /* SLP library header */
-#include "package-manager.h"
 #include "pkgmgr-info.h"
 #include "aul.h"
 
@@ -40,31 +38,16 @@
 
 namespace smartcard_service_api
 {
-	uid_t ProcGetUsrBypid(int pid)
-	{
-		char buf[255];
-		int ret;
-		uid_t uid;
-		struct stat dir_stats;
-		snprintf(buf, sizeof(buf), "/proc/%d", pid);
-		ret = stat(buf, &dir_stats);
-		if (ret < 0)
-			uid = (uid_t) - 1;
-		else
-			uid = dir_stats.st_uid;
-		return uid;
-	}
-
 	int SignatureHelper::getPackageName(int pid, char *package, size_t length)
 	{
 		return aul_app_get_pkgname_bypid(pid, package, length);
 	}
 
-	const ByteArray SignatureHelper::getCertificationHash(const char *packageName, uid_t uid)
+	const ByteArray SignatureHelper::getCertificationHash(const char *packageName)
 	{
 		ByteArray result;
 		int ret = 0;
-		pkgmgr_certinfo_h handle = NULL;
+		pkgmgrinfo_certinfo_h handle = NULL;
 		pkgmgrinfo_appinfo_h handle_appinfo;
 		char *pkgid = NULL;
 
@@ -82,17 +65,19 @@ namespace smartcard_service_api
 		}
 		pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
 
-		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
+		SECURE_LOGD("package name : %s, package id : %s", packageName, pkgid);
+
+		if ((ret = pkgmgrinfo_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle, uid)) == 0)
+			if (0)
 			{
 				int type;
 
-				for (type = (int)PM_AUTHOR_ROOT_CERT; type <= (int)PM_DISTRIBUTOR2_SIGNER_CERT; type++)
+				for (type = (int)PMINFO_AUTHOR_ROOT_CERT; type <= (int)PMINFO_DISTRIBUTOR2_SIGNER_CERT; type++)
 				{
 					const char *value = NULL;
 
-					if ((ret = pkgmgr_pkginfo_get_cert_value(handle, (pkgmgr_cert_type)type, &value)) == 0)
+					if ((ret = pkgmgrinfo_pkginfo_get_cert_value(handle, (pkgmgrinfo_cert_type)type, &value)) == 0)
 					{
 						if (value != NULL && strlen(value) > 0)
 						{
@@ -111,7 +96,7 @@ namespace smartcard_service_api
 				_ERR("pkgmgr_pkginfo_load_certinfo failed [%d]", ret);
 			}
 
-			pkgmgr_pkginfo_destroy_certinfo(handle);
+			pkgmgrinfo_pkginfo_destroy_certinfo(handle);
 		}
 		else
 		{
@@ -126,11 +111,10 @@ namespace smartcard_service_api
 		ByteArray result;
 		int error = 0;
 		char pkgName[256] = { 0, };
-		uid_t uid = ProcGetUsrBypid(pid);
 
 		if ((error = aul_app_get_pkgname_bypid(pid, pkgName, sizeof(pkgName))) == 0)
 		{
-			result = getCertificationHash(pkgName, uid);
+			result = getCertificationHash(pkgName);
 		}
 		else
 		{
@@ -145,11 +129,10 @@ namespace smartcard_service_api
 		bool result = false;
 		int error = 0;
 		char pkgName[256] = { 0, };
-		uid_t uid = ProcGetUsrBypid(pid);
 
 		if ((error = aul_app_get_pkgname_bypid(pid, pkgName, sizeof(pkgName))) == 0)
 		{
-			result = getCertificationHashes(pkgName, certHashes, uid);
+			result = getCertificationHashes(pkgName, certHashes);
 		}
 		else
 		{
@@ -159,38 +142,40 @@ namespace smartcard_service_api
 		return result;
 	}
 
-	bool SignatureHelper::getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes, uid_t uid)
+	bool SignatureHelper::getCertificationHashes(const char *packageName, vector<ByteArray> &certHashes)
 	{
 		bool result = false;
 		int ret = 0;
-		pkgmgr_certinfo_h handle = NULL;
+		pkgmgrinfo_certinfo_h handle = NULL;
 		pkgmgrinfo_appinfo_h handle_appinfo;
 		char *pkgid = NULL;
 
-		if(pkgmgrinfo_appinfo_get_appinfo(packageName, &handle_appinfo) != PMINFO_R_OK)
+		if (pkgmgrinfo_appinfo_get_appinfo(packageName, &handle_appinfo) != PMINFO_R_OK)
 		{
 			_ERR("pkgmgrinfo_appinfo_get_appinfo fail");
 			return result;
 		}
 
-		if(pkgmgrinfo_appinfo_get_pkgid(handle_appinfo, &pkgid) != PMINFO_R_OK)
+		if (pkgmgrinfo_appinfo_get_pkgid(handle_appinfo, &pkgid) != PMINFO_R_OK)
 		{
 			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
 			_ERR("pkgmgrinfo_appinfo_get_pkgid fail");
 			return result;
 		}
 
-		if ((ret = pkgmgr_pkginfo_create_certinfo(&handle)) == 0)
+		SECURE_LOGD("package name : %s, package id : %s", packageName, pkgid);
+
+		if ((ret = pkgmgrinfo_pkginfo_create_certinfo(&handle)) == 0)
 		{
-			if ((ret = pkgmgr_pkginfo_load_certinfo(pkgid, handle, uid)) == 0)
+			if (0)
 			{
 				int type;
 
-				for (type = (int)PM_AUTHOR_ROOT_CERT; type <= (int)PM_DISTRIBUTOR2_SIGNER_CERT; type++)
+				for (type = (int)PMINFO_AUTHOR_ROOT_CERT; type <= (int)PMINFO_DISTRIBUTOR2_SIGNER_CERT; type++)
 				{
 					const char *value = NULL;
 
-					if ((ret = pkgmgr_pkginfo_get_cert_value(handle, (pkgmgr_cert_type)type, &value)) == 0)
+					if ((ret = pkgmgrinfo_pkginfo_get_cert_value(handle, (pkgmgrinfo_cert_type)type, &value)) == 0)
 					{
 						if (value != NULL && strlen(value) > 0)
 						{
@@ -219,7 +204,7 @@ namespace smartcard_service_api
 
 			pkgmgrinfo_appinfo_destroy_appinfo(handle_appinfo);
 
-			pkgmgr_pkginfo_destroy_certinfo(handle);
+			pkgmgrinfo_pkginfo_destroy_certinfo(handle);
 		}
 		else
 		{
@@ -236,12 +221,15 @@ using namespace smartcard_service_api;
 certiHash *__signature_helper_vector_to_linked_list(vector<ByteArray> &certHashes)
 {
 	vector<ByteArray>::iterator item;
-	certiHash *head, *tail, *tmp;
+	certiHash *head, *tail;
+	uint8_t* buffer = NULL;
 
 	head = tail = NULL;
 
 	for (item = certHashes.begin(); item != certHashes.end(); item++)
 	{
+		certiHash *tmp = NULL;
+
 		if ((tmp = (certiHash *)calloc(1, sizeof(certiHash))) == NULL)
 			goto ERROR;
 
@@ -253,7 +241,15 @@ certiHash *__signature_helper_vector_to_linked_list(vector<ByteArray> &certHashe
 			goto ERROR;
 		}
 
-		memcpy(tmp->value, (*item).getBuffer(), tmp->length);
+		buffer = (*item).getBuffer();
+		if(buffer == NULL)
+		{
+			free(tmp->value);
+			free(tmp);
+			continue;
+		}
+
+		memcpy(tmp->value, buffer, tmp->length);
 		tmp->next = NULL;
 
 		if (head == NULL)
@@ -266,10 +262,13 @@ certiHash *__signature_helper_vector_to_linked_list(vector<ByteArray> &certHashe
 			tail = tmp;
 		}
 	}
+
 	return head;
 
 ERROR :
 	_ERR("alloc fail");
+
+	certiHash *tmp;
 
 	while (head)
 	{
@@ -283,7 +282,7 @@ ERROR :
 	return NULL;
 }
 
-EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, uid_t uid, certiHash **hash)
+EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, certiHash **hash)
 {
 	int ret = -1;
 	vector<ByteArray> hashes;
@@ -291,7 +290,7 @@ EXTERN_API int signature_helper_get_certificate_hashes(const char *packageName, 
 	if (packageName == NULL)
 		return ret;
 
-	if (SignatureHelper::getCertificationHashes(packageName, hashes, uid) == true)
+	if (SignatureHelper::getCertificationHashes(packageName, hashes) == true)
 	{
 		*hash = __signature_helper_vector_to_linked_list(hashes);
 		ret = 0;

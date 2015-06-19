@@ -17,6 +17,12 @@
 #ifndef TERMINALINTERFACE_H_
 #define TERMINALINTERFACE_H_
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
+
 //typedef unsigned int terminal_handle_h;
 //
 //typedef enum

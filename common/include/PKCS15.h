@@ -17,9 +17,12 @@
 #ifndef PKCS15_H_
 #define PKCS15_H_
 
+/* standard library header */
 #include <map>
 
-#include "Debug.h"
+/* SLP library header */
+
+/* local header */
 #include "PKCS15Object.h"
 #include "PKCS15ODF.h"
 
@@ -27,7 +30,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class EXPORT PKCS15: public PKCS15Object
+	class PKCS15: public PKCS15Object
 	{
 	private:
 		map<unsigned int, ByteArray> recordElement;
@@ -36,7 +39,7 @@ namespace smartcard_service_api
 		int selectFromEFDIR();
 
 	public:
-		static ByteArray PKCS15_AID;
+		static const ByteArray PKCS15_AID;
 
 		PKCS15(Channel *channel);
 		PKCS15(Channel *channel, const ByteArray &selectResponse);

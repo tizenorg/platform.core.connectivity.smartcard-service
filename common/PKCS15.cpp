@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "APDUHelper.h"
 #include "EFDIR.h"
@@ -23,7 +28,7 @@ namespace smartcard_service_api
 {
 	static unsigned char aid[] = { 0xA0, 0x00, 0x00, 0x00, 0x63, 0x50,
 		0x4B, 0x43, 0x53, 0x2D, 0x31, 0x35 };
-	ByteArray PKCS15::PKCS15_AID(ARRAY_AND_SIZE(aid));
+	const ByteArray PKCS15::PKCS15_AID(ARRAY_AND_SIZE(aid));
 
 	PKCS15::PKCS15(Channel *channel) :
 		PKCS15Object(channel), odf(NULL)
@@ -48,7 +53,7 @@ namespace smartcard_service_api
 	{
 		int ret;
 
-		ret = PKCS15Object::select(PKCS15::PKCS15_AID);
+		ret = PKCS15Object::select(PKCS15_AID);
 		if (ret >= SCARD_ERROR_OK)
 		{
 			_DBG("response : %s", selectResponse.toString().c_str());

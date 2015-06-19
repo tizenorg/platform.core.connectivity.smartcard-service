@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "ServerChannel.h"
 #include "APDUHelper.h"
@@ -47,6 +52,9 @@ namespace smartcard_service_api
 		{
 			/* close channel */
 			command = apdu.generateAPDU(APDUHelper::COMMAND_CLOSE_LOGICAL_CHANNEL, channelNum, ByteArray::EMPTY);
+
+			_DBG("command [%d] : %s", command.size(), command.toString().c_str());
+
 			rv = terminal->transmitSync(command, result);
 
 			if (rv == 0 && result.size() >= 2)

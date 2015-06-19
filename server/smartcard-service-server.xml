@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<manifest xmlns="http://tizen.org/ns/packages"
-	package="smartcard-service-server"
-	version="0.1.20"
-	install-location="internal-only"
-	type="rpm">
+<manifest xmlns="http://tizen.org/ns/packages" package="smartcard-service-server" version="0.1.20" install-location="internal-only" type="rpm">
 	<label>Smartcard Service Server</label>
 	<author email="constant.lee@samsung.com" href="www.samsung.com">Sangsoo Lee</author>
 	<author email="wonkyu.kwon@samsung.com" href="www.samsung.com">Wonkyu Kwon</author>
 	<description>Smartcard Service Server</description>
 	<ui-application appid="smartcard-service-server"
-		exec="/usr/bin/smartcard-daemon"
+		exec="/usr/apps/smartcard-service-server/bin/smartcard-daemon"
 		nodisplay="true"
 		multiple="false"
 		type="capp"

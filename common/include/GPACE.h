@@ -17,7 +17,11 @@
 #ifndef GPACE_H_
 #define GPACE_H_
 
-#include "Debug.h"
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "AccessControlList.h"
@@ -26,7 +30,7 @@
 #ifdef __cplusplus
 namespace smartcard_service_api
 {
-	class EXPORT GPACE : public AccessControlList
+	class GPACE : public AccessControlList
 	{
 	private :
 		AccessControlList *acl;

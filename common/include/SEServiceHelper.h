@@ -17,9 +17,12 @@
 #ifndef SESERVICEHELPER_H_
 #define SESERVICEHELPER_H_
 
+/* standard library header */
 #include <vector>
 
-#include "Debug.h"
+/* SLP library header */
+
+/* local header */
 #include "Synchronous.h"
 #include "ReaderHelper.h"
 
@@ -27,7 +30,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class EXPORT SEServiceHelper : public Synchronous
+	class SEServiceHelper : public Synchronous
 	{
 	protected:
 		vector<ReaderHelper *> readers;

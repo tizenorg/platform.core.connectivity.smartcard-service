@@ -17,11 +17,12 @@
 #ifndef SESSION_H_
 #define SESSION_H_
 
-#ifdef USE_AUTOSTART
+/* standard library header */
 #include <gio/gio.h>
-#endif
 
-#include "Debug.h"
+/* SLP library header */
+
+/* local header */
 #include "smartcard-types.h"
 #ifdef __cplusplus
 #include "SessionHelper.h"
@@ -32,7 +33,7 @@ namespace smartcard_service_api
 {
 	class Reader;
 
-	class EXPORT Session : public SessionHelper
+	class Session : public SessionHelper
 	{
 	private:
 		void *context;
@@ -43,18 +44,21 @@ namespace smartcard_service_api
 		~Session();
 
 		int openChannel(int id, const ByteArray &aid, openChannelCallback callback, void *userData);
+		
 		Channel *openChannelSync(int id, const ByteArray &aid)
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
-#ifdef USE_AUTOSTART
+		Channel *openChannelSync(int id, const ByteArray &aid, unsigned char P2)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
+
 		static void session_get_atr_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
 		static void session_open_channel_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
 		static void session_close_cb(GObject *source_object,
 			GAsyncResult *res, gpointer user_data);
-#endif
 
 	public:
 		void closeChannels()
@@ -90,9 +94,26 @@ namespace smartcard_service_api
 
 		Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length)
 			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);	
+
+		Channel *openBasicChannelSync(const ByteArray &aid, unsigned char P2)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
+
+		Channel *openBasicChannelSync(const unsigned char *aid, unsigned int length, unsigned char P2)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
+
+		Channel *openLogicalChannelSync(const ByteArray &aid, unsigned char P2)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+				ErrorIllegalParameter &, ErrorSecurity &);
+
+		Channel *openLogicalChannelSync(const unsigned char *aid, unsigned int length, unsigned char P2)
+			throw(ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 				ErrorIllegalParameter &, ErrorSecurity &);
 
 		size_t getChannelCount() const;
+		void *getHandle(){ return handle; }
 
 		friend class Reader;
 	};
@@ -105,31 +126,29 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-reader_h session_get_reader(session_h handle);
-bool session_is_closed(session_h handle);
-__attribute__((deprecated)) void session_destroy_instance(session_h handle);
-void session_close_channels(session_h handle);
+int session_get_reader(session_h handle, int* reader_handle);
+int session_is_closed(session_h handle, bool* is_closed);
+int session_close_channels(session_h handle);
+int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length);
+int session_close_sync(session_h handle);
+int session_open_basic_channel_sync(session_h handle, unsigned char *aid,
+	unsigned int length, unsigned char P2, int* channel_handle);
+int session_open_logical_channel_sync(session_h handle, unsigned char *aid,
+	unsigned int length, unsigned char P2, int* channel_handle);
+///
 
 int session_get_atr(session_h handle, session_get_atr_cb callback,
 	void *userData);
 int session_close(session_h handle, session_close_session_cb callback,
 	void *userData);
-
 int session_open_basic_channel(session_h handle, unsigned char *aid,
 	unsigned int length, session_open_channel_cb callback, void *userData);
 int session_open_logical_channel(session_h handle, unsigned char *aid,
 	unsigned int length, session_open_channel_cb callback, void *userData);
-
-int session_get_atr_sync(session_h handle, unsigned char **buffer,
-	unsigned int *length);
-void session_close_sync(session_h handle);
-
-channel_h session_open_basic_channel_sync(session_h handle,
-	unsigned char *aid, unsigned int length);
-channel_h session_open_logical_channel_sync(session_h handle,
-	unsigned char *aid, unsigned int length);
-
 size_t session_get_channel_count(session_h handle);
+__attribute__((deprecated)) void session_destroy_instance(session_h handle);
+
+
 
 #ifdef __cplusplus
 }

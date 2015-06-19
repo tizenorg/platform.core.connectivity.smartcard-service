@@ -14,14 +14,28 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <glib.h>
 
+/* SLP library header */
+
+/* local header */
 #include "smartcard-types.h"
 #include "Debug.h"
 #include "ByteArray.h"
 #include "ClientGDBus.h"
 
 using namespace std;
+
+/* below functions will be called when dlopen or dlclose is called */
+void __attribute__ ((constructor)) lib_init()
+{
+	g_type_init();
+}
+
+void __attribute__ ((destructor)) lib_fini()
+{
+}
 
 namespace smartcard_service_api
 {

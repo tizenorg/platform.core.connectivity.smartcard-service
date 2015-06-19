@@ -27,8 +27,8 @@
 typedef struct _Smartcard_Service Smartcard_Service;
 typedef struct _Smartcard_ServiceClass Smartcard_ServiceClass;
 
-#define SMARTCARD_SERVICE_NAME "org.tizen.smartcard_service"
-#define SMARTCARD_SERVICE_PATH "/org/tizen/smartcard_service"
+#define SMARTCARD_SERVICE_NAME "org.tizen.SmartcardService"
+#define SMARTCARD_SERVICE_PATH "/org/tizen/SmartcardService"
 
 GType smartcard_service_get_type(void);
 

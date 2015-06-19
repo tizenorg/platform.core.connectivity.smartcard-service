@@ -123,6 +123,12 @@ int main(int argc, char *argv[])
 	daemonize();
 #endif
 
+	if (!g_thread_supported()) {
+		g_thread_init(NULL);
+	}
+
+	g_type_init();
+
 	main_loop = g_main_new(TRUE);
 
 	id = g_bus_own_name(G_BUS_TYPE_SYSTEM,

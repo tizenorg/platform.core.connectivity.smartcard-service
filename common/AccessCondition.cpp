@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <stdio.h>
 
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "SimpleTLV.h"
 #include "AccessControlList.h"
@@ -46,8 +50,17 @@ namespace smartcard_service_api
 			cmd = *(unsigned int *)command.getBuffer();
 			for (item = listFilters.begin(); item != listFilters.end(); item++)
 			{
-				mask = *(unsigned int *)item->second.getBuffer();
-				rule = *(unsigned int *)item->first.getBuffer();
+				unsigned int *temp1 = NULL;
+				unsigned int *temp2 = NULL;
+
+				temp1 = (unsigned int *)item->second.getBuffer();
+				temp2 = (unsigned int *)item->first.getBuffer();
+
+				if(temp1 == NULL || temp2 == NULL)
+					continue;
+
+				mask = *temp1;
+				rule = *temp2;
 
 				if ((cmd & mask) == rule)
 				{
@@ -63,6 +76,27 @@ namespace smartcard_service_api
 		}
 
 		return result;
+	}
+
+	void AccessRule::printAccessRules() const
+	{
+		if (listFilters.size() > 0)
+		{
+			vector<pair<ByteArray, ByteArray> >::const_iterator item;
+
+			_DBG("         +---- Granted APDUs");
+
+			for (item = listFilters.begin(); item != listFilters.end(); item++)
+			{
+				_DBG("         +----- APDU : %s, Mask : %s", item->first.toString().c_str(), item->second.toString().c_str());
+			}
+		}
+		else
+		{
+			_DBG("         +---- APDU Access ALLOW : %s", apduRule ? "ALWAYS" : "NEVER");
+		}
+
+		_DBG("         +---- NFC  Access ALLOW : %s", nfcRule ? "ALWAYS" : "NEVER");
 	}
 
 	bool AccessRule::isAuthorizedNFCAccess(void) const
@@ -131,6 +165,28 @@ namespace smartcard_service_api
 		}
 
 		return result;
+	}
+
+	void AccessCondition::printAccessConditions() const
+	{
+		_DBG("   +-- Access Condition");
+
+		if (mapRules.size() > 0)
+		{
+			map<ByteArray, AccessRule>::const_iterator item;
+
+			for (item = mapRules.begin(); item != mapRules.end(); item++)
+			{
+				ByteArray temp = item->first;
+
+				_DBG("   +--- hash : %s", (temp == AccessControlList::ALL_DEVICE_APPS) ? "All device applications" : temp.toString().c_str());
+				item->second.printAccessRules();
+			}
+		}
+		else
+		{
+			_DBG("   +--- no rule found");
+		}
 	}
 
 	void AccessCondition::setAPDUAccessRule(const ByteArray &certHash,

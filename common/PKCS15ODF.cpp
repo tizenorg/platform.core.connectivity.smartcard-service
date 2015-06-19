@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "PKCS15ODF.h"
 #include "SimpleTLV.h"
@@ -21,18 +26,23 @@
 
 namespace smartcard_service_api
 {
+	static const unsigned int ODF_FID = 0x3150;
+
+	static const unsigned int TAG_DODF = (unsigned int)0xA7;
+	static const unsigned int TAG_CDF = (unsigned int)0xA5;
+
 	PKCS15ODF::PKCS15ODF(Channel *channel) :
-		PKCS15Object(channel), dodf(NULL)
+		PKCS15Object(channel), cdf(NULL), dodf(NULL)
 	{
 		int ret = 0;
 
-		if ((ret = select(PKCS15ODF::ODF_FID)) >= SCARD_ERROR_OK)
+		if ((ret = select(ODF_FID)) >= SCARD_ERROR_OK)
 		{
 			ByteArray odfData, extra;
 
 			_DBG("response : %s", selectResponse.toString().c_str());
 
-			if ((ret = readBinary(0, 0, getFCP()->getFileSize(), odfData)) == 0)
+			if ((ret = readBinaryAll(0, odfData)) == 0)
 			{
 				_DBG("odfData : %s", odfData.toString().c_str());
 
@@ -55,7 +65,7 @@ namespace smartcard_service_api
 		int ret = 0;
 		ByteArray odfData;
 
-		if ((ret = readBinary(0, 0, 0, odfData)) == 0)
+		if ((ret = readBinaryAll(0, odfData)) == 0)
 		{
 			_DBG("odfData : %s", odfData.toString().c_str());
 
@@ -85,7 +95,7 @@ namespace smartcard_service_api
 		{
 			switch (tlv.getTag())
 			{
-			case (unsigned int)0xA7 ://PKCS15ODF::TAG_DODF :
+			case TAG_DODF :
 				{
 					ByteArray dodf;
 
@@ -100,11 +110,11 @@ namespace smartcard_service_api
 				}
 				break;
 
-			case (unsigned int)0xA5 ://PKCS15ODF::TAG_TOKENINFO :
+			case TAG_CDF :
 				{
 					ByteArray tokeninfo;
 
-					_DBG("TAG_TOKENINFO");
+					_DBG("TAG_CDF");
 
 					tokeninfo = PKCS15Object::getOctetStream(tlv.getValue());
 
@@ -134,13 +144,13 @@ namespace smartcard_service_api
 
 		if (dodf == NULL)
 		{
-			item = dataList.find((unsigned int)0xA7/*PKCS15ODF::TAG_DODF*/);
+			item = dataList.find(TAG_DODF);
 			if (item != dataList.end())
 			{
 				NumberStream num(item->second);
 				unsigned int fid = num.getLittleEndianNumber();
 
-				_DBG("fid [%X]", fid);
+				_DBG("dodf fid [%X]", fid);
 
 				dodf = new PKCS15DODF(fid, channel);
 				if (dodf != NULL && dodf->isClosed() == true)
@@ -162,4 +172,37 @@ namespace smartcard_service_api
 		return dodf;
 	}
 
+	PKCS15CDF *PKCS15ODF::getCDF()
+	{
+		map<unsigned int, ByteArray>::iterator item;
+
+		if (cdf == NULL)
+		{
+			item = dataList.find(TAG_CDF);
+			if (item != dataList.end())
+			{
+				NumberStream num(item->second);
+				unsigned int fid = num.getLittleEndianNumber();
+
+				_DBG("cdf fid [%X]", fid);
+
+				cdf = new PKCS15CDF(fid, channel);
+				if (cdf != NULL && cdf->isClosed() == true)
+				{
+					_ERR("failed to open CDF");
+
+					delete cdf;
+					cdf = NULL;
+				}
+			}
+			else
+			{
+				_ERR("[%02X] is not found. total [%d]", TAG_CDF, dataList.size());
+			}
+		}
+
+		_DBG("cdf [%p]", cdf);
+
+		return cdf;
+	}
 } /* namespace smartcard_service_api */

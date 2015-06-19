@@ -19,7 +19,6 @@
 
 #include <glib.h>
 
-#include "Debug.h"
 #include "ByteArray.h"
 
 namespace smartcard_service_api
@@ -32,7 +31,7 @@ namespace smartcard_service_api
 		void *user_param;
 	};
 
-	class EXPORT GDBusHelper
+	class GDBusHelper
 	{
 	public :
 		static void convertVariantToByteArray(GVariant *var,

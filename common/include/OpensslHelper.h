@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <stdint.h>
 
+/* SLP library header */
+
+/* local header */
 #include "ByteArray.h"
 
 #ifndef OPENSSLHELPER_H_

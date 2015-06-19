@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.tizen.SmartcardService
+Exec=/usr/apps/smartcard-service-server/bin/smartcard-daemon
+MemoryLimit=10M
+User=root

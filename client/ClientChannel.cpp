@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <glib.h>
 
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "ClientChannel.h"
 #include "ReaderHelper.h"
@@ -167,6 +171,7 @@ namespace smartcard_service_api
 				gint ret;
 				GError *error = NULL;
 
+
 				if (proxy == NULL) {
 					_ERR("dbus proxy is not initialized yet");
 					throw ErrorIllegalState(SCARD_ERROR_NOT_INITIALIZED);
@@ -177,7 +182,9 @@ namespace smartcard_service_api
 					GPOINTER_TO_UINT(context),
 					GPOINTER_TO_UINT(handle),
 					&ret, NULL, &error) == true) {
-					if (ret != SCARD_ERROR_OK) {
+					if (ret == SCARD_ERROR_OK) {
+						channelNum = -1;
+					} else {
 						_ERR("smartcard_service_channel_call_close_channel_sync failed, [%d]", ret);
 						THROW_ERROR(ret);
 					}
@@ -246,13 +253,14 @@ namespace smartcard_service_api
 				NULL, &error) == true) {
 
 				if (rv == SCARD_ERROR_OK) {
-					GDBusHelper::convertVariantToByteArray(var_response, result);
+					GDBusHelper::convertVariantToByteArray(var_response, transmitResponse);
+					result = transmitResponse;
 				} else {
-					_ERR("smartcard_service_session_call_get_atr_sync failed, [%d]", rv);
+					_ERR("smartcard_service_session_call_transmit failed, [%d]", rv);
 					THROW_ERROR(rv);
 				}
 			} else {
-				_ERR("smartcard_service_session_call_get_atr_sync failed, [%s]", error->message);
+				_ERR("smartcard_service_session_call_transmit failed, [%s]", error->message);
 				g_error_free(error);
 
 				throw ErrorIO(SCARD_ERROR_IPC_FAILED);
@@ -316,6 +324,274 @@ namespace smartcard_service_api
 
 using namespace smartcard_service_api;
 
+EXTERN_API int channel_close_sync(channel_h handle)
+{
+	int result = SCARD_ERROR_OK;
+
+	CHANNEL_EXTERN_BEGIN;
+
+	try
+	{
+		channel->closeSync();
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int channel_transmit_sync(channel_h handle, unsigned char *command,
+	unsigned int cmd_len, unsigned char **response, unsigned int *resp_len)
+{
+	int result = SCARD_ERROR_OK;
+
+	if (command == NULL || cmd_len == 0 || response == NULL || resp_len == NULL)
+		return SCARD_ERROR_UNKNOWN;
+
+	CHANNEL_EXTERN_BEGIN;
+
+	try
+	{
+		ByteArray temp, resp;
+
+		temp.assign(command, cmd_len);
+		channel->transmitSync(temp, resp);
+
+		if (resp.size() > 0)
+		{
+			*response = (unsigned char *)calloc(resp.size(), sizeof(unsigned char));
+			*resp_len = resp.size();
+			memcpy(*response, resp.getBuffer(), *resp_len);
+		}
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+		*resp_len = 0;
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+		*resp_len = 0;
+	}
+
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int channel_is_basic_channel(channel_h handle, bool* is_basic_channel)
+{
+	int result = SCARD_ERROR_OK;
+
+	CHANNEL_EXTERN_BEGIN;
+
+	try
+	{
+		*is_basic_channel = channel->isBasicChannel();
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int channel_is_closed(channel_h handle, bool* is_closed)
+{
+	int result = SCARD_ERROR_OK;
+
+	CHANNEL_EXTERN_BEGIN;
+
+	try
+	{
+		*is_closed = channel->isClosed();
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int channel_get_select_response(channel_h handle,
+	unsigned char **buffer, size_t *length)
+{
+	int result = SCARD_ERROR_OK;
+
+	CHANNEL_EXTERN_BEGIN;
+
+	try
+	{
+		ByteArray response = channel->getSelectResponse();
+		uint8_t* get_buffer = response.getBuffer();
+
+		*length = response.size();
+
+		if (*length > 0)
+		{
+			*buffer = (unsigned char *)calloc(*length, sizeof(unsigned char));
+			if(*buffer == NULL || get_buffer == NULL)
+			{
+				*length = 0;
+				return SCARD_ERROR_NOT_ENOUGH_RESOURCE;
+			}
+
+			memcpy(*buffer, get_buffer, *length);
+		}
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+		*length = 0;
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+		*length = 0;
+	}
+
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int channel_get_transmit_response(channel_h handle,
+	unsigned char **buffer, size_t *length)
+{
+	int result = SCARD_ERROR_OK;
+
+	CHANNEL_EXTERN_BEGIN;
+
+	try
+	{
+		ByteArray response;
+
+		response = channel->getTransmitResponse();
+
+		*length = response.size();
+
+		if (*length > 0)
+		{
+			*buffer = (unsigned char *)calloc(*length, sizeof(unsigned char));
+			memcpy(*buffer, response.getBuffer(), *length);
+		}
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+		*length = 0;
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+		*length = 0;
+	}
+
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int channel_get_session(channel_h handle, int *session_handle)
+{
+	int result = SCARD_ERROR_OK;
+	session_h session = NULL;
+
+	CHANNEL_EXTERN_BEGIN;
+
+	try
+	{
+		session = channel->getSession();
+		//*session_handle = (int)session;
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int channel_select_next(channel_h handle, bool *pSuccess)
+{
+	int result = SCARD_ERROR_OK;
+
+	CHANNEL_EXTERN_BEGIN;
+
+	try
+	{
+		*pSuccess = channel->selectNext();
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API unsigned int channel_get_select_response_length(channel_h handle)
+{
+	unsigned int result = 0;
+
+	CHANNEL_EXTERN_BEGIN;
+	result = channel->getSelectResponse().size();
+	CHANNEL_EXTERN_END;
+
+	return result;
+}
+
 EXTERN_API int channel_close(channel_h handle, channel_close_cb callback, void *userParam)
 {
 	int result = -1;
@@ -340,119 +616,6 @@ EXTERN_API int channel_transmit(channel_h handle, unsigned char *command,
 	CHANNEL_EXTERN_END;
 
 	return result;
-}
-
-EXTERN_API void channel_close_sync(channel_h handle)
-{
-	CHANNEL_EXTERN_BEGIN;
-	try
-	{
-		channel->closeSync();
-	}
-	catch (...)
-	{
-	}
-	CHANNEL_EXTERN_END;
-}
-
-EXTERN_API int channel_transmit_sync(channel_h handle, unsigned char *command,
-	unsigned int cmd_len, unsigned char **response, unsigned int *resp_len)
-{
-	int result = -1;
-
-	if (command == NULL || cmd_len == 0 || response == NULL || resp_len == NULL)
-		return result;
-
-	CHANNEL_EXTERN_BEGIN;
-	ByteArray temp, resp;
-
-	temp.assign(command, cmd_len);
-
-	try
-	{
-		result = channel->transmitSync(temp, resp);
-		if (resp.size() > 0)
-		{
-			*resp_len = resp.size();
-			*response = (unsigned char *)calloc(1, *resp_len);
-			memcpy(*response, resp.getBuffer(), *resp_len);
-		}
-	}
-	catch (...)
-	{
-		result = -1;
-	}
-	CHANNEL_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API bool channel_is_basic_channel(channel_h handle)
-{
-	bool result = false;
-
-	CHANNEL_EXTERN_BEGIN;
-	result = channel->isBasicChannel();
-	CHANNEL_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API bool channel_is_closed(channel_h handle)
-{
-	bool result = false;
-
-	CHANNEL_EXTERN_BEGIN;
-	result = channel->isClosed();
-	CHANNEL_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API unsigned int channel_get_select_response_length(channel_h handle)
-{
-	unsigned int result = 0;
-
-	CHANNEL_EXTERN_BEGIN;
-	result = channel->getSelectResponse().size();
-	CHANNEL_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API bool channel_get_select_response(channel_h handle,
-	unsigned char *buffer, unsigned int length)
-{
-	bool result = false;
-
-	if (buffer == NULL || length == 0)
-	{
-		return result;
-	}
-
-	CHANNEL_EXTERN_BEGIN;
-	ByteArray response;
-
-	response = channel->getSelectResponse();
-	if (response.size() > 0)
-	{
-		memcpy(buffer, response.getBuffer(), MIN(length, response.size()));
-		result = true;
-	}
-	CHANNEL_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API session_h channel_get_session(channel_h handle)
-{
-	session_h session = NULL;
-
-	CHANNEL_EXTERN_BEGIN;
-	session = channel->getSession();
-	CHANNEL_EXTERN_END;
-
-	return session;
 }
 
 EXTERN_API void channel_destroy_instance(channel_h handle)

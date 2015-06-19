@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/* standard library header */
+
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "GPARFACL.h"
 #include "PKCS15ODF.h"
@@ -53,7 +58,12 @@ namespace smartcard_service_api
 		PKCS15 pkcs15(channel);
 
 		/* basically, all requests will be accepted when PKCS #15 doesn't exist or global platform OID is not placed */
+#if 1 /* FOR ORANGE */
+		/* for Orange, every requests will be denied in same cases */
 		allGranted = false;
+#else
+		allGranted = true;
+#endif
 
 		result = pkcs15.select();
 		if (result >= SCARD_ERROR_OK)
@@ -61,7 +71,6 @@ namespace smartcard_service_api
 			PKCS15ODF *odf;
 
 			result = SCARD_ERROR_OK;
-			allGranted = true;
 
 			if ((odf = pkcs15.getODF()) != NULL)
 			{
@@ -72,26 +81,43 @@ namespace smartcard_service_api
 					result = loadAccessControl(channel, dodf);
 					if (result == SCARD_ERROR_OK)
 					{
+						printAccessControlList();
 					}
 					else
 					{
+#if 1 /* FOR ORANGE */
+						_ERR("loadAccessControl failed, every request will be denied.");
+#else
 						_INFO("loadAccessControl failed, every request will be accepted.");
+#endif
 						result = SCARD_ERROR_OK;
 					}
 				}
 				else
 				{
+#if 1 /* FOR ORANGE */
+					_ERR("dodf null, every request will be denied.");
+#else
 					_INFO("dodf null, every request will be accepted.");
+#endif
 				}
 			}
 			else
 			{
+#if 1 /* FOR ORANGE */
+				_ERR("odf null, every request will be denied.");
+#else
 				_INFO("odf null, every request will be accepted.");
+#endif
 			}
 		}
 		else
 		{
-			_ERR("failed to open PKCS15, every request will be denied.");
+#if 1 /* FOR ORANGE */
+			_ERR("failed to open PKCS#15, every request will be denied.");
+#else
+			_INFO("failed to open PKCS#15, every request will be accepted.");
+#endif
 		}
 
 		_END();
@@ -112,7 +138,7 @@ namespace smartcard_service_api
 			_DBG("oid path : %s", path.toString().c_str());
 
 			file.select(NumberStream::getLittleEndianNumber(path));
-			file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
+			file.readBinaryAll(0, data);
 
 			_DBG("data : %s", data.toString().c_str());
 
@@ -182,7 +208,7 @@ namespace smartcard_service_api
 		ByteArray data, aid;
 
 		file.select(NumberStream::getLittleEndianNumber(path));
-		file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
+		file.readBinaryAll(0, data);
 
 		_DBG("data : %s", data.toString().c_str());
 
@@ -380,9 +406,10 @@ namespace smartcard_service_api
 				}
 				else
 				{
-					_INFO("access denied for all applications, aid : %s", condition.getAID().toString().c_str());
+					/* empty rule, it means allow for all application */
+					_INFO("access allowed for all applications, aid : %s", condition.getAID().toString().c_str());
 
-					condition.setAccessCondition(false);
+					condition.setAccessCondition(true);
 					break;
 				}
 			}
@@ -402,7 +429,7 @@ namespace smartcard_service_api
 		ByteArray data;
 
 		file.select(NumberStream::getLittleEndianNumber(path));
-		file.readBinary(0, 0, file.getFCP()->getFileSize(), data);
+		file.readBinaryAll(0, data);
 
 		_DBG("data : %s", data.toString().c_str());
 

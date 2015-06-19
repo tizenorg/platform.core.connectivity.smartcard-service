@@ -1,44 +1,31 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-PROJECT(smartcard-service CXX C)
 
 MESSAGE("build smartcard-service")
 
-IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
-	SET(CMAKE_BUILD_TYPE "Release")
-ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
+SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
-MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
+# apply smack
+ADD_DEFINITIONS("-DUSER_SPACE_SMACK")
 
-INCLUDE(FindPkgConfig)
-
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-
-SET(CMAKE_SHARED_LINKER_FLAGS " -Wl,--as-needed -Wl,--rpath=${LIB_INSTALL_DIR}")
-SET(CMAKE_EXE_LINKER_FLAGS " -Wl,--as-needed -Wl,--rpath=${LIB_INSTALL_DIR}")
-
-FIND_PROGRAM(UNAME NAMES uname)
-EXEC_PROGRAM("${UNAME}" ARGS "-m" OUTPUT_VARIABLE "ARCH")
-IF("${ARCH}" MATCHES "^arm.*")
-	ADD_DEFINITIONS("-DTARGET")
-	MESSAGE("add -DTARGET")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mabi=aapcs-linux -fno-common")
-ENDIF("${ARCH}" MATCHES "^arm.*")
-
-# names
-SET(CLIENT_LIB ${PROJECT_NAME})
-SET(COMMON_LIB "smartcard-service-common")
-SET(DAEMON "smartcard-daemon")
-
-# For *.pc files
-SET(PREFIX ${CMAKE_INSTALL_PREFIX})
-
-# Defines
 IF(DEFINED USE_AUTOSTART)
 	ADD_DEFINITIONS("-DUSE_AUTOSTART")
 ENDIF()
 
-# apply smack
-##ADD_DEFINITIONS("-DUSER_SPACE_SMACK")
+# make string from entire content of byte array
+ADD_DEFINITIONS("-DTO_STRING_ALL")
+
+SET(GC_SECTIONS_FLAGS "-fdata-sections -ffunction-sections -Wl,--gc-sections")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GC_SECTIONS_FLAGS}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GC_SECTIONS_FLAGS}")
+
+FIND_PROGRAM(GDBUS_CODEGEN NAMES gdbus-codegen)
+EXEC_PROGRAM(${GDBUS_CODEGEN} ARGS
+	" \\
+	--generate-c-code ${CMAKE_CURRENT_SOURCE_DIR}/common/smartcard-service-gdbus \\
+	--c-namespace SmartcardService\\
+	--interface-prefix org.tizen.SmartcardService. \\
+	${CMAKE_CURRENT_SOURCE_DIR}/common/smartcard-service-gdbus.xml \\
+	")
 
 ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(client)

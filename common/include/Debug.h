@@ -17,13 +17,13 @@
 #ifndef DEBUG_H_
 #define DEBUG_H_
 
+/* standard library header */
 #include <iostream>
 
+/* SLP library header */
 #include "dlog.h"
 
-#ifndef EXPORT
-#define EXPORT __attribute__((visibility("default")))
-#endif
+/* local header */
 
 #define COLOR_BLACK	"\033[0;30m"
 #define COLOR_RED	"\033[0;31m"
@@ -66,14 +66,14 @@
 #define _BEGIN() \
 	do \
 	{ \
-		LOGD(COLOR_BLUE"BEGIN >>>>"COLOR_END); \
+		LOGD(COLOR_BLUE "BEGIN >>>>" COLOR_END); \
 	} \
 	while (0)
 
 #define _END() \
 	do \
 	{ \
-		LOGD(COLOR_BLUE"END <<<<"COLOR_END); \
+		LOGD(COLOR_BLUE "END <<<<" COLOR_END); \
 	} \
 	while (0)
 

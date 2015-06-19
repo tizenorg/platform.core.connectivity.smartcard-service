@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/* standard library header */
+#include <glib.h>
+
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "GPARAM.h"
 #include "APDUHelper.h"
@@ -29,7 +35,7 @@
 
 namespace smartcard_service_api
 {
-	static unsigned char aid_aram[] = { 0xA0, 0x00, 0x00, 0x01, 0x51, 0x41, 0x43, 0x4C, 00 };
+	static unsigned char aid_aram[] = { 0xA0, 0x00, 0x00, 0x01, 0x51, 0x41, 0x43, 0x4C, 0x00 };
 	static ByteArray AID_ARAM(ARRAY_AND_SIZE(aid_aram));
 
 #define GET_DATA_ALL		0
@@ -132,6 +138,49 @@ namespace smartcard_service_api
 		return result;
 	}
 
+	int getLengthAndValue(const ByteArray &data, ByteArray &value)
+	{
+		int result = -1;
+		int offset = 0;
+
+		if (data.isEmpty() == true) {
+			return result;
+		}
+
+		if (data.at(offset) == 0xFF && data.at(offset + 1) == 0x40) {
+			uint8_t count;
+
+			offset += 2;
+			count = data.at(offset);
+
+			offset += 1;
+			if (count & 0x80) {
+				int i;
+
+				count &= ~0x80;
+				result = 0;
+
+				for (i = 0; i < count; i++) {
+					result = (result << 8) | data.at(offset + i);
+				}
+
+				offset += i;
+			} else {
+				result = count;
+			}
+
+			if (result > 0) {
+				value.assign(data.getBuffer(offset),
+					MIN((uint32_t)result,
+						data.size() - offset));
+			}
+		} else {
+			_ERR("invalid tag");
+		}
+
+		return result;
+	}
+
 	int GPARAM::getDataAll(ByteArray &data)
 	{
 		int result;
@@ -141,37 +190,31 @@ namespace smartcard_service_api
 
 		result = doCommand(channel, GET_DATA_ALL, response);
 		if (result >= SCARD_ERROR_OK) {
-			ISO7816BERTLV tlv(response);
+			int length;
 
-			if (tlv.decodeTLV() == true &&
-				tlv.getTag() == ARAM_TAG_ALL_AR) {
-				unsigned int length = tlv.size();
-
-				if (length > 0){
-					data = tlv.getValue();
-
-					while (length > data.size()) {
-						result = doCommand(channel, GET_DATA_NEXT, response);
-						if (result >= SCARD_ERROR_OK) {
-							data += response;
-						} else {
-							_ERR("generateCommand failed, [%d]", result);
-							data.clear();
-							break;
-						}
+			length = getLengthAndValue(response, data);
+			if (length > 0){
+				while (length > (int)data.size()) {
+					result = doCommand(channel, GET_DATA_NEXT, response);
+					if (result >= SCARD_ERROR_OK) {
+						data += response;
+					} else {
+						_ERR("generateCommand failed, [%d]", result);
+						data.clear();
+						break;
 					}
-
-					_DBG("data[%d] : %s", data.size(), data.toString().c_str());
-				} else {
-					_INFO("Response-ALL-AR-DO is empty");
-					data.clear();
 				}
+
+				_DBG("data[%d] : %s", data.size(), data.toString().c_str());
+			} else if (length == 0) {
+				_INFO("Response-ALL-AR-DO is empty");
+				data.clear();
 			} else {
-				_ERR("decodeTLV failed, %s", response.toString().c_str());
-				result = SCARD_ERROR_ILLEGAL_PARAM;
+				_ERR("invalid result, %s", response.toString().c_str());
+				result = SCARD_ERROR_UNAVAILABLE;
 			}
 		} else {
-			_ERR("generateCommand failed, [%d]", result);
+			_ERR("doCommand failed, [%d]", result);
 		}
 
 		_END();

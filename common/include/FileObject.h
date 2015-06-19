@@ -17,9 +17,12 @@
 #ifndef FILEOBJECT_H_
 #define FILEOBJECT_H_
 
+/* standard library header */
 #include <vector>
 
-#include "Debug.h"
+/* SLP library header */
+
+/* local header */
 #include "ProviderHelper.h"
 #include "ByteArray.h"
 #include "FCI.h"
@@ -29,7 +32,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class EXPORT FileObject : public ProviderHelper
+	class FileObject : public ProviderHelper
 	{
 	private:
 		FCI fci;
@@ -76,7 +79,11 @@ namespace smartcard_service_api
 		int searchRecord(unsigned int sfi, const ByteArray &searchParam, vector<int> &result);
 
 		int readBinary(unsigned int sfi, unsigned int offset, unsigned int length, ByteArray &result);
+		int readBinary(unsigned int sfi, unsigned int length, ByteArray &result);
 		int writeBinary(unsigned int sfi, const ByteArray &data, unsigned int offset, unsigned int length);
+		int writeBinary(unsigned int sfi, const ByteArray &data);
+
+		int readBinaryAll(unsigned int sfi, ByteArray &result);
 	};
 
 } /* namespace smartcard_service_api */

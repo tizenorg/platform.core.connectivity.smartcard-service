@@ -17,9 +17,13 @@
 #ifndef ACCESSCONTROLLIST_H_
 #define ACCESSCONTROLLIST_H_
 
+/* standard library header */
 #include <vector>
 #include <map>
 
+/* SLP library header */
+
+/* local header */
 #include "ByteArray.h"
 #include "Channel.h"
 #include "AccessCondition.h"
@@ -38,6 +42,8 @@ namespace smartcard_service_api
 			const ByteArray &hash) const;
 		AccessCondition &getAccessCondition(const ByteArray &aid);
 
+		void printAccessControlList() const;
+
 	public:
 		static ByteArray ALL_SE_APPS;
 		static ByteArray DEFAULT_SE_APP;
@@ -50,6 +56,9 @@ namespace smartcard_service_api
 
 		int updateACL(Channel *channel) { return loadACL(channel); }
 		void releaseACL();
+
+		/* FIXME ??? */
+		inline bool hasConditions() const { return mapConditions.size() > 0; }
 
 		virtual bool isAuthorizedAccess(const ByteArray &aid,
 			const ByteArray &certHash) const;

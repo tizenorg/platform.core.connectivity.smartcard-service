@@ -17,12 +17,11 @@
 #ifndef SERIALIZABLE_H_
 #define SERIALIZABLE_H_
 
-#include "Debug.h"
 #include "ByteArray.h"
 
 namespace smartcard_service_api
 {
-	class EXPORT Serializable
+	class Serializable
 	{
 		virtual const ByteArray serialize() const = 0;
 		virtual void deserialize(const ByteArray &buffer) = 0;

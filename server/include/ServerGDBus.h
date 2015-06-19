@@ -17,10 +17,14 @@
 #ifndef SERVERGDBUS_H_
 #define SERVERGDBUS_H_
 
+/* standard library header */
 #include <glib.h>
 #include <queue>
 #include <vector>
 
+/* SLP library header */
+
+/* local header */
 #include "Synchronous.h"
 #include "GDBusHelper.h"
 #include "smartcard-service-gdbus.h"

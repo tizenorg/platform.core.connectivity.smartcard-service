@@ -17,9 +17,13 @@
 #ifndef ACCESSCONDITION_H_
 #define ACCESSCONDITION_H_
 
+/* standard library header */
 #include <map>
 #include <vector>
 
+/* SLP library header */
+
+/* local header */
 #include "ByteArray.h"
 
 using namespace std;
@@ -32,6 +36,8 @@ namespace smartcard_service_api
 		bool apduRule;
 		bool nfcRule;
 		vector<pair<ByteArray, ByteArray> > listFilters;
+
+		void printAccessRules() const;
 
 	public :
 		AccessRule() : apduRule(true), nfcRule(true) {}
@@ -58,6 +64,8 @@ namespace smartcard_service_api
 		ByteArray aid;
 		map<ByteArray, AccessRule> mapRules;
 
+		void printAccessConditions() const;
+
 	public :
 		AccessCondition() {}
 
@@ -81,6 +89,7 @@ namespace smartcard_service_api
 
 		AccessRule *getAccessRule(const ByteArray &certHash);
 		const AccessRule *getAccessRule(const ByteArray &certHash) const;
+
 
 		friend class AccessControlList;
 	};

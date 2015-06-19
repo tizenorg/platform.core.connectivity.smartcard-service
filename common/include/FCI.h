@@ -17,8 +17,12 @@
 #ifndef FCI_H_
 #define FCI_H_
 
+/* standard library header */
 #include <string>
 
+/* SLP library header */
+
+/* local header */
 #include "ByteArray.h"
 
 namespace smartcard_service_api

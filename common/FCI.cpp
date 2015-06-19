@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <cstdio>
 #include <cstring>
 #include <sstream>
 
+/* SLP library header */
+
+/* local header */
 #include "Debug.h"
 #include "FCI.h"
 #include "SimpleTLV.h"
@@ -77,7 +81,7 @@ namespace smartcard_service_api
 		}
 
 		/* parse... */
-		tlv.setTLVBuffer(fcpBuffer.getBuffer(), fcpBuffer.size());
+		tlv.setTLVBuffer(fcpBuffer);
 
 		if (tlv.decodeTLV())
 		{
@@ -130,6 +134,7 @@ namespace smartcard_service_api
 
 				case 0x84 : /* DF name */
 					{
+						SECURE_LOGD("0x%02X : DF name : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
@@ -143,6 +148,7 @@ namespace smartcard_service_api
 
 				case 0x86 : /* Security attribute in proprietary format */
 					{
+						SECURE_LOGD("0x%02X : Security attribute in proprietary format : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
@@ -185,36 +191,42 @@ namespace smartcard_service_api
 
 				case 0x8B : /* Security attribute referencing the expanded format */
 					{
+						SECURE_LOGD("0x%02X : Security attribute referencing the expanded format : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x8C : /* Security attribute in compact format */
 					{
+						SECURE_LOGD("0x%02X : Security attribute in compact format : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x8D : /* Identifier of an EF containing security environment templates */
 					{
+						SECURE_LOGD("0x%02X : Identifier of an EF containing security environment templates : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0x8E : /* Channel security attribute */
 					{
+						SECURE_LOGD("0x%02X : Channel security attribute : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xA0 : /* Security attribute template for data objects */
 					{
+						SECURE_LOGD("0x%02X : Security attribute template for data objects : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
 
 				case 0xA1 : /* Security attribute template in proprietary format */
 					{
+						SECURE_LOGD("0x%02X : Security attribute template in proprietary format : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
@@ -235,6 +247,7 @@ namespace smartcard_service_api
 
 				case 0xAB : /* Security attribute template in expanded format */
 					{
+						SECURE_LOGD("0x%02X : Security attribute template in expanded format : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;
@@ -248,6 +261,7 @@ namespace smartcard_service_api
 
 				case 0xC6 : /* PIN status template DO */
 					{
+						SECURE_LOGD("0x%02X : PIN status template DO : %s", tlv.getTag(), tlv.getValue().toString().c_str());
 	//					ByteArray value = tlv.getValue();
 					}
 					break;

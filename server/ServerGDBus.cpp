@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <unistd.h>
 #include <glib.h>
 #include <gio/gio.h>
@@ -21,6 +22,12 @@
 #include <string>
 #include <sys/socket.h>
 
+/* SLP library header */
+#ifdef USER_SPACE_SMACK
+#include "security-server.h"
+#endif
+
+/* local header */
 #include "smartcard-types.h"
 #include "Debug.h"
 #include "ByteArray.h"
@@ -29,6 +36,11 @@
 #include "ServerGDBus.h"
 
 using namespace std;
+
+#ifdef __PRIVATE
+extern "C" bool smartcard_service_init_access_control(void *connection);
+extern "C" void smartcard_service_deinit_access_control();
+#endif
 
 namespace smartcard_service_api
 {
@@ -226,12 +238,17 @@ namespace smartcard_service_api
 		initReader();
 		initSession();
 		initChannel();
-
+#ifdef __PRIVATE
+		smartcard_service_init_access_control(connection);
+#endif
 		return true;
 	}
 
 	void ServerGDBus::deinit()
 	{
+#ifdef __PRIVATE
+		smartcard_service_deinit_access_control();
+#endif
 		deinitChannel();
 		deinitSession();
 		deinitReader();
@@ -283,7 +300,25 @@ namespace smartcard_service_api
 		const char *rights)
 	{
 		bool result = true;
-		/*TODO : apply cynara api */
+#ifdef USER_SPACE_SMACK
+		pid_t pid;
+		const char *name;
+		ClientInstance *instance;
+
+		name = g_dbus_method_invocation_get_sender(invocation);
+
+		instance = ServerResource::getInstance().getClient(name);
+		if (instance != NULL) {
+			pid = instance->getPID();
+		} else {
+			pid = ServerGDBus::getInstance().getPID(name);
+		}
+
+		result = (security_server_check_privilege_by_pid(
+			pid,
+			"smartcard-service",
+			rights) == SECURITY_SERVER_API_SUCCESS);
+#endif
 		return result;
 	}
 
@@ -444,7 +479,7 @@ namespace smartcard_service_api
 
 	static gboolean __process_shutdown(SmartcardServiceSeService *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t handle, void *user_data)
+		guint handle, void *user_data)
 	{
 		const char *name;
 
@@ -470,7 +505,7 @@ namespace smartcard_service_api
 	{
 		SmartcardServiceSeService *object;
 		GDBusMethodInvocation *invocation;
-		intptr_t handle;
+		guint handle;
 		void *user_data;
 
 		if (params.size() != 4) {
@@ -481,7 +516,7 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceSeService *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		handle = (intptr_t)params[2];
+		handle = 0;//(guint)params[2];
 		user_data = params[3];
 
 		__process_shutdown(object, invocation, handle, user_data);
@@ -492,7 +527,7 @@ namespace smartcard_service_api
 
 	static gboolean _handle_shutdown(SmartcardServiceSeService *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t handle,
+		guint handle,
 		void *user_data)
 	{
 		vector<void *> params;
@@ -583,8 +618,8 @@ namespace smartcard_service_api
 	 *
 	 */
 	static gboolean __process_open_session(SmartcardServiceReader *object,
-		GDBusMethodInvocation *invocation, intptr_t service_id,
-		intptr_t reader_id, void *user_data)
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint reader_id, void *user_data)
 	{
 		unsigned int handle = IntegerHandle::INVALID_HANDLE;
 		int result;
@@ -628,8 +663,8 @@ namespace smartcard_service_api
 	{
 		SmartcardServiceReader *object;
 		GDBusMethodInvocation *invocation;
-		intptr_t service_id;
-		intptr_t reader_id;
+		guint service_id;
+		guint reader_id;
 		void *user_data;
 
 		if (params.size() != 5) {
@@ -640,8 +675,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceReader *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = (intptr_t)params[2];
-		reader_id = (intptr_t)params[3];
+		service_id = 0;//(guint)params[2];
+		reader_id = 0;//(guint)params[3];
 		user_data = params[4];
 
 		__process_open_session(object, invocation, service_id,
@@ -653,8 +688,8 @@ namespace smartcard_service_api
 
 	static gboolean _handle_open_session(SmartcardServiceReader *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t service_id,
-		intptr_t reader_id, void *user_data)
+		guint service_id,
+		guint reader_id, void *user_data)
 	{
 		vector<void *> params;
 
@@ -726,8 +761,8 @@ namespace smartcard_service_api
 	 *
 	 */
 	static gboolean __process_close_session(SmartcardServiceSession *object,
-		GDBusMethodInvocation *invocation, intptr_t service_id,
-		intptr_t session_id, void *user_data)
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint session_id, void *user_data)
 	{
 		const char *name;
 
@@ -756,8 +791,8 @@ namespace smartcard_service_api
 	{
 		SmartcardServiceSession *object;
 		GDBusMethodInvocation *invocation;
-		intptr_t service_id;
-		intptr_t session_id;
+		guint service_id;
+		guint session_id;
 		void *user_data;
 
 		if (params.size() != 5) {
@@ -768,8 +803,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceSession *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = (intptr_t)params[2];
-		session_id = (intptr_t)params[3];
+		service_id = 0;//(guint)params[2];
+		session_id = 0;//(guint)params[3];
 		user_data = params[4];
 
 		__process_close_session(object, invocation, service_id,
@@ -781,8 +816,8 @@ namespace smartcard_service_api
 
 	static gboolean _handle_close_session(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t service_id,
-		intptr_t session_id, void *user_data)
+		guint service_id,
+		guint session_id, void *user_data)
 	{
 		vector<void *> params;
 
@@ -811,8 +846,8 @@ namespace smartcard_service_api
 	}
 
 	static gboolean __process_get_atr(SmartcardServiceSession *object,
-		GDBusMethodInvocation *invocation, intptr_t service_id,
-		intptr_t session_id, void *user_data)
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint session_id, void *user_data)
 	{
 		int result;
 		ByteArray resp;
@@ -832,14 +867,10 @@ namespace smartcard_service_api
 
 			terminal = client->getTerminal(session_id);
 			if (terminal != NULL) {
-				int rv;
-
 				if (terminal->open() == true) {
-					rv = terminal->getATRSync(resp);
-					if (rv < SCARD_ERROR_OK) {
+					result = terminal->getATRSync(resp);
+					if (result < SCARD_ERROR_OK) {
 						_ERR("getATRSync failed : name [%s], service_id [%d], session_id [%d]", name, service_id, session_id);
-
-						result = rv;
 					}
 
 					terminal->close();
@@ -872,8 +903,8 @@ namespace smartcard_service_api
 	{
 		SmartcardServiceSession *object;
 		GDBusMethodInvocation *invocation;
-		intptr_t service_id;
-		intptr_t session_id;
+		guint service_id;
+		guint session_id;
 		void *user_data;
 
 		if (params.size() != 5) {
@@ -884,8 +915,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceSession *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = (intptr_t)params[2];
-		session_id = (intptr_t)params[3];
+		service_id = 0;//(guint)params[2];
+		session_id = 0;//(guint)params[3];
 		user_data = params[4];
 
 		__process_get_atr(object, invocation, service_id,
@@ -897,8 +928,8 @@ namespace smartcard_service_api
 
 	static gboolean _handle_get_atr(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t service_id,
-		intptr_t session_id, void *user_data)
+		guint service_id,
+		guint session_id, void *user_data)
 	{
 		vector<void *> params;
 
@@ -932,9 +963,10 @@ namespace smartcard_service_api
 	}
 
 	static gboolean __process_open_channel(SmartcardServiceSession *object,
-		GDBusMethodInvocation *invocation, intptr_t service_id,
-		intptr_t session_id, intptr_t type, GVariant *aid, void *user_data)
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint session_id, guint type, GVariant *aid, guint8 P2, void *user_data)
 	{
+		int channelNum = -1;
 		int result = SCARD_ERROR_UNKNOWN;
 		ByteArray resp;
 		GVariant *response = NULL;
@@ -942,6 +974,7 @@ namespace smartcard_service_api
 		const char *name;
 
 		_INFO("[MSG_REQUEST_OPEN_CHANNEL]");
+		_INFO("P2 is %x", P2);
 
 		ServerResource &resource = ServerResource::getInstance();
 
@@ -963,8 +996,12 @@ namespace smartcard_service_api
 					name, service_id, channelID);
 				if (temp != NULL) {
 					resp = temp->getSelectResponse();
-
+					channelNum = temp->getChannelNumber();
 					result = SCARD_ERROR_OK;
+				}
+				else{
+					_ERR("getChannel is failed");
+					result = SCARD_ERROR_UNAVAILABLE;
 				}
 			} else {
 				_ERR("channel is null.");
@@ -982,7 +1019,7 @@ namespace smartcard_service_api
 
 		/* response to client */
 		smartcard_service_session_complete_open_channel(object,
-			invocation, result, channelID, response);
+			invocation, result, channelID, channelNum, response);
 
 		return true;
 	}
@@ -991,13 +1028,14 @@ namespace smartcard_service_api
 	{
 		SmartcardServiceSession *object;
 		GDBusMethodInvocation *invocation;
-		intptr_t service_id;
-		intptr_t session_id;
-		intptr_t type;
+		guint service_id;
+		guint session_id;
+		guint type;
+		guint8 P2;
 		GVariant *aid;
 		void *user_data;
 
-		if (params.size() != 7) {
+		if (params.size() != 8) {
 			_ERR("invalid parameter");
 
 			return;
@@ -1005,24 +1043,25 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceSession *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = (intptr_t)params[2];
-		session_id = (intptr_t)params[3];
-		type = (intptr_t)params[4];
+		service_id = 0;//(guint)params[2];
+		session_id = 0;//(guint)params[3];
+		type = 0;//(guint)params[4];
 		aid = (GVariant *)params[5];
-		user_data = params[6];
+		P2 = 0;//(guint8)((int)params[6]);
+		user_data = params[7];
 
 		__process_open_channel(object, invocation, service_id,
-			session_id, type, aid, user_data);
+			session_id, type, aid, P2, user_data);
 
 		g_object_unref(object);
 		g_object_unref(invocation);
-		g_object_unref(aid);
+		g_variant_unref(aid);
 	}
 
 	static gboolean _handle_open_channel(SmartcardServiceSession *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t service_id,
-		intptr_t session_id, intptr_t type, GVariant *aid, void *user_data)
+		guint service_id,
+		guint session_id, guint type, GVariant *aid, guint8 P2, void *user_data)
 	{
 		vector<void *> params;
 
@@ -1038,8 +1077,9 @@ namespace smartcard_service_api
 			params.push_back((void *)session_id);
 			params.push_back((void *)type);
 
-			g_object_ref(aid);
+			g_variant_ref(aid);
 			params.push_back((void *)aid);
+			params.push_back((void *)((int)P2));
 			params.push_back(user_data);
 
 			GDBusDispatcher::push(_process_open_channel, params);
@@ -1053,6 +1093,7 @@ namespace smartcard_service_api
 				invocation,
 				SCARD_ERROR_SECURITY_NOT_ALLOWED,
 				IntegerHandle::INVALID_HANDLE,
+				-1,
 				GDBusHelper::convertByteArrayToVariant(resp));
 		}
 
@@ -1111,8 +1152,8 @@ namespace smartcard_service_api
 	 *
 	 */
 	static gboolean __process_close_channel(SmartcardServiceChannel *object,
-		GDBusMethodInvocation *invocation, intptr_t service_id,
-		intptr_t channel_id, void *user_data)
+		GDBusMethodInvocation *invocation, guint service_id,
+		guint channel_id, void *user_data)
 	{
 		int result;
 		const char *name;
@@ -1138,8 +1179,8 @@ namespace smartcard_service_api
 	{
 		SmartcardServiceChannel *object;
 		GDBusMethodInvocation *invocation;
-		intptr_t service_id;
-		intptr_t channel_id;
+		guint service_id;
+		guint channel_id;
 		void *user_data;
 
 		if (params.size() != 5) {
@@ -1150,8 +1191,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceChannel *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = (intptr_t)params[2];
-		channel_id = (intptr_t)params[3];
+		service_id = 0;//(guint)params[2];
+		channel_id = 0;//(guint)params[3];
 		user_data = params[4];
 
 		__process_close_channel(object, invocation, service_id,
@@ -1163,7 +1204,7 @@ namespace smartcard_service_api
 
 	static gboolean _handle_close_channel(SmartcardServiceChannel *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t service_id, intptr_t channel_id, void *user_data)
+		guint service_id, guint channel_id, void *user_data)
 	{
 		vector<void *> params;
 
@@ -1195,8 +1236,8 @@ namespace smartcard_service_api
 
 	static gboolean __process_transmit(SmartcardServiceChannel *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t service_id,
-		intptr_t channel_id,
+		guint service_id,
+		guint channel_id,
 		GVariant *command,
 		void *user_data)
 	{
@@ -1246,8 +1287,8 @@ namespace smartcard_service_api
 	{
 		SmartcardServiceChannel *object;
 		GDBusMethodInvocation *invocation;
-		intptr_t service_id;
-		intptr_t channel_id;
+		guint service_id;
+		guint channel_id;
 		GVariant *command;
 		void *user_data;
 
@@ -1259,8 +1300,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceChannel *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = (intptr_t)params[2];
-		channel_id = (intptr_t)params[3];
+		service_id = 0;//(guint)params[2];
+		channel_id = 0;//(guint)params[3];
 		command = (GVariant *)params[4];
 		user_data = params[5];
 
@@ -1274,8 +1315,8 @@ namespace smartcard_service_api
 
 	static gboolean _handle_transmit(SmartcardServiceChannel *object,
 		GDBusMethodInvocation *invocation,
-		intptr_t service_id,
-		intptr_t channel_id,
+		guint service_id,
+		guint channel_id,
 		GVariant *command,
 		void *user_data)
 	{

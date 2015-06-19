@@ -52,6 +52,10 @@ namespace smartcard_service_api
 	public:
 		static ServerSEService &getInstance();
 
+#if 0
+		bool isValidReaderHandle(void *handle);
+#endif
+
 		void shutdown() {}
 		void shutdownSync() {}
 

@@ -17,11 +17,15 @@
 #ifndef BYTEARRAY_H_
 #define BYTEARRAY_H_
 
+/* standard library header */
 #include <string>
 #include <stdint.h>
 #include <stddef.h>
 
-#include "Debug.h"
+/* SLP library header */
+
+/* local header */
+//#include "Serializable.h"
 
 #define ARRAY_AND_SIZE(x) (uint8_t *)(&x), sizeof(x)
 
@@ -29,7 +33,7 @@ using namespace std;
 
 namespace smartcard_service_api
 {
-	class EXPORT ByteArray //: public Serializable
+	class ByteArray //: public Serializable
 	{
 	protected:
 		uint8_t *buffer;
@@ -78,6 +82,7 @@ namespace smartcard_service_api
 		uint8_t operator [](size_t index) const;
 
 		inline bool isEmpty() const { return (buffer == (void *)0 || length == 0); }
+		const string toString(bool entire) const;
 		const string toString() const;
 	};
 

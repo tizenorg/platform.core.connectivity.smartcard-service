@@ -166,6 +166,15 @@ namespace smartcard_service_api
 				result = rule->isAuthorizedAPDUAccess(command);
 			}
 			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", "All device applications");
+			goto END;
+		}
+
+		size_t i;
+
+		_INFO("no rule found, aid     [%s]", aid.toString().c_str());
+
+		for (i = 0; i < certHashes.size(); i++) {
+			_INFO("               hash[%d] [%s]", i, certHashes[i].toString().c_str());
 		}
 
 END :
@@ -216,9 +225,35 @@ END :
 		if (rule != NULL) {
 			result = rule->isAuthorizedNFCAccess();
 			_INFO("rule found (%s): [%s:%s]", result ? "accept" : "deny", "All SE Applications", "All device applications");
+			goto END;
 		}
 
+		size_t i;
+
+		_INFO("no rule found, aid     [%s]", aid.toString().c_str());
+
+		for (i = 0; i < certHashes.size(); i++) {
+			_INFO("               hash[%d] [%s]", i, certHashes[i].toString().c_str());
+		}
 END :
 		return result;
 	}
+
+	void AccessControlList::printAccessControlList() const
+	{
+		ByteArray temp;
+		map<ByteArray, AccessCondition>::const_iterator iterMap;
+
+		_DBG("========================== Access Control Rules ============================");
+		for (iterMap = mapConditions.begin(); iterMap != mapConditions.end(); iterMap++)
+		{
+			temp = iterMap->first;
+
+			_DBG("+ aid : %s", (temp == DEFAULT_SE_APP) ? "Default Application" : (temp == ALL_SE_APPS) ? "All SE Applications" : temp.toString().c_str());
+
+			iterMap->second.printAccessConditions();
+		}
+		_DBG("============================================================================");
+	}
+
 } /* namespace smartcard_service_api */

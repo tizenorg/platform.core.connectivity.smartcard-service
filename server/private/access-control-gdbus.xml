@@ -1,0 +1,26 @@
+<!--
+  org.tizen.SmartcardService
+-->
+
+<node>
+  <interface name="org.tizen.SmartcardService.AccessControl">
+    <!--
+      isAuthorizedExtraAccess
+    -->
+    <method name="isAuthorizedExtraAccess">
+      <arg type="u" name="se_type" direction="in" />
+      <arg type="s" name="package" direction="in" />
+      <arg type="b" name="result" direction="out" />
+    </method>
+
+    <!--
+      isAuthorizedNfcAccess
+    -->
+    <method name="isAuthorizedNfcAccess">
+      <arg type="u" name="se_type" direction="in" />
+      <arg type="s" name="package" direction="in" />
+      <arg type="a(y)" name="aid" direction="in" />
+      <arg type="b" name="result" direction="out" />
+    </method>
+  </interface>
+</node>

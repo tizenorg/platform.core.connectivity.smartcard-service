@@ -144,11 +144,12 @@ namespace smartcard_service_api
 		CallbackParam *param = (CallbackParam *)user_data;
 		Session *session;
 		openChannelCallback callback;
-		gint result;
+		gint result = SCARD_ERROR_UNKNOWN;
+		gint channel_number;
 		guint channel_id;
 		GVariant *var_response;
 		GError *error = NULL;
-		Channel *channel;
+		Channel *channel = NULL;
 
 		_INFO("MSG_REQUEST_OPEN_CHANNEL");
 
@@ -162,7 +163,7 @@ namespace smartcard_service_api
 
 		if (smartcard_service_session_call_open_channel_finish(
 			SMARTCARD_SERVICE_SESSION(source_object),
-			&result, &channel_id, &var_response,
+			&result, &channel_id, &channel_number, &var_response,
 			res, &error) == true) {
 			if (result == SCARD_ERROR_OK) {
 				ByteArray response;
@@ -400,8 +401,14 @@ namespace smartcard_service_api
 
 		return count;
 	}
-
 	Channel *Session::openChannelSync(int id, const ByteArray &aid)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
+	{
+		return openChannelSync(id, aid, 0x00);
+	}
+
+	Channel *Session::openChannelSync(int id, const ByteArray &aid, unsigned char P2)
 		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 			ErrorIllegalParameter &, ErrorSecurity &)
 	{
@@ -412,6 +419,7 @@ namespace smartcard_service_api
 			gint ret;
 			GVariant *var_aid = NULL, *var_response = NULL;
 			guint channel_id;
+			gint channel_number;
 			GError *error = NULL;
 
 			var_aid = GDBusHelper::convertByteArrayToVariant(aid);
@@ -420,7 +428,7 @@ namespace smartcard_service_api
 				(SmartcardServiceSession *)proxy,
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
-				(guint)id, var_aid, &ret, &channel_id,
+				(guint)id, var_aid, (guint8)P2, &ret, &channel_id, &channel_number,
 				&var_response, NULL, &error) == true) {
 				if (ret == SCARD_ERROR_OK && channel_id != 0) {
 					ByteArray response;
@@ -430,7 +438,7 @@ namespace smartcard_service_api
 
 					/* create new instance of channel */
 					channel = new ClientChannel(context,
-						this, channel_id,
+						this, channel_number,
 						response, (void *)channel_id);
 					if (channel != NULL)
 					{
@@ -484,7 +492,7 @@ namespace smartcard_service_api
 				(SmartcardServiceSession *)proxy,
 				GPOINTER_TO_UINT(context),
 				GPOINTER_TO_UINT(handle),
-				(guint)id, var_aid, NULL,
+				(guint)id, var_aid, 0, NULL,
 				&Session::session_open_channel_cb, param);
 
 			result = SCARD_ERROR_OK;
@@ -502,7 +510,14 @@ namespace smartcard_service_api
 		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 			ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		return openChannelSync(0, aid);
+		return openChannelSync(0, aid, 0x00);
+	}
+
+	Channel *Session::openBasicChannelSync(const ByteArray &aid, unsigned char P2)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
+	{
+		return openChannelSync(0, aid, P2);
 	}
 
 	Channel *Session::openBasicChannelSync(const unsigned char *aid, unsigned int length)
@@ -511,7 +526,16 @@ namespace smartcard_service_api
 	{
 		ByteArray temp(aid, length);
 
-		return openBasicChannelSync(temp);
+		return openBasicChannelSync(temp, 0x00);
+	}
+
+	Channel *Session::openBasicChannelSync(const unsigned char *aid, unsigned int length, unsigned char P2)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
+	{
+		ByteArray temp(aid, length);
+
+		return openBasicChannelSync(temp, P2);
 	}
 
 	int Session::openBasicChannel(const ByteArray &aid, openChannelCallback callback, void *userData)
@@ -531,7 +555,14 @@ namespace smartcard_service_api
 		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
 			ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		return openChannelSync(1, aid);
+		return openChannelSync(1, aid, 0x00);
+	}
+
+	Channel *Session::openLogicalChannelSync(const ByteArray &aid, unsigned char P2)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
+	{
+		return openChannelSync(1, aid, P2);
 	}
 
 	Channel *Session::openLogicalChannelSync(const unsigned char *aid, unsigned int length)
@@ -540,7 +571,16 @@ namespace smartcard_service_api
 	{
 		ByteArray temp(aid, length);
 
-		return openLogicalChannelSync(temp);
+		return openLogicalChannelSync(temp, 0x00);
+	}
+
+	Channel *Session::openLogicalChannelSync(const unsigned char *aid, unsigned int length, unsigned char P2)
+		throw (ExceptionBase &, ErrorIO &, ErrorIllegalState &,
+			ErrorIllegalParameter &, ErrorSecurity &)
+	{
+		ByteArray temp(aid, length);
+
+		return openLogicalChannelSync(temp, P2);
 	}
 
 	int Session::openLogicalChannel(const ByteArray &aid, openChannelCallback callback, void *userData)
@@ -572,15 +612,218 @@ namespace smartcard_service_api
 
 using namespace smartcard_service_api;
 
-EXTERN_API reader_h session_get_reader(session_h handle)
+EXTERN_API int session_get_reader(session_h handle, int* reader_handle)
 {
+	int result = SCARD_ERROR_OK;
 	reader_h reader = NULL;
 
 	SESSION_EXTERN_BEGIN;
+
+	try
+	{
 		reader = session->getReader();
+		//*reader_handle = (int)reader;
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+		*reader_handle = 0;
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+		*reader_handle = 0;
+	}
+
 	SESSION_EXTERN_END;
 
-	return reader;
+	return result;
+}
+
+EXTERN_API int session_is_closed(session_h handle, bool* is_closed)
+{
+	int result = SCARD_ERROR_OK;
+
+	SESSION_EXTERN_BEGIN;
+
+	try
+	{
+		*is_closed = session->isClosed();
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	SESSION_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int session_close_channels(session_h handle)
+{
+	int result = SCARD_ERROR_OK;
+
+	SESSION_EXTERN_BEGIN;
+
+	try
+	{
+		session->closeChannels();
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	SESSION_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length)
+{
+	ByteArray temp;
+	int result = SCARD_ERROR_OK;
+
+	SESSION_EXTERN_BEGIN;
+
+	try
+	{
+		temp = session->getATRSync();
+
+		if (temp.size() > 0)
+		{
+			*buffer = (unsigned char *)calloc(temp.size(), sizeof(char));
+			*length = temp.size();
+
+			memcpy(*buffer, temp.getBuffer(), *length);
+		}
+	}
+	catch (ErrorIllegalState &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+
+		if(result == SCARD_ERROR_OPERATION_NOT_SUPPORTED)
+		{
+			*length = 0;
+			result = SCARD_ERROR_OK;
+		}
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+		*length = 0;
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+		*length = 0;
+	}
+
+	SESSION_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int session_close_sync(session_h handle)
+{
+	int result = SCARD_ERROR_OK;
+
+	SESSION_EXTERN_BEGIN;
+
+	try
+	{
+		session->closeSync();
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+	}
+
+	SESSION_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API int session_open_basic_channel_sync(session_h handle, unsigned char *aid,
+	unsigned int length, unsigned char P2, int* channel_handle)
+{
+	int result = SCARD_ERROR_OK;
+
+	SESSION_EXTERN_BEGIN;
+
+	try
+	{
+		//*channel_handle = (int)session->openBasicChannelSync(aid, length, P2);
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+		*channel_handle = 0;
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+		*channel_handle = 0;
+	}
+
+	SESSION_EXTERN_END;
+
+	return result;
+}
+
+EXTERN_API  int session_open_logical_channel_sync(session_h handle, unsigned char *aid,
+	unsigned int length, unsigned char P2, int* channel_handle)
+{
+	int result = SCARD_ERROR_OK;
+
+	SESSION_EXTERN_BEGIN;
+
+	try
+	{
+		//*channel_handle = (int)session->openLogicalChannelSync(aid, length, P2);
+	}
+	catch (ExceptionBase &e)
+	{
+		_ERR("Error occur : %s\n", e.what());
+		result = e.getErrorCode();
+		*channel_handle = 0;
+	}
+	catch (...)
+	{
+		_ERR("Error occur : unknown error\n");
+		result = SCARD_ERROR_UNKNOWN;
+		*channel_handle = 0;
+	}
+
+	SESSION_EXTERN_END;
+
+	return result;
 }
 
 EXTERN_API int session_get_atr(session_h handle, session_get_atr_cb callback, void *userData)
@@ -603,24 +846,6 @@ EXTERN_API int session_close(session_h handle, session_close_session_cb callback
 	SESSION_EXTERN_END;
 
 	return result;
-}
-
-EXTERN_API bool session_is_closed(session_h handle)
-{
-	bool result = false;
-
-	SESSION_EXTERN_BEGIN;
-		result = session->isClosed();
-	SESSION_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API void session_close_channels(session_h handle)
-{
-	SESSION_EXTERN_BEGIN;
-		session->closeChannels();
-	SESSION_EXTERN_END;
 }
 
 EXTERN_API int session_open_basic_channel(session_h handle, unsigned char *aid,
@@ -647,62 +872,6 @@ EXTERN_API int session_open_logical_channel(session_h handle, unsigned char *aid
 	return result;
 }
 
-EXTERN_API void session_destroy_instance(session_h handle)
-{
-}
-
-EXTERN_API int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length)
-{
-	ByteArray temp;
-	int result = -1;
-
-	if (buffer == NULL || length == NULL)
-		return result;
-
-	SESSION_EXTERN_BEGIN;
-		temp = session->getATRSync();
-		if (temp.size() > 0)
-		{
-			*length = temp.size();
-			*buffer = (unsigned char *)calloc(1, *length);
-			memcpy(*buffer, temp.getBuffer(), *length);
-
-			result = 0;
-		}
-	SESSION_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API void session_close_sync(session_h handle)
-{
-	SESSION_EXTERN_BEGIN;
-		session->closeSync();
-	SESSION_EXTERN_END;
-}
-
-EXTERN_API channel_h session_open_basic_channel_sync(session_h handle, unsigned char *aid, unsigned int length)
-{
-	channel_h result = NULL;
-
-	SESSION_EXTERN_BEGIN;
-		result = session->openBasicChannelSync(aid, length);
-	SESSION_EXTERN_END;
-
-	return result;
-}
-
-EXTERN_API channel_h session_open_logical_channel_sync(session_h handle, unsigned char *aid, unsigned int length)
-{
-	channel_h result = NULL;
-
-	SESSION_EXTERN_BEGIN;
-		result = session->openLogicalChannelSync(aid, length);
-	SESSION_EXTERN_END;
-
-	return result;
-}
-
 EXTERN_API size_t session_get_channel_count(session_h handle)
 {
 	size_t result = 0;
@@ -713,3 +882,8 @@ EXTERN_API size_t session_get_channel_count(session_h handle)
 
 	return result;
 }
+
+EXTERN_API void session_destroy_instance(session_h handle)
+{
+}
+

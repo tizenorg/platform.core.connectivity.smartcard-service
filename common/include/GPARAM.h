@@ -17,8 +17,12 @@
 #ifndef GPARAM_H_
 #define GPARAM_H_
 
+/* standard library header */
 #include <vector>
 
+/* SLP library header */
+
+/* local header */
 #include "FileObject.h"
 
 using namespace std;

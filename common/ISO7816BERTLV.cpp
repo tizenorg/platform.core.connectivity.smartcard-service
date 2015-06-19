@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
+/* standard library header */
 #include <stdio.h>
 #include <string.h>
 
+/* SLP library header */
+
+/* local header */
 #include "ISO7816BERTLV.h"
 
 namespace smartcard_service_api
@@ -89,34 +93,38 @@ namespace smartcard_service_api
 
 	int ISO7816BERTLV::decodeLength(const unsigned char *buffer)
 	{
-		if (buffer[0] & 0x80)
+		uint8_t offset = 0;
+		uint8_t count = buffer[offset];
+
+		offset++;
+
+		if (count & 0x80)
 		{
-			uint8_t count = (buffer[0] & 0x7F);
 			uint8_t i;
+
+			count &= ~0x80;
 
 			/* count will be less than 5 */
 			if (count > 4)
 				return -1;
 
-			count++;
-
-			for (i = 1; i < count; i++)
+			for (i = 0; i < count; i++)
 			{
 				/* if big endian */
-				currentL = (currentL << 8) | buffer[i];
+				currentL = (currentL << 8) | buffer[offset + i];
 
 				/* if little endian */
-				/* currentL = currentL | (buffer[i] << (8 * (i - 1))); */
+				/* currentL = currentL | (buffer[offset + i] << (8 * (i - 1))); */
 			}
 
-			return count;
+			offset += i;
 		}
 		else
 		{
-			currentL = buffer[0];
-
-			return 1;
+			currentL = count;
 		}
+
+		return offset;
 	}
 
 	int ISO7816BERTLV::decodeValue(const unsigned char *buffer)

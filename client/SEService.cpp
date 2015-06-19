@@ -20,11 +20,10 @@
 #include <glib.h>
 #include <glib-object.h>
 
-/* SLP library header */
-
 /* local header */
 #include "Debug.h"
 #include "SEService.h"
+#include "ClientChannel.h"
 #include "Reader.h"
 #include "ClientGDBus.h"
 
@@ -33,11 +32,13 @@
 #endif
 
 #define SHUTDOWN_DELAY		500000 /* us */
+#define VERSION "3.0"
 
 namespace smartcard_service_api
 {
 	SEService::SEService() : SEServiceHelper(),
-		handle(-1), context(NULL), handler(NULL), listener(NULL)
+		handle(-1), context(NULL), handler(NULL), listener(NULL),
+		version(VERSION)
 	{
 		proxy = NULL;
 	}
@@ -45,7 +46,7 @@ namespace smartcard_service_api
 	SEService::SEService(void *user_data, serviceConnected handler)
 		throw(ErrorIO &, ErrorIllegalParameter &) :
 		SEServiceHelper(), handle(-1),
-		listener(NULL)
+		listener(NULL), version(VERSION)
 	{
 		initialize(user_data, handler);
 	}
@@ -53,33 +54,42 @@ namespace smartcard_service_api
 	SEService::SEService(void *user_data, SEServiceListener *listener)
 		throw(ErrorIO &, ErrorIllegalParameter &) :
 		SEServiceHelper(), handle(-1),
-		handler(NULL)
+		handler(NULL), version(VERSION)
 	{
 		initialize(user_data, listener);
 	}
 
+	SEService::SEService(void *user_data)
+		throw(ErrorIO &, ErrorIllegalParameter &, ExceptionBase &) :
+		SEServiceHelper(), handle(-1),
+		handler(NULL), version(VERSION)
+	{
+		initializeSync(user_data);
+	}
+
 	SEService::~SEService()
 	{
-		uint32_t i;
-
 		try
 		{
+			size_t i;
+
 			shutdownSync();
+
+			for (i = 0; i < readers.size(); i++)
+			{
+				delete (Reader *)readers[i];
+			}
+
+			readers.clear();
 		}
-		catch(ExceptionBase &e)
+		catch (ExceptionBase &e)
 		{
 			_ERR("EXCEPTION : %s", e.what());
 		}
-		catch(...)
+		catch (...)
 		{
 			_ERR("EXCEPTION!!!");
 		}
-
-		for (i = 0; i < readers.size(); i++)
-		{
-			delete (Reader *)readers[i];
-		}
-		readers.clear();
 	}
 
 	SEService *SEService::createInstance(void *user_data,
@@ -293,6 +303,64 @@ namespace smartcard_service_api
 		return result;
 	}
 
+	int SEService::_initialize_sync() throw(ErrorIO &, ExceptionBase &)
+	{
+		gint result;
+		guint handle;
+		GError *error = NULL;
+		GVariant *readers = NULL;
+		SEService *service = (SEService *)this;
+
+		_BEGIN();
+
+		/* init default context */
+
+		proxy = smartcard_service_se_service_proxy_new_for_bus_sync(
+			G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE,
+			"org.tizen.SmartcardService",
+			"/org/tizen/SmartcardService/SeService",
+			NULL, &error);
+		if (proxy == NULL)
+		{
+			_ERR("Can not create proxy : %s", error->message);
+			g_error_free(error);
+			return false;
+		}
+
+		g_signal_connect(proxy, "reader-inserted",
+				G_CALLBACK(&SEService::reader_inserted), this);
+
+		g_signal_connect(proxy, "reader-removed",
+				G_CALLBACK(&SEService::reader_removed), this);
+
+		/* request reader */
+		if(smartcard_service_se_service_call_se_service_sync(
+			(SmartcardServiceSeService *)proxy, &result, &handle, &readers, NULL, &error) == true)
+		{
+			if (result == SCARD_ERROR_OK)
+			{
+				service->connected = true;
+				service->handle = handle;
+				service->parseReaderInformation(readers);
+			}
+			else
+			{
+				throw ExceptionBase(result);
+			}
+		}
+		else
+		{
+			_ERR("smartcard_service_se_service_call_se_service failed, [%s]", error->message);
+			g_error_free(error);
+
+			result = SCARD_ERROR_IPC_FAILED;
+		}
+
+		_END();
+
+		return result;
+	}
+
 	bool SEService::initialize(void *context, serviceConnected handler)
 		throw(ErrorIO &, ErrorIllegalParameter &)
 	{
@@ -321,20 +389,29 @@ namespace smartcard_service_api
 		return _initialize();
 	}
 
+	bool SEService::initializeSync(void *context)
+		throw(ErrorIO &, ErrorIllegalParameter &, ExceptionBase &)
+	{
+		this->context = context;
+
+		_initialize_sync();
+		return true;
+	}
+
 	bool SEService::parseReaderInformation(GVariant *variant)
 	{
 		Reader *reader = NULL;
 
 		GVariantIter *iter;
-		gsize count;
 		guint handle;
 		gchar *name;
 
 		g_variant_get(variant, "a(us)", &iter);
 
-		count = g_variant_iter_n_children(iter);
 		while (g_variant_iter_loop(iter, "(us)", &handle, &name) == true)
 		{
+			SECURE_LOGD("Reader : name [%s], handle [%08x]", name, handle);
+
 			/* add readers */
 			reader = new Reader((void *)this->handle, name, GUINT_TO_POINTER(handle));
 			if (reader == NULL)
@@ -360,19 +437,35 @@ namespace smartcard_service_api
 		void *handle = NULL;
 		Reader *reader = NULL;
 		char name[100];
+		const uint8_t *buffer = NULL;
+
 
 		for (i = 0; i < count && offset < data.size(); i++)
 		{
 			memset(name, 0, sizeof(name));
 
-			memcpy(&len, data.getBuffer(offset), sizeof(len));
+			buffer = data.getBuffer(offset);
+			if(buffer == NULL)
+				continue;
+
+			memcpy(&len, buffer, sizeof(len));
 			offset += sizeof(len);
 
-			memcpy(name, data.getBuffer(offset), len);
+			buffer = data.getBuffer(offset);
+			if(buffer == NULL)
+				return false;
+
+			memcpy(name, buffer, len);
 			offset += len;
 
-			memcpy(&handle, data.getBuffer(offset), sizeof(handle));
+			buffer = data.getBuffer(offset);
+			if(buffer == NULL)
+				return false;
+
+			memcpy(&handle, buffer, sizeof(handle));
 			offset += sizeof(handle);
+
+			SECURE_LOGD("Reader [%d] : name [%s], handle [%p]", i, name, handle);
 
 			/* add readers */
 			reader = new Reader(context, name, handle);
@@ -404,7 +497,8 @@ namespace smartcard_service_api
 
 using namespace smartcard_service_api;
 
-EXTERN_API se_service_h se_service_create_instance(void *user_data, se_service_connected_cb callback)
+EXTERN_API se_service_h se_service_create_instance(void *user_data,
+	se_service_connected_cb callback)
 {
 	SEService *service;
 
@@ -420,8 +514,9 @@ EXTERN_API se_service_h se_service_create_instance(void *user_data, se_service_c
 	return (se_service_h)service;
 }
 
-EXTERN_API se_service_h se_service_create_instance_with_event_callback(void *user_data,
-	se_service_connected_cb connected, se_service_event_cb event, se_sesrvice_error_cb error)
+EXTERN_API se_service_h se_service_create_instance_with_event_callback(
+	void *user_data, se_service_connected_cb connected,
+	se_service_event_cb event, se_sesrvice_error_cb error)
 {
 	SEService *service;
 
@@ -435,6 +530,46 @@ EXTERN_API se_service_h se_service_create_instance_with_event_callback(void *use
 	}
 
 	return (se_service_h)service;
+}
+
+EXTERN_API se_service_h se_service_create_instance_sync(void *user_data,
+	int *result)
+{
+	SEService *service;
+
+	try
+	{
+		service = new SEService(user_data);
+	}
+	catch (ExceptionBase &e)
+	{
+		*result = e.getErrorCode();
+		service = NULL;
+	}
+	catch (...)
+	{
+		*result = SCARD_ERROR_UNKNOWN;
+		service = NULL;
+	}
+
+	return (se_service_h)service;
+}
+
+EXTERN_API int se_service_get_version(se_service_h handle, char **version_str)
+{
+	int ret = 0;
+
+	if (version_str == NULL) {
+		return SCARD_ERROR_ILLEGAL_PARAM;
+	}
+
+	SE_SERVICE_EXTERN_BEGIN;
+
+	*version_str = g_strdup(service->getVersion());
+
+	SE_SERVICE_EXTERN_END;
+
+	return ret;
 }
 
 EXTERN_API int se_service_get_readers_count(se_service_h handle)
@@ -453,9 +588,9 @@ EXTERN_API int se_service_get_readers_count(se_service_h handle)
 	return count;
 }
 
-EXTERN_API bool se_service_get_readers(se_service_h handle, reader_h *readers, int *count)
+EXTERN_API int se_service_get_readers(se_service_h handle, int **readers, int *count)
 {
-	bool result = false;
+	int result = 0;
 
 	SE_SERVICE_EXTERN_BEGIN;
 
@@ -464,16 +599,26 @@ EXTERN_API bool se_service_get_readers(se_service_h handle, reader_h *readers, i
 	int temp = 0;
 
 	temp_readers = service->getReaders();
-
-	for (i = 0; i < temp_readers.size() && i < (size_t)*count; i++)
+	if(temp_readers.size() > 0)
 	{
-		if (temp_readers[i]->isSecureElementPresent())
+		*readers = (int *)calloc(temp_readers.size(), sizeof(int));
+
+		if(*readers == NULL)
 		{
-			readers[i] = (reader_h)temp_readers[i];
-			temp++;
+			*count = 0;
+			return SCARD_ERROR_NOT_ENOUGH_RESOURCE;
 		}
+
+		for (i = 0; i < temp_readers.size(); i++)
+		{
+			if (temp_readers[i]->isSecureElementPresent())
+			{
+				//(*readers)[i] = (int)temp_readers[i];
+				temp++;
+			}
+		}
+		*count = temp;
 	}
-	*count = temp;
 
 	SE_SERVICE_EXTERN_END;
 
@@ -502,11 +647,15 @@ EXTERN_API void se_service_shutdown(se_service_h handle)
 	SE_SERVICE_EXTERN_END;
 }
 
-EXTERN_API void se_service_destroy_instance(se_service_h handle)
+EXTERN_API int se_service_destroy_instance(se_service_h handle)
 {
+	int result = 0;
+
 	SE_SERVICE_EXTERN_BEGIN;
 
 	delete service;
 
 	SE_SERVICE_EXTERN_END;
+
+	return result;
 }
