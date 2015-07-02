@@ -1,23 +1,5 @@
 <manifest>
-	<define>
-		<domain name="smartcard-service" />
-		<provide>
-			<label name="smartcard-service::priv" />
-		</provide>
-		<request>
-			<smack request="sys-assert::core" type="rwxat" />
-			<smack request="nfc-manager" type="rwx" />
-			<smack request="csc-feature" type="r" />
-			<smack request="security-server::api-privilege-by-pid" type="w" />
-		</request>
-	</define>
-	<assign>
-		<filesystem path="/usr/apps/smartcard-service-server/bin/smartcard-daemon" exec_label="smartcard-service" />
-		<!-- <filesystem path="/usr/apps/smartcard-service-server/bin/smartcard-test-client" exec_label="smartcard-service" /> -->
-		<filesystem path="/usr/share/dbus-1/services/smartcard-service.service" label="_" />
-	</assign>
 	<request>
-		<domain name="smartcard-service" />
+		<domain name="_"/>
 	</request>
 </manifest>
-
