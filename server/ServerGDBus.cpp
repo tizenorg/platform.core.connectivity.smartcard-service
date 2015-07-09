@@ -22,11 +22,6 @@
 #include <string>
 #include <sys/socket.h>
 
-/* SLP library header */
-#ifdef USER_SPACE_SMACK
-#include "security-server.h"
-#endif
-
 /* local header */
 #include "smartcard-types.h"
 #include "Debug.h"
@@ -300,25 +295,7 @@ namespace smartcard_service_api
 		const char *rights)
 	{
 		bool result = true;
-#ifdef USER_SPACE_SMACK
-		pid_t pid;
-		const char *name;
-		ClientInstance *instance;
 
-		name = g_dbus_method_invocation_get_sender(invocation);
-
-		instance = ServerResource::getInstance().getClient(name);
-		if (instance != NULL) {
-			pid = instance->getPID();
-		} else {
-			pid = ServerGDBus::getInstance().getPID(name);
-		}
-
-		result = (security_server_check_privilege_by_pid(
-			pid,
-			"smartcard-service",
-			rights) == SECURITY_SERVER_API_SUCCESS);
-#endif
 		return result;
 	}
 

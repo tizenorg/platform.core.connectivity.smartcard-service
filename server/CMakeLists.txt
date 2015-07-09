@@ -29,7 +29,7 @@ ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 # pkg config
 INCLUDE(FindPkgConfig)
 
-SET(PKG_MODULE glib-2.0 gio-2.0 gio-unix-2.0 security-server dlog)
+SET(PKG_MODULE glib-2.0 gio-2.0 gio-unix-2.0 dlog)
 
 pkg_check_modules(pkgs_server REQUIRED ${PKG_MODULE})
 

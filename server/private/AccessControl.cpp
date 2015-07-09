@@ -19,11 +19,6 @@
 #include <gio/gio.h>
 #include <map>
 
-/* SLP library header */
-#ifdef USER_SPACE_SMACK
-#include "security-server.h"
-#endif
-
 /* local header */
 #include "Debug.h"
 #include "APDUHelper.h"
@@ -121,19 +116,7 @@ static bool _is_authorized_request(GDBusMethodInvocation *invocation,
 	const char *rights)
 {
 	bool result = true;
-#ifdef USER_SPACE_SMACK
-	pid_t pid;
-	const char *name;
 
-	name = g_dbus_method_invocation_get_sender(invocation);
-
-	pid = ServerGDBus::getInstance().getPID(name);
-
-	result = (security_server_check_privilege_by_pid(
-		pid,
-		"smartcard-service::priv",
-		rights) == SECURITY_SERVER_API_SUCCESS);
-#endif
 	return result;
 }
 

@@ -18,7 +18,6 @@ Source1:    %{name}-server.init
 BuildRequires: cmake
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(gio-unix-2.0)
-BuildRequires: pkgconfig(security-server)
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(libssl)
