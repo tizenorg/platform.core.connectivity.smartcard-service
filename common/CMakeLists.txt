@@ -15,7 +15,7 @@ AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} SRCS)
 #MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs_common REQUIRED glib-2.0 gio-unix-2.0 dlog aul libssl pkgmgr pkgmgr-info)
+pkg_check_modules(pkgs_common REQUIRED glib-2.0 gio-unix-2.0 dlog aul libssl libcrypto pkgmgr pkgmgr-info)
 
 MESSAGE("${LIB_NAME} ld flag : ${pkgs_common_LDFLAGS}")
 
@@ -53,13 +53,13 @@ SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES VERSION ${VERSION})
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_common_LDFLAGS})
 
-SET(EXPORT_HEADER 
+SET(EXPORT_HEADER
 	include/smartcard-types.h
 	include/Debug.h
 	include/Exception.h
 	include/ByteArray.h
 	include/Lock.h
-	include/Synchronous.h	
+	include/Synchronous.h
 	include/TerminalInterface.h
 	include/Terminal.h
 	include/SignatureHelper.h

@@ -21,6 +21,7 @@ BuildRequires: pkgconfig(gio-unix-2.0)
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(libssl)
+BuildRequires: pkgconfig(libcrypto)
 BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: pkgconfig(pkgmgr-info)
 BuildRequires: python
@@ -182,8 +183,8 @@ export LDFLAGS+="-Wl,-Bsymbolic-functions"
 mkdir obj-arm-limux-qnueabi
 cd obj-arm-limux-qnueabi
 %cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix} %{?use_autostart} %{?use_gdbus} %{?test_client}
-#make %{?jobs:-j%jobs}
 
+make %{?_smp_mflags}
 
 %install
 cd obj-arm-limux-qnueabi
