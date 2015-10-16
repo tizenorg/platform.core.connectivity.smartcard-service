@@ -184,8 +184,6 @@ mkdir obj-arm-limux-qnueabi
 cd obj-arm-limux-qnueabi
 %cmake .. -DCMAKE_INSTALL_PREFIX=%{_prefix} %{?use_autostart} %{?use_gdbus} %{?test_client}
 
-make %{?_smp_mflags}
-
 %install
 cd obj-arm-limux-qnueabi
 %make_install
