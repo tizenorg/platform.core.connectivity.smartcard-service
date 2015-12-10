@@ -163,7 +163,7 @@ rm -f /usr/bin/smartcard-daemon
 %{bindir}/%{name}-server
 %{bindir}/author-signature.xml
 %{bindir}/signature1.xml
-
+/etc/dbus-1/system.d/org.tizen.SmartcardService.conf
 
 ################################################################################
 # common...                                                                    #
@@ -194,9 +194,11 @@ cd obj-arm-limux-qnueabi
 	chmod 755 %{buildroot}/etc/init.d/%{name}-server
 %endif
 mkdir -p %{buildroot}/usr/share/license
+mkdir -p %{buildroot}/etc/dbus-1/system.d/
 cp -af %{_builddir}/%{name}-%{version}/packaging/%{name} %{buildroot}/usr/share/license/
 cp -af %{_builddir}/%{name}-%{version}/packaging/%{name}-common %{buildroot}/usr/share/license/
 cp -af %{_builddir}/%{name}-%{version}/packaging/%{name}-server %{buildroot}%{bindir}
+cp -af %{_builddir}/%{name}-%{version}/packaging/org.tizen.SmartcardService.conf %{buildroot}/etc/dbus-1/system.d/
 
 %define tizen_sign 1
 %define tizen_sign_base %{bindir}
