@@ -241,7 +241,7 @@ static void _process_is_authorized_nfc_access(vector<void *> &params)
 
 	object = (SmartcardServiceAccessControl *)params[0];
 	invocation = (GDBusMethodInvocation *)params[1];
-	se_type = 0;//(guint)params[2];
+	se_type = (gulong)params[2];
 	package = (gchar *)params[3];
 	aid = (GVariant *)params[4];
 	user_data = params[5];
@@ -473,7 +473,7 @@ static void _process_is_authorized_extra_access(vector<void *> &params)
 
 	object = (SmartcardServiceAccessControl *)params[0];
 	invocation = (GDBusMethodInvocation *)params[1];
-	se_type = 0;//(guint)params[2];
+	se_type = (gulong)params[2];
 	package = (gchar *)params[3];
 	user_data = params[4];
 

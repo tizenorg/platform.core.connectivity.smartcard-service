@@ -493,7 +493,7 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceSeService *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		handle = 0;//(guint)params[2];
+		handle = (gulong)params[2];
 		user_data = params[3];
 
 		__process_shutdown(object, invocation, handle, user_data);
@@ -652,8 +652,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceReader *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = 0;//(guint)params[2];
-		reader_id = 0;//(guint)params[3];
+		service_id = (gulong)params[2];
+		reader_id = (gulong)params[3];
 		user_data = params[4];
 
 		__process_open_session(object, invocation, service_id,
@@ -780,8 +780,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceSession *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = 0;//(guint)params[2];
-		session_id = 0;//(guint)params[3];
+		service_id = (gulong)params[2];
+		session_id = (gulong)params[3];
 		user_data = params[4];
 
 		__process_close_session(object, invocation, service_id,
@@ -892,8 +892,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceSession *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = 0;//(guint)params[2];
-		session_id = 0;//(guint)params[3];
+		service_id = (gulong)params[2];
+		session_id = (gulong)params[3];
 		user_data = params[4];
 
 		__process_get_atr(object, invocation, service_id,
@@ -1020,11 +1020,11 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceSession *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = 0;//(guint)params[2];
-		session_id = 0;//(guint)params[3];
-		type = 0;//(guint)params[4];
+		service_id = (gulong)params[2];
+		session_id = (gulong)params[3];
+		type = (gulong)params[4];
 		aid = (GVariant *)params[5];
-		P2 = 0;//(guint8)((int)params[6]);
+		P2 = (guint8)((gulong)params[6]);
 		user_data = params[7];
 
 		__process_open_channel(object, invocation, service_id,
@@ -1168,8 +1168,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceChannel *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = 0;//(guint)params[2];
-		channel_id = 0;//(guint)params[3];
+		service_id = (gulong)params[2];
+		channel_id = (gulong)params[3];
 		user_data = params[4];
 
 		__process_close_channel(object, invocation, service_id,
@@ -1277,8 +1277,8 @@ namespace smartcard_service_api
 
 		object = (SmartcardServiceChannel *)params[0];
 		invocation = (GDBusMethodInvocation *)params[1];
-		service_id = 0;//(guint)params[2];
-		channel_id = 0;//(guint)params[3];
+		service_id = (gulong)params[2];
+		channel_id = (gulong)params[3];
 		command = (GVariant *)params[4];
 		user_data = params[5];
 

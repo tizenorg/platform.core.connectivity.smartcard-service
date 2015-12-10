@@ -7,7 +7,7 @@
 ################################################################################
 Name:       smartcard-service
 Summary:    Smartcard Service FW
-Version:    0.1.43
+Version:    0.1.44
 Release:    0
 Group:      libs
 License:    Apache-2.0
@@ -152,7 +152,6 @@ rm -f /usr/bin/smartcard-daemon
 %manifest %{name}-server.manifest
 %defattr(-,root,root,-)
 %{bindir}/bin/smartcard-daemon
-%{_datadir}/packages/%{name}-server.xml
 %if 0%{?test_client:1}
 	%{bindir}/bin/smartcard-test-client
 %endif

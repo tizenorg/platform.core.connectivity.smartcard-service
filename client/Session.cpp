@@ -622,7 +622,7 @@ EXTERN_API int session_get_reader(session_h handle, int* reader_handle)
 	try
 	{
 		reader = session->getReader();
-		//*reader_handle = (int)reader;
+		*reader_handle = (long)reader;
 	}
 	catch (ExceptionBase &e)
 	{
@@ -777,7 +777,7 @@ EXTERN_API int session_open_basic_channel_sync(session_h handle, unsigned char *
 
 	try
 	{
-		//*channel_handle = (int)session->openBasicChannelSync(aid, length, P2);
+		*channel_handle = (long)session->openBasicChannelSync(aid, length, P2);
 	}
 	catch (ExceptionBase &e)
 	{
@@ -806,7 +806,7 @@ EXTERN_API  int session_open_logical_channel_sync(session_h handle, unsigned cha
 
 	try
 	{
-		//*channel_handle = (int)session->openLogicalChannelSync(aid, length, P2);
+		*channel_handle = (long)session->openLogicalChannelSync(aid, length, P2);
 	}
 	catch (ExceptionBase &e)
 	{
