@@ -537,7 +537,7 @@ EXTERN_API int channel_get_session(channel_h handle, int *session_handle)
 	try
 	{
 		session = channel->getSession();
-		//*session_handle = (int)session;
+		*session_handle = (long)session;
 	}
 	catch (ExceptionBase &e)
 	{

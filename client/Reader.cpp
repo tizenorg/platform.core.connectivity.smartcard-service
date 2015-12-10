@@ -296,7 +296,7 @@ EXTERN_API int reader_open_session_sync(reader_h handle, int *session_handle)
 	try
 	{
 		session = (session_h)reader->openSessionSync();
-		//*session_handle = (int)session;
+		*session_handle = (long)session;
 	}
 	catch (ExceptionBase &e)
 	{

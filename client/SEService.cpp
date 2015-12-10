@@ -613,7 +613,7 @@ EXTERN_API int se_service_get_readers(se_service_h handle, int **readers, int *c
 		{
 			if (temp_readers[i]->isSecureElementPresent())
 			{
-				//(*readers)[i] = (int)temp_readers[i];
+				(*readers)[i] = (long)temp_readers[i];
 				temp++;
 			}
 		}

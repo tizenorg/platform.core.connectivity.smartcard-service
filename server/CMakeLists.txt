@@ -72,4 +72,3 @@ INSTALL(TARGETS ${PROJECT_NAME} DESTINATION /usr/apps/smartcard-service-server/b
 IF("${USE_AUTOSTART}" STREQUAL "1")
 	INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.tizen.SmartcardService.service DESTINATION share/dbus-1/system-services)
 ENDIF()
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/smartcard-service-server.xml DESTINATION share/packages)
