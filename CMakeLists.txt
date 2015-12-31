@@ -10,6 +10,7 @@ ENDIF()
 
 # make string from entire content of byte array
 ADD_DEFINITIONS("-DTO_STRING_ALL")
+ADD_DEFINITIONS("-DUSE_CYNARA")
 
 SET(GC_SECTIONS_FLAGS "-fdata-sections -ffunction-sections -Wl,--gc-sections")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GC_SECTIONS_FLAGS}")

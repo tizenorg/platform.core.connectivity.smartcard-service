@@ -24,6 +24,10 @@ BuildRequires: pkgconfig(libssl)
 BuildRequires: pkgconfig(libcrypto)
 BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: pkgconfig(pkgmgr-info)
+BuildRequires: pkgconfig(cynara-client)
+BuildRequires: pkgconfig(cynara-creds-gdbus)
+BuildRequires: pkgconfig(cynara-session)
+
 BuildRequires: python
 BuildRequires: python-xml
 BuildRequires: hash-signer

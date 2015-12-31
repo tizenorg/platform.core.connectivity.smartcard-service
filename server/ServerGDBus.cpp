@@ -30,6 +30,14 @@
 #include "GDBusHelper.h"
 #include "ServerGDBus.h"
 
+#ifdef USE_CYNARA
+#include "cynara-client.h"
+#include "cynara-creds-gdbus.h"
+#include "cynara-session.h"
+
+#define SMARTCARD_PRIVILEGE "http://tizen.org/privilege/secureelement"
+#endif
+
 using namespace std;
 
 #ifdef __PRIVATE
@@ -291,10 +299,63 @@ namespace smartcard_service_api
 		return pid;
 	}
 
-	static bool _is_authorized_request(GDBusMethodInvocation *invocation,
-		const char *rights)
+#ifdef USE_CYNARA
+	static bool _get_credentials(GDBusMethodInvocation *invocation)
 	{
-		bool result = true;
+		int ret = 0;
+		int pid = 0;
+		char *user;
+		char *client;
+		char *client_session;
+		cynara *p_cynara = NULL;
+		const char *sender_unique_name;
+		GDBusConnection *connection;
+
+		connection = g_dbus_method_invocation_get_connection(invocation);
+		sender_unique_name = g_dbus_method_invocation_get_sender(invocation);
+
+		pid = ServerGDBus::getInstance().getPID(sender_unique_name);
+
+		ret = cynara_initialize(&p_cynara, NULL);
+		if (ret != CYNARA_API_SUCCESS) {
+			_ERR("cynara_initialize() failed");
+			return false;
+		}
+
+		ret = cynara_creds_gdbus_get_user(connection, sender_unique_name, USER_METHOD_DEFAULT, &user);
+		if (ret != CYNARA_API_SUCCESS) {
+			_ERR("cynara_creds_gdbus_get_user() failed");
+			return false;
+		}
+
+		ret = cynara_creds_gdbus_get_client(connection, sender_unique_name, CLIENT_METHOD_DEFAULT, &client);
+		if (ret != CYNARA_API_SUCCESS) {
+			_ERR("cynara_creds_gdbus_get_client() failed");
+			return false;
+		}
+
+		_ERR("user :%s , client :%s ,unique_name : %s, pid() : %d", user, client, sender_unique_name, pid);
+
+		client_session = cynara_session_from_pid(pid);
+
+		ret = cynara_check(p_cynara, client, client_session, user, SMARTCARD_PRIVILEGE);
+		if ( ret == CYNARA_API_ACCESS_ALLOWED ) {
+			_INFO("cynara PASS");
+		}
+
+		return (ret == CYNARA_API_ACCESS_ALLOWED ) ? true : false;
+	}
+#endif
+
+	static bool _is_authorized_request(GDBusMethodInvocation *invocation)
+	{
+		bool result = false;
+
+#ifdef USE_CYNARA
+		result = _get_credentials(invocation);
+#endif
+
+		_ERR("api security check result : %d", result);
 
 		return result;
 	}
@@ -428,7 +489,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(invocation, "r") == true) {
+		if (_is_authorized_request(invocation) == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -510,7 +571,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(invocation, "r") == true) {
+		if (_is_authorized_request(invocation) == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -671,7 +732,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(invocation, "r") == true) {
+		if (_is_authorized_request(invocation) == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -799,7 +860,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(invocation, "r") == true) {
+		if (_is_authorized_request(invocation) == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -911,7 +972,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(invocation, "r") == true) {
+		if (_is_authorized_request(invocation) == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -1043,7 +1104,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(invocation, "rw") == true) {
+		if (_is_authorized_request(invocation) == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -1186,7 +1247,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(invocation, "r") == true) {
+		if (_is_authorized_request(invocation) == true) {
 			g_object_ref(object);
 			params.push_back((void *)object);
 
@@ -1300,7 +1361,7 @@ namespace smartcard_service_api
 		vector<void *> params;
 
 		/* apply user space smack */
-		if (_is_authorized_request(invocation, "r") == true) {
+		if (_is_authorized_request(invocation) == true) {
 			/* enqueue message */
 			g_object_ref(object);
 			params.push_back((void *)object);
