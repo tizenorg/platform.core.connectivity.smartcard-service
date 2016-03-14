@@ -203,14 +203,14 @@ namespace smartcard_service_api
 	Channel *ServerSession::openLogicalChannelSync(const ByteArray &aid)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		void* caller;
+		void* caller = NULL;
 		return openLogicalChannelSync(aid, caller);
 	}
 
 	Channel *ServerSession::openLogicalChannelSync(const ByteArray &aid, unsigned char P2)
 		throw(ErrorIO &, ErrorIllegalState &, ErrorIllegalParameter &, ErrorSecurity &)
 	{
-		void* caller;
+		void* caller = NULL;
 		return openLogicalChannelSync(aid, caller);
 	}
 
