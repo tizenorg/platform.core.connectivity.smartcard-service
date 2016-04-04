@@ -30,7 +30,8 @@ using namespace std;
 /* below functions will be called when dlopen or dlclose is called */
 void __attribute__ ((constructor)) lib_init()
 {
-	g_type_init();
+	/* remove for deprecated-declarations build warning: glib ver > 2.36 */
+	/* g_type_init(); */
 }
 
 void __attribute__ ((destructor)) lib_fini()
