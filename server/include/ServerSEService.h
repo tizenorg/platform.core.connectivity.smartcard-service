@@ -27,11 +27,16 @@
 #include "Terminal.h"
 #include "ServerReader.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class ServerSEService : public SEServiceHelper
+	class LIBSCL_EXPORT_API ServerSEService : public SEServiceHelper
 	{
 	private:
 		vector<void *> libraries;
@@ -59,8 +64,8 @@ namespace smartcard_service_api
 		void shutdown() {}
 		void shutdownSync() {}
 
-		friend void terminalCallback(const void *name, int event, int error, void *user_param);
-		friend bool dispatcherCallback(void *message, int socket);
+		LIBSCL_EXPORT_API friend void terminalCallback(const void *name, int event, int error, void *user_param);
+		LIBSCL_EXPORT_API friend bool dispatcherCallback(void *message, int socket);
 		friend class ServerDispatcher;
 	};
 

@@ -29,13 +29,18 @@
 #include "Terminal.h"
 #include "SessionHelper.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
 	class ServerReader;
 
-	class ServerSession : public SessionHelper
+	class LIBSCL_EXPORT_API ServerSession : public SessionHelper
 	{
 	private:
 		Terminal *terminal;

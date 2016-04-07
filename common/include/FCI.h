@@ -25,9 +25,14 @@
 /* local header */
 #include "ByteArray.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class FCP
+	class LIBSCL_EXPORT_API FCP
 	{
 	private:
 		ByteArray fcpBuffer;
@@ -66,7 +71,7 @@ namespace smartcard_service_api
 		const string toString() const;
 	};
 
-	class FCM
+	class LIBSCL_EXPORT_API FCM
 	{
 	private:
 		ByteArray fcmBuffer;
@@ -76,7 +81,7 @@ namespace smartcard_service_api
 		virtual ~FCM();
 	};
 
-	class FCI
+	class LIBSCL_EXPORT_API FCI
 	{
 	private:
 		ByteArray fciBuffer;

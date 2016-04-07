@@ -29,9 +29,14 @@
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
+
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
 namespace smartcard_service_api
 {
-	class PKCS15CDFACL : public AccessControlList
+	class LIBSCL_EXPORT_API PKCS15CDFACL : public AccessControlList
 	{
 	private:
 		int loadRules(Channel *channel, PKCS15CDF *cdf);

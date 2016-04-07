@@ -27,11 +27,16 @@
 #include "PKCS15CDF.h"
 #include "PKCS15DODF.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class PKCS15ODF : public PKCS15Object
+	class LIBSCL_EXPORT_API PKCS15ODF : public PKCS15Object
 	{
 	private:
 		PKCS15CDF *cdf;

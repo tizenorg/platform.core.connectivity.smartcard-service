@@ -34,11 +34,16 @@
 #include "ClientInstance.h"
 #include "ServiceInstance.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class IntegerHandle
+	class LIBSCL_EXPORT_API IntegerHandle
 	{
 	private:
 		static unsigned int newHandle;
@@ -52,7 +57,7 @@ namespace smartcard_service_api
 		static void releaseHandle(unsigned int);
 	};
 
-	class ServerResource
+	class LIBSCL_EXPORT_API ServerResource
 	{
 	private:
 		/* non-static member */
@@ -137,7 +142,7 @@ namespace smartcard_service_api
 		ServerChannel *createInternalChannel(Terminal *terminal,
 			int channelType);
 
-		friend void terminalCallback(void *terminal, int event, int error, void *user_param);
+		LIBSCL_EXPORT_API friend void terminalCallback(void *terminal, int event, int error, void *user_param);
 	};
 
 } /* namespace smartcard_service_api */

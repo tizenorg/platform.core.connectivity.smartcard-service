@@ -25,6 +25,11 @@
 #include "ByteArray.h"
 #include "Synchronous.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
 	typedef void (*terminalNotificationCallback)(const void *terminal, int event, int error, void *user_param);
@@ -32,7 +37,7 @@ namespace smartcard_service_api
 	typedef void (*terminalTransmitCallback)(const unsigned char *buffer, unsigned int length, int error, void *userParam);
 	typedef void (*terminalGetATRCallback)(const unsigned char *buffer, unsigned int length, int error, void *userParam);
 
-	class Terminal : public Synchronous
+	class LIBSCL_EXPORT_API Terminal : public Synchronous
 	{
 	protected:
 		terminalNotificationCallback statusCallback;

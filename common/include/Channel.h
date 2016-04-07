@@ -26,6 +26,11 @@
 #include "ByteArray.h"
 #include "Exception.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
 	class SessionHelper;	/* explicit declaration */
@@ -34,7 +39,7 @@ namespace smartcard_service_api
 		unsigned int length, int error, void *userParam);
 	typedef void (*closeChannelCallback)(int error, void *userParam);
 
-	class Channel : public Synchronous
+	class LIBSCL_EXPORT_API Channel : public Synchronous
 	{
 	protected :
 		ByteArray selectResponse;

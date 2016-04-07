@@ -31,13 +31,18 @@
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
+
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
 using namespace std;
 
 namespace smartcard_service_api
 {
 	typedef void (*serviceConnected)(SEServiceHelper *service, void *context);
 
-	class SEService : public SEServiceHelper
+	class LIBSCL_EXPORT_API SEService : public SEServiceHelper
 	{
 	private:
 		unsigned int handle;
@@ -102,20 +107,20 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-se_service_h se_service_create_instance(void *user_data,
+LIBSCL_EXPORT_API se_service_h se_service_create_instance(void *user_data,
 	se_service_connected_cb callback);
-se_service_h se_service_create_instance_with_event_callback(void *user_data,
+LIBSCL_EXPORT_API se_service_h se_service_create_instance_with_event_callback(void *user_data,
 	se_service_connected_cb connected, se_service_event_cb event,
 	se_sesrvice_error_cb error);
 
-se_service_h se_service_create_instance_sync(void *user_data, int* result);
-int se_service_get_version(se_service_h handle, char **version_str);
-int se_service_get_readers_count(se_service_h handle);
-int se_service_get_readers(se_service_h handle, int **readers, int *count);
+LIBSCL_EXPORT_API se_service_h se_service_create_instance_sync(void *user_data, int* result);
+LIBSCL_EXPORT_API int se_service_get_version(se_service_h handle, char **version_str);
+LIBSCL_EXPORT_API int se_service_get_readers_count(se_service_h handle);
+LIBSCL_EXPORT_API int se_service_get_readers(se_service_h handle, int **readers, int *count);
 
-bool se_service_is_connected(se_service_h handle);
-void se_service_shutdown(se_service_h handle);
-int se_service_destroy_instance(se_service_h handle);
+LIBSCL_EXPORT_API bool se_service_is_connected(se_service_h handle);
+LIBSCL_EXPORT_API void se_service_shutdown(se_service_h handle);
+LIBSCL_EXPORT_API int se_service_destroy_instance(se_service_h handle);
 
 
 #ifdef __cplusplus

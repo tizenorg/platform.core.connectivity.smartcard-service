@@ -25,9 +25,14 @@
 #ifndef OPENSSLHELPER_H_
 #define OPENSSLHELPER_H_
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class OpensslHelper
+	class LIBSCL_EXPORT_API OpensslHelper
 	{
 	public:
 		/* base64 method */

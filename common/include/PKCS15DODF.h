@@ -25,9 +25,14 @@
 #include "PKCS15Object.h"
 #include "PKCS15OID.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class PKCS15DODF : public PKCS15Object
+	class LIBSCL_EXPORT_API PKCS15DODF : public PKCS15Object
 	{
 	private:
 		map<ByteArray, PKCS15OID> mapOID;

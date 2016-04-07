@@ -25,9 +25,14 @@
 #include "ByteArray.h"
 #include "TLVHelper.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class SimpleTLV : public TLVHelper
+	class LIBSCL_EXPORT_API SimpleTLV : public TLVHelper
 	{
 	private:
 		SimpleTLV(TLVHelper *parent);

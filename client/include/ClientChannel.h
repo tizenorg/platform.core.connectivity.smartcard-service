@@ -30,9 +30,14 @@
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
+
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
 namespace smartcard_service_api
 {
-	class ClientChannel: public Channel
+	class LIBSCL_EXPORT_API ClientChannel: public Channel
 	{
 	private:
 		void *context;
@@ -74,24 +79,24 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-int channel_is_basic_channel(channel_h handle, bool* is_basic_channel);
-int channel_is_closed(channel_h handle, bool* is_closed );
-int channel_get_session(channel_h handle, int *session_handle);
-int channel_close_sync(channel_h handle);
-int channel_transmit_sync(channel_h handle, unsigned char *command,
+LIBSCL_EXPORT_API int channel_is_basic_channel(channel_h handle, bool* is_basic_channel);
+LIBSCL_EXPORT_API int channel_is_closed(channel_h handle, bool* is_closed );
+LIBSCL_EXPORT_API int channel_get_session(channel_h handle, int *session_handle);
+LIBSCL_EXPORT_API int channel_close_sync(channel_h handle);
+LIBSCL_EXPORT_API int channel_transmit_sync(channel_h handle, unsigned char *command,
 	unsigned int cmd_len, unsigned char **response, unsigned int *resp_len);
-int channel_get_select_response(channel_h handle,
+LIBSCL_EXPORT_API int channel_get_select_response(channel_h handle,
 	unsigned char **buffer, size_t* length);
-int channel_get_transmit_response(channel_h handle,
+LIBSCL_EXPORT_API int channel_get_transmit_response(channel_h handle,
 	unsigned char **buffer, size_t* length);
-int channel_select_next(channel_h hChannel, bool *pSuccess);
+LIBSCL_EXPORT_API int channel_select_next(channel_h hChannel, bool *pSuccess);
 ////
 
-int channel_close(channel_h handle, channel_close_cb callback, void *userParam);
-int channel_transmit(channel_h handle, unsigned char *command,
+LIBSCL_EXPORT_API int channel_close(channel_h handle, channel_close_cb callback, void *userParam);
+LIBSCL_EXPORT_API int channel_transmit(channel_h handle, unsigned char *command,
 	unsigned int length, channel_transmit_cb callback, void *userParam);
-unsigned int channel_get_select_response_length(channel_h handle);
-void channel_destroy_instance(channel_h handle) __attribute__((deprecated));
+LIBSCL_EXPORT_API unsigned int channel_get_select_response_length(channel_h handle);
+LIBSCL_EXPORT_API void channel_destroy_instance(channel_h handle) __attribute__((deprecated));
 
 
 #ifdef __cplusplus

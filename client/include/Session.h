@@ -29,11 +29,16 @@
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
+
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
 namespace smartcard_service_api
 {
 	class Reader;
 
-	class Session : public SessionHelper
+	class LIBSCL_EXPORT_API Session : public SessionHelper
 	{
 	private:
 		void *context;
@@ -126,27 +131,27 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-int session_get_reader(session_h handle, int* reader_handle);
-int session_is_closed(session_h handle, bool* is_closed);
-int session_close_channels(session_h handle);
-int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length);
-int session_close_sync(session_h handle);
-int session_open_basic_channel_sync(session_h handle, unsigned char *aid,
+LIBSCL_EXPORT_API int session_get_reader(session_h handle, int* reader_handle);
+LIBSCL_EXPORT_API int session_is_closed(session_h handle, bool* is_closed);
+LIBSCL_EXPORT_API int session_close_channels(session_h handle);
+LIBSCL_EXPORT_API int session_get_atr_sync(session_h handle, unsigned char **buffer, unsigned int *length);
+LIBSCL_EXPORT_API int session_close_sync(session_h handle);
+LIBSCL_EXPORT_API int session_open_basic_channel_sync(session_h handle, unsigned char *aid,
 	unsigned int length, unsigned char P2, int* channel_handle);
-int session_open_logical_channel_sync(session_h handle, unsigned char *aid,
+LIBSCL_EXPORT_API int session_open_logical_channel_sync(session_h handle, unsigned char *aid,
 	unsigned int length, unsigned char P2, int* channel_handle);
 ///
 
-int session_get_atr(session_h handle, session_get_atr_cb callback,
+LIBSCL_EXPORT_API int session_get_atr(session_h handle, session_get_atr_cb callback,
 	void *userData);
-int session_close(session_h handle, session_close_session_cb callback,
+LIBSCL_EXPORT_API int session_close(session_h handle, session_close_session_cb callback,
 	void *userData);
-int session_open_basic_channel(session_h handle, unsigned char *aid,
+LIBSCL_EXPORT_API int session_open_basic_channel(session_h handle, unsigned char *aid,
 	unsigned int length, session_open_channel_cb callback, void *userData);
-int session_open_logical_channel(session_h handle, unsigned char *aid,
+LIBSCL_EXPORT_API int session_open_logical_channel(session_h handle, unsigned char *aid,
 	unsigned int length, session_open_channel_cb callback, void *userData);
-size_t session_get_channel_count(session_h handle);
-__attribute__((deprecated)) void session_destroy_instance(session_h handle);
+LIBSCL_EXPORT_API size_t session_get_channel_count(session_h handle);
+LIBSCL_EXPORT_API __attribute__((deprecated)) void session_destroy_instance(session_h handle);
 
 
 

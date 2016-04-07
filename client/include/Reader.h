@@ -31,9 +31,14 @@
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
+
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
 namespace smartcard_service_api
 {
-	class Reader: public ReaderHelper
+	class LIBSCL_EXPORT_API Reader: public ReaderHelper
 	{
 	private:
 		void *context;
@@ -69,16 +74,16 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-int reader_get_name(reader_h handle, char** reader_name);
-int reader_is_secure_element_present(reader_h handle, bool* is_present);
-int reader_open_session_sync(reader_h handle, int *session_handle);
-int reader_close_sessions(reader_h handle);
+LIBSCL_EXPORT_API int reader_get_name(reader_h handle, char** reader_name);
+LIBSCL_EXPORT_API int reader_is_secure_element_present(reader_h handle, bool* is_present);
+LIBSCL_EXPORT_API int reader_open_session_sync(reader_h handle, int *session_handle);
+LIBSCL_EXPORT_API int reader_close_sessions(reader_h handle);
 ///
 
-int reader_open_session(reader_h handle, reader_open_session_cb callback,
+LIBSCL_EXPORT_API int reader_open_session(reader_h handle, reader_open_session_cb callback,
 	void *userData);
-se_service_h reader_get_se_service(reader_h handle);
-__attribute__((deprecated)) void reader_destroy_instance(reader_h handle);
+LIBSCL_EXPORT_API se_service_h reader_get_se_service(reader_h handle);
+LIBSCL_EXPORT_API __attribute__((deprecated)) void reader_destroy_instance(reader_h handle);
 
 #ifdef __cplusplus
 }

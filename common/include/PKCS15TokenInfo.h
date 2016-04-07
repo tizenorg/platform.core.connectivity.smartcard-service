@@ -24,9 +24,14 @@
 /* local header */
 #include "PKCS15Object.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class PKCS15TokenInfo : public PKCS15Object
+	class LIBSCL_EXPORT_API PKCS15TokenInfo : public PKCS15Object
 	{
 	public:
 		PKCS15TokenInfo(Channel *channel);

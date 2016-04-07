@@ -24,9 +24,14 @@
 /* local header */
 #include "pthread.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class Lock
+	class LIBSCL_EXPORT_API Lock
 	{
 	public:
 		virtual ~Lock() {};
@@ -34,7 +39,7 @@ namespace smartcard_service_api
 		virtual void unlock() = 0;
 	};
 
-	class PMutex : public Lock
+	class LIBSCL_EXPORT_API PMutex : public Lock
 	{
 	private:
 		pthread_mutex_t mutex;
@@ -51,7 +56,7 @@ namespace smartcard_service_api
 #define SCOPE_LOCK(X) \
 	if (AutoLockHelper TOKENPASTE2(lock_, __LINE__) = makeAutoLock(X))
 
-	class AutoLockHelper
+	class LIBSCL_EXPORT_API AutoLockHelper
 	{
 	public:
 		inline operator bool() const
@@ -61,7 +66,7 @@ namespace smartcard_service_api
 	};
 
 	template<typename T>
-	class AutoLock : public AutoLockHelper
+	class LIBSCL_EXPORT_API AutoLock : public AutoLockHelper
 	{
 	private:
 		T *lock;
@@ -73,7 +78,7 @@ namespace smartcard_service_api
 	};
 
 	template<typename T>
-	inline AutoLock<T> makeAutoLock(T& lock)
+	LIBSCL_EXPORT_API inline AutoLock<T> makeAutoLock(T& lock)
 	{
 		return AutoLock<T>(lock);
 	}

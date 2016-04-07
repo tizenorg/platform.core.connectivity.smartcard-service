@@ -27,6 +27,11 @@
 #include "Synchronous.h"
 #include "SessionHelper.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
@@ -36,7 +41,7 @@ namespace smartcard_service_api
 	typedef void (*openSessionCallback)(SessionHelper *session, int error,
 		void *userData);
 
-	class ReaderHelper : public Synchronous
+	class LIBSCL_EXPORT_API ReaderHelper : public Synchronous
 	{
 	protected:
 		SEServiceHelper *seService;

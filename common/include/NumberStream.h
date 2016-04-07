@@ -24,9 +24,14 @@
 /* local header */
 #include "ByteArray.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class NumberStream : public ByteArray
+	class LIBSCL_EXPORT_API NumberStream : public ByteArray
 	{
 	public:
 		NumberStream(const ByteArray &T);

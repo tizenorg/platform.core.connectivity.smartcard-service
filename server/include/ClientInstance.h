@@ -27,9 +27,14 @@
 /* local header */
 #include "ServiceInstance.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class ClientInstance
+	class LIBSCL_EXPORT_API ClientInstance
 	{
 	private :
 		string name;

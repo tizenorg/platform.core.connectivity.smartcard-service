@@ -26,11 +26,16 @@
 #include "PKCS15Object.h"
 #include "PKCS15ODF.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class PKCS15: public PKCS15Object
+	class LIBSCL_EXPORT_API PKCS15: public PKCS15Object
 	{
 	private:
 		map<unsigned int, ByteArray> recordElement;

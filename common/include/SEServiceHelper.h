@@ -26,11 +26,16 @@
 #include "Synchronous.h"
 #include "ReaderHelper.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class SEServiceHelper : public Synchronous
+	class LIBSCL_EXPORT_API SEServiceHelper : public Synchronous
 	{
 	protected:
 		vector<ReaderHelper *> readers;

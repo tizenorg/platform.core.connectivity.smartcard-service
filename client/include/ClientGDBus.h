@@ -26,9 +26,14 @@
 #include "GDBusHelper.h"
 #include "smartcard-service-gdbus.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class ClientGDBus
+	class LIBSCL_EXPORT_API ClientGDBus
 	{
 	};
 } /* namespace smartcard_service_api */

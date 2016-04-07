@@ -29,9 +29,14 @@
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
+
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
 namespace smartcard_service_api
 {
-	class GPARFACL : public AccessControlList
+	class LIBSCL_EXPORT_API GPARFACL : public AccessControlList
 	{
 	private:
 		ByteArray refreshTag;

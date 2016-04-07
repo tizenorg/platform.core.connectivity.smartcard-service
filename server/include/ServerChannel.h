@@ -26,9 +26,14 @@
 #include "Terminal.h"
 #include "ServerSession.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class ServerChannel: public Channel
+	class LIBSCL_EXPORT_API ServerChannel: public Channel
 	{
 	private:
 		Terminal *terminal;

@@ -21,9 +21,14 @@
 
 #include "ByteArray.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class CallbackParam
+	class LIBSCL_EXPORT_API CallbackParam
 	{
 	public :
 		void *instance;
@@ -31,7 +36,7 @@ namespace smartcard_service_api
 		void *user_param;
 	};
 
-	class GDBusHelper
+	class LIBSCL_EXPORT_API GDBusHelper
 	{
 	public :
 		static void convertVariantToByteArray(GVariant *var,

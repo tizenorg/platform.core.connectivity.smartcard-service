@@ -25,9 +25,14 @@
 #include "PKCS15Object.h"
 #include "PKCS15OID.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class CertificateType
+	class LIBSCL_EXPORT_API CertificateType
 	{
 	public :
 		/* Common Object Attributes */
@@ -45,7 +50,7 @@ namespace smartcard_service_api
 		ByteArray certificate;
 	};
 
-	class PKCS15CDF : public PKCS15Object
+	class LIBSCL_EXPORT_API PKCS15CDF : public PKCS15Object
 	{
 	private:
 		vector<CertificateType *> listCertType;

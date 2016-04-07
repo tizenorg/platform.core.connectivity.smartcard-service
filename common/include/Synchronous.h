@@ -20,13 +20,18 @@
 /* standard library header */
 #include <pthread.h>
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 /* SLP library header */
 
 /* local header */
 
 namespace smartcard_service_api
 {
-	class Synchronous
+	class LIBSCL_EXPORT_API Synchronous
 	{
 	protected:
 		pthread_mutex_t syncMutex;

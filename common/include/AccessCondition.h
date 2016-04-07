@@ -26,11 +26,16 @@
 /* local header */
 #include "ByteArray.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class AccessRule
+	class LIBSCL_EXPORT_API AccessRule
 	{
 	private :
 		bool apduRule;
@@ -58,7 +63,7 @@ namespace smartcard_service_api
 		friend class AccessCondition;
 	};
 
-	class AccessCondition
+	class LIBSCL_EXPORT_API AccessCondition
 	{
 	private :
 		ByteArray aid;

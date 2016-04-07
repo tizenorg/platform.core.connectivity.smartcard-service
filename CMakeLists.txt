@@ -11,8 +11,9 @@ ENDIF()
 # make string from entire content of byte array
 ADD_DEFINITIONS("-DTO_STRING_ALL")
 ADD_DEFINITIONS("-DUSE_CYNARA")
+ADD_DEFINITIONS("-DLIBSCL_EXPORT_API=__attribute__((visibility(\"default\")))")
 
-SET(GC_SECTIONS_FLAGS "-fdata-sections -ffunction-sections -Wl,--gc-sections -flto")
+SET(GC_SECTIONS_FLAGS "-fdata-sections -ffunction-sections -Wl,--gc-sections -flto -fvisibility=hidden")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GC_SECTIONS_FLAGS}")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GC_SECTIONS_FLAGS}")
 

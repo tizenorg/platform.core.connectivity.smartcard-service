@@ -17,6 +17,11 @@
 #ifndef SMARTCARD_DAEMON_H_
 #define SMARTCARD_DAEMON_H_
 
-void smartcard_daemon_exit();
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
+LIBSCL_EXPORT_API void smartcard_daemon_exit();
 
 #endif /* SMARTCARD_DAEMON_H_ */

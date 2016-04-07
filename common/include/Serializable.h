@@ -19,9 +19,14 @@
 
 #include "ByteArray.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class Serializable
+	class LIBSCL_EXPORT_API Serializable
 	{
 		virtual const ByteArray serialize() const = 0;
 		virtual void deserialize(const ByteArray &buffer) = 0;

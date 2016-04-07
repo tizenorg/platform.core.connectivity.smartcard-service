@@ -28,11 +28,16 @@
 #include "FCI.h"
 #include "Record.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class FileObject : public ProviderHelper
+	class LIBSCL_EXPORT_API FileObject : public ProviderHelper
 	{
 	private:
 		FCI fci;

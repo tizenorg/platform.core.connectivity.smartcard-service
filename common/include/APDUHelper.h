@@ -24,9 +24,14 @@
 /* local header */
 #include "ByteArray.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 namespace smartcard_service_api
 {
-	class ResponseHelper
+	class LIBSCL_EXPORT_API ResponseHelper
 	{
 	private:
 		ByteArray response;
@@ -75,7 +80,7 @@ namespace smartcard_service_api
 //		static char *getErrorString();
 	};
 
-	class APDUCommand
+	class LIBSCL_EXPORT_API APDUCommand
 	{
 	private:
 		typedef struct _command_header_t
@@ -172,7 +177,7 @@ namespace smartcard_service_api
 		bool getBuffer(ByteArray &array) const;
 	};
 
-	class APDUHelper
+	class LIBSCL_EXPORT_API APDUHelper
 	{
 	public:
 		static const int COMMAND_OPEN_LOGICAL_CHANNEL = 1;

@@ -31,11 +31,16 @@
 #endif /* __cplusplus */
 
 #ifdef __cplusplus
+
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class SignatureHelper
+	class LIBSCL_EXPORT_API SignatureHelper
 	{
 	public:
 		static int getPackageName(int pid, char *package, size_t length);
@@ -54,7 +59,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-typedef struct _certiHash
+typedef struct LIBSCL_EXPORT_API _certiHash
 {
 	uint8_t *value;
 	uint32_t length;
@@ -63,8 +68,8 @@ typedef struct _certiHash
 
 typedef void (*signature_helper_get_certificate_hashes_cb)(void *user_param, uint8_t *hash, uint32_t length);
 
-int signature_helper_get_certificate_hashes(const char *packageName, certiHash **hash);
-int signature_helper_get_certificate_hashes_by_pid(int pid, certiHash **hash);
+LIBSCL_EXPORT_API int signature_helper_get_certificate_hashes(const char *packageName, certiHash **hash);
+LIBSCL_EXPORT_API int signature_helper_get_certificate_hashes_by_pid(int pid, certiHash **hash);
 
 #ifdef __cplusplus
 }

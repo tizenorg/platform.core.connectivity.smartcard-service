@@ -29,13 +29,18 @@
 #include "GDBusHelper.h"
 #include "smartcard-service-gdbus.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
 	typedef void (*dispatcher_cb_t)(vector<void *> &params);
 
-	class GDBusDispatcher : public Synchronous
+	class LIBSCL_EXPORT_API GDBusDispatcher : public Synchronous
 	{
 	public :
 		static GDBusDispatcher &getInstance();
@@ -53,7 +58,7 @@ namespace smartcard_service_api
 		static gboolean dispatch(gpointer user_data);
 	};
 
-	class ServerGDBus
+	class LIBSCL_EXPORT_API ServerGDBus
 	{
 	public :
 		GDBusProxy *dbus_proxy;

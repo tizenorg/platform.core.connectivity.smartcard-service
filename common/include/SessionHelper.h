@@ -27,6 +27,11 @@
 #include "ByteArray.h"
 #include "Channel.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
@@ -38,7 +43,7 @@ namespace smartcard_service_api
 	typedef void (*closeSessionCallback)(int error, void *userData);
 	typedef void (*getChannelCountCallback)(unsigned count, int error, void *userData);
 
-	class SessionHelper : public Synchronous
+	class LIBSCL_EXPORT_API SessionHelper : public Synchronous
 	{
 	protected:
 		ReaderHelper *reader;

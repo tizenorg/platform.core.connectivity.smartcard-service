@@ -63,10 +63,15 @@
 				break; \
 			} \
 		}
+		
+		#ifndef LIBSCL_EXPORT_API
+		#define LIBSCL_EXPORT_API
+		#endif // LIBSCL_EXPORT_API
+		
 
 namespace smartcard_service_api
 {
-	class ExceptionBase : public std::exception
+	class LIBSCL_EXPORT_API ExceptionBase : public std::exception
 	{
 	protected :
 		int errorCode;
@@ -83,7 +88,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class ErrorIO : public ExceptionBase
+	class LIBSCL_EXPORT_API ErrorIO : public ExceptionBase
 	{
 	private :
 		unsigned char sw[2];
@@ -130,7 +135,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class ErrorSecurity : public ExceptionBase
+	class LIBSCL_EXPORT_API ErrorSecurity : public ExceptionBase
 	{
 	public :
 		ErrorSecurity(int errorCode) throw()
@@ -156,7 +161,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class ErrorIllegalState : public ExceptionBase
+	class LIBSCL_EXPORT_API ErrorIllegalState : public ExceptionBase
 	{
 	public :
 		ErrorIllegalState(int errorCode) throw()
@@ -190,7 +195,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class ErrorIllegalParameter : public ExceptionBase
+	class LIBSCL_EXPORT_API ErrorIllegalParameter : public ExceptionBase
 	{
 	public :
 		ErrorIllegalParameter(int errorCode) throw()
@@ -216,7 +221,7 @@ namespace smartcard_service_api
 		}
 	};
 
-	class ThrowError
+	class LIBSCL_EXPORT_API ThrowError
 	{
 	public :
 		static void throwError(int errorCode)

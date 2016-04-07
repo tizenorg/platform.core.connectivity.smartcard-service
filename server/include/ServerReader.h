@@ -29,13 +29,18 @@
 #include "ServerChannel.h"
 #include "AccessControlList.h"
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
 	class ServerSEService;
 
-	class ServerReader : public ReaderHelper
+	class LIBSCL_EXPORT_API ServerReader : public ReaderHelper
 	{
 	private:
 		Terminal *terminal;

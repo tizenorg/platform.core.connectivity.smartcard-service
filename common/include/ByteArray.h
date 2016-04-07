@@ -29,11 +29,16 @@
 
 #define ARRAY_AND_SIZE(x) (uint8_t *)(&x), sizeof(x)
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 using namespace std;
 
 namespace smartcard_service_api
 {
-	class ByteArray //: public Serializable
+	class LIBSCL_EXPORT_API ByteArray //: public Serializable
 	{
 	protected:
 		uint8_t *buffer;

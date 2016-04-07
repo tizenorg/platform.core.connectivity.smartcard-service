@@ -20,6 +20,11 @@
 /* standard library header */
 #include <glib-object.h>
 
+#ifndef LIBSCL_EXPORT_API
+#define LIBSCL_EXPORT_API
+#endif // LIBSCL_EXPORT_API
+
+
 /* SLP library header */
 
 /* local header */
@@ -30,7 +35,7 @@ typedef struct _Smartcard_ServiceClass Smartcard_ServiceClass;
 #define SMARTCARD_SERVICE_NAME "org.tizen.SmartcardService"
 #define SMARTCARD_SERVICE_PATH "/org/tizen/SmartcardService"
 
-GType smartcard_service_get_type(void);
+LIBSCL_EXPORT_API GType smartcard_service_get_type(void);
 
 struct _Smartcard_Service
 {
@@ -55,12 +60,12 @@ typedef enum
 	SMARTCARD_SERVICE_ERROR_INVALID_PRAM
 } Smartcard_Service_Error;
 
-GQuark smartcard_service_error_quark(void);
+LIBSCL_EXPORT_API GQuark smartcard_service_error_quark(void);
 #define SMARTCARD_SERVICE_ERROR smartcard_service_error_quark ()
 
 /**
  *     launch the nfc-manager
  */
-gboolean smartcard_service_launch(Smartcard_Service *smartcard_service, guint *result_val, GError **error);
+LIBSCL_EXPORT_API gboolean smartcard_service_launch(Smartcard_Service *smartcard_service, guint *result_val, GError **error);
 
 #endif /* SMARTCARDDBUS_H_ */
