@@ -12,7 +12,7 @@ ENDIF()
 ADD_DEFINITIONS("-DTO_STRING_ALL")
 ADD_DEFINITIONS("-DUSE_CYNARA")
 
-SET(GC_SECTIONS_FLAGS "-fdata-sections -ffunction-sections -Wl,--gc-sections")
+SET(GC_SECTIONS_FLAGS "-fdata-sections -ffunction-sections -Wl,--gc-sections -flto")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GC_SECTIONS_FLAGS}")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GC_SECTIONS_FLAGS}")
 
@@ -32,4 +32,3 @@ ADD_SUBDIRECTORY(server)
 IF(DEFINED TEST_CLIENT)
 	ADD_SUBDIRECTORY(test-client)
 ENDIF()
-
