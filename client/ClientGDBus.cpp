@@ -31,7 +31,9 @@ using namespace std;
 void __attribute__ ((constructor)) lib_init()
 {
 	/* remove for deprecated-declarations build warning: glib ver > 2.36 */
-	/* g_type_init(); */
+#if !GLIB_CHECK_VERSION (2, 35, 0)
+	g_type_init();
+#endif
 }
 
 void __attribute__ ((destructor)) lib_fini()
