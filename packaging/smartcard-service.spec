@@ -7,7 +7,7 @@
 ################################################################################
 Name:       smartcard-service
 Summary:    Smartcard Service FW
-Version:    0.1.46
+Version:    0.1.47
 Release:    0
 Group:      libs
 License:    Apache-2.0
@@ -35,6 +35,7 @@ BuildRequires: hash-signer
 Requires(post):   /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 Requires:         %{name}-common = %{version}-%{release}
+Requires: security-config
 
 
 %description
