@@ -177,6 +177,10 @@ namespace smartcard_service_api
 
 		name_owner_changed((GDBusProxy *)connection,
 			name, old_owner, new_owner, user_data);
+
+		g_free(name);
+		g_free(old_owner);
+		g_free(new_owner);
 	}
 
 	bool ServerGDBus::_init()
@@ -331,6 +335,7 @@ namespace smartcard_service_api
 		ret = cynara_creds_gdbus_get_client(connection, sender_unique_name, CLIENT_METHOD_DEFAULT, &client);
 		if (ret != CYNARA_API_SUCCESS) {
 			_ERR("cynara_creds_gdbus_get_client() failed");
+			g_free(user);
 			return false;
 		}
 
@@ -338,9 +343,25 @@ namespace smartcard_service_api
 
 		client_session = cynara_session_from_pid(pid);
 
+		if (!client_session) {
+			_ERR("cynara_session_from_pid() failed");
+			g_free(client);
+			g_free(user);
+			return false;
+		}
+
 		ret = cynara_check(p_cynara, client, client_session, user, SMARTCARD_PRIVILEGE);
 		if ( ret == CYNARA_API_ACCESS_ALLOWED ) {
 			_INFO("cynara PASS");
+		}
+
+		g_free(client_session);
+		g_free(client);
+		g_free(user);
+
+		if (p_cynara) {
+			cynara_finish(p_cynara);
+			p_cynara = NULL;
 		}
 
 		return (ret == CYNARA_API_ACCESS_ALLOWED ) ? true : false;

@@ -93,6 +93,8 @@ namespace smartcard_service_api
 			mapSessions.erase(item);
 
 			IntegerHandle::releaseHandle(session);
+
+			delete item->second.first;
 		}
 	}
 
@@ -107,6 +109,8 @@ namespace smartcard_service_api
 			item->second.first->closeSync();
 
 			IntegerHandle::releaseHandle(item->first);
+
+			delete item->second.first;
 		}
 
 		mapSessions.clear();

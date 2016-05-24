@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 	daemonize();
 #endif
 
-	main_loop = g_main_new(TRUE);
+	main_loop = g_main_loop_new(NULL, FALSE);
 
 	id = g_bus_own_name(G_BUS_TYPE_SYSTEM,
 			"org.tizen.SmartcardService",
@@ -148,4 +148,5 @@ int main(int argc, char *argv[])
 void smartcard_daemon_exit()
 {
 	g_main_loop_quit(main_loop);
+	g_main_loop_unref(main_loop);
 }
