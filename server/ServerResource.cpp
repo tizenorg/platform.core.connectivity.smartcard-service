@@ -684,13 +684,14 @@ namespace smartcard_service_api
 			 throw ExceptionBase(SCARD_ERROR_OUT_OF_MEMORY);
 		}
 
-		/* check */
+		/* NOTICE : This code is Access contol implementation in OpenMobile Specification.
+		 If you need the Access control in your target, please remove this comment.*/
+		/*
 		if (_isAuthorizedAccess(channel, aid,
 			service->getParent()->getCertificationHashes()) == true)
 		{
 			int rv = 0;
 
-			/* select aid */
 			if (aid == PKCS15::PKCS15_AID)
 			{
 				PKCS15 pkcs15(channel);
@@ -698,7 +699,6 @@ namespace smartcard_service_api
 				rv = pkcs15.select();
 				if (rv >= SCARD_ERROR_OK)
 				{
-					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
 					channel->setSelectResponse(pkcs15.getSelectResponse());
 				}
@@ -717,7 +717,6 @@ namespace smartcard_service_api
 				rv = file.select(aid);
 				if (rv >= SCARD_ERROR_OK)
 				{
-					/* remove privilege mode */
 					channel->unsetPrivilegeMode();
 					channel->setSelectResponse(file.getSelectResponse());
 				}
@@ -737,7 +736,7 @@ namespace smartcard_service_api
 			service->closeChannel(result);
 			throw ExceptionBase(SCARD_ERROR_SECURITY_NOT_ALLOWED);
 		}
-
+		*/
 		return result;
 	}
 
