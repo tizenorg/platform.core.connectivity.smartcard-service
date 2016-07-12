@@ -356,6 +356,16 @@ namespace smartcard_service_api
 			result = SCARD_ERROR_IPC_FAILED;
 		}
 
+		if (service->handler != NULL) {
+			service->handler(service, service->context);
+		} else if (service->listener != NULL) {
+			if (result == SCARD_ERROR_OK) {
+				service->listener->serviceConnected(service, service->context);
+			} else {
+				service->listener->errorHandler(service, result, service->context);
+			}
+		}
+
 		_END();
 
 		return result;
@@ -386,7 +396,8 @@ namespace smartcard_service_api
 		this->context = context;
 		this->listener = listener;
 
-		return _initialize();
+		_initialize_sync();
+		return true;
 	}
 
 	bool SEService::initializeSync(void *context)
