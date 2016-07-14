@@ -303,6 +303,67 @@ namespace smartcard_service_api
 		return result;
 	}
 
+	int SEService::_initialize_sync_do_not_throw_exception()
+	{
+		gint result;
+		guint handle;
+		GError *error = NULL;
+		GVariant *readers = NULL;
+		SEService *service = (SEService *)this;
+
+		_BEGIN();
+
+		/* init default context */
+
+		proxy = smartcard_service_se_service_proxy_new_for_bus_sync(
+			G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE,
+			"org.tizen.SmartcardService",
+			"/org/tizen/SmartcardService/SeService",
+			NULL, &error);
+		if (proxy == NULL)
+		{
+			_ERR("Can not create proxy : %s", error->message);
+			g_error_free(error);
+			return false;
+		}
+
+		g_signal_connect(proxy, "reader-inserted",
+				G_CALLBACK(&SEService::reader_inserted), this);
+
+		g_signal_connect(proxy, "reader-removed",
+				G_CALLBACK(&SEService::reader_removed), this);
+
+		/* request reader */
+		if(smartcard_service_se_service_call_se_service_sync(
+			(SmartcardServiceSeService *)proxy, &result, &handle, &readers, NULL, &error) == true)
+		{
+			if (result == SCARD_ERROR_OK)
+			{
+				service->connected = true;
+				service->handle = handle;
+				service->parseReaderInformation(readers);
+			}
+			else
+			{
+				_ERR("Initialize error : %d", result);
+			}
+		}
+
+		if (service->handler != NULL) {
+			service->handler(service, service->context);
+		} else if (service->listener != NULL) {
+			if (result == SCARD_ERROR_OK) {
+				service->listener->serviceConnected(service, service->context);
+			} else {
+				service->listener->errorHandler(service, result, service->context);
+			}
+		}
+
+		_END();
+
+		return result;
+	}
+
 	int SEService::_initialize_sync() throw(ErrorIO &, ExceptionBase &)
 	{
 		gint result;
@@ -356,16 +417,6 @@ namespace smartcard_service_api
 			result = SCARD_ERROR_IPC_FAILED;
 		}
 
-		if (service->handler != NULL) {
-			service->handler(service, service->context);
-		} else if (service->listener != NULL) {
-			if (result == SCARD_ERROR_OK) {
-				service->listener->serviceConnected(service, service->context);
-			} else {
-				service->listener->errorHandler(service, result, service->context);
-			}
-		}
-
 		_END();
 
 		return result;
@@ -396,8 +447,7 @@ namespace smartcard_service_api
 		this->context = context;
 		this->listener = listener;
 
-		_initialize_sync();
-		return true;
+		return _initialize_sync_do_not_throw_exception();
 	}
 
 	bool SEService::initializeSync(void *context)

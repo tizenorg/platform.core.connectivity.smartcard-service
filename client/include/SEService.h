@@ -61,6 +61,7 @@ namespace smartcard_service_api
 			throw(ErrorIO &, ErrorIllegalParameter &);
 		int _initialize_sync()
 			throw(ErrorIO &, ExceptionBase &);
+		int _initialize_sync_do_not_throw_exception();
 		bool initializeSync(void *context)
 			throw(ErrorIO &, ErrorIllegalParameter &, ExceptionBase &);
 
