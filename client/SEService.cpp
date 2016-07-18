@@ -680,6 +680,10 @@ EXTERN_API int se_service_get_readers(se_service_h handle, int **readers, int *c
 		}
 		*count = temp;
 	}
+	else
+	{
+		*count = 0;
+	}
 
 	SE_SERVICE_EXTERN_END;
 
